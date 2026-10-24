@@ -2,13 +2,24 @@
 
 > Documentación funcional: [`docs/modules/01-power-supply.md`](../../docs/modules/01-power-supply.md).
 
-> **Estado (2026-08-17): esta v1 no se construye.** Queda como diseño cerrado y
-> documentado — el razonamiento de `notes/design-notes.md` sigue siendo la base
-> de la que hereda la [v2](v2/), incluido el front-end (trafo, puente, bulk) y
-> las simulaciones de valle y de lazo de zumbido. Lo que cambia es que **no hace
-> de mula**: la v2 se ajusta contra sus propias medidas en el bring-up
-> ([v2/notes/design-notes.md §4](v2/notes/design-notes.md)). La fuente que se
-> fabrica y alimenta el sintetizador es la **v2**.
+> **Estado (2026-10-24): la fuente que se construye es la v5.** Esta carpeta
+> raíz es la v1, y todo lo que sigue debajo del banner la describe a ella.
+>
+> | Versión | Qué es | Estado |
+> |---|---|---|
+> | v1 (esta carpeta) | trafo de 12 VAC y 7805/7812/7912 | no se construye (2026-08-17); `notes/design-notes.md` es la base de la que heredan las demás |
+> | [v2](v2/) | la primera cascada: pre-reguladores y LT3045/LT3094 | gerbers, BOM y CPL generados, nunca se pidió |
+> | [v3](v3/) | toroide y cascada lineal | no se pide (2026-09-04); su cascada sigue valiendo |
+> | [v4](v4/) | seis Mean Well IRM dentro de la caja, con la cascada | superada por la v5; sus curvas y puertas son la referencia de la cascada |
+> | [v5](v5/) | ladrillo externo de 24 V; dentro, la conversión DC-DC y la cascada | D-V1..D-V5 firmadas el 2026-09-08 ([spec](../../docs/superpowers/specs/2026-09-05-fuente-v5-ladrillo-design.md)) |
+>
+> La placa de la v5 está ruteada en 4 capas con el DRC en cero
+> ([`v5/fab/`](v5/fab/README.md)), pero todavía no autoriza cobre: los 16
+> HUECOS de su §9.2 son la condición de fabricación, varios los contesta solo
+> el fabricante, y la
+> [propuesta de piezas](../../docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
+> sigue sin firmar. El bring-up es la hoja de 104 medidas de
+> [`v5/check_bringup.py`](v5/check_bringup.py).
 
 ## Resumen
 

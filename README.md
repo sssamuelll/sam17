@@ -14,7 +14,8 @@ Goethe-Institut Venezuela selected it for its programme *Pensar la Música
 Electrónica en Venezuela*. Since then it has been redesigned, in Nürnberg, as
 the sixteen-voice instrument this repository describes. **There is no finished
 unit yet.** The firmware runs on the STM32N657 evaluation board, the voice
-board is being drawn, and the first complete instrument is due in May 2027.
+board is being drawn, the power supply board is routed but not yet cleared for
+fabrication, and the first complete instrument is due in May 2027.
 Details, with dates, under [Status](#status-october-2026).
 
 The working language of the project is Spanish: specs, budgets and design
@@ -73,24 +74,30 @@ flowchart LR
   modules, with its own current budget. The skeleton is machined aluminium;
   the outer finish is being decided. Dimensions, materials and drawings in
   [`case/README.md`](case/README.md).
-- Power is 230 VAC. The supply is on paper and parked until the first note
-  sounds, in two versions: v4 with Mean Well IRM modules and a cascade of
-  linear regulators ([`hardware/01-power-supply`](hardware/01-power-supply)),
-  and the v5 "brick"
-  ([spec](docs/superpowers/specs/2026-09-05-fuente-v5-ladrillo-design.md)).
-  The test kit runs from a bench supply.
+- Power is 230 VAC through an external 24 V brick. In the v5 supply, signed
+  on 8 September 2026 ([spec](docs/superpowers/specs/2026-09-05-fuente-v5-ladrillo-design.md)),
+  the AC-DC stage moves out of the case. Inside it stay the DC-DC conversion
+  and the cascade of linear regulators carried over from v4. The v5 board is
+  routed on four layers with a clean DRC
+  ([`hardware/01-power-supply/v5/fab`](hardware/01-power-supply/v5/fab)), but
+  it is not cleared for copper yet: the 16 open questions in §9.2 of the spec
+  are the condition for fabrication, several of them answered only by the
+  manufacturers, and the
+  [parts proposal](docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
+  is unsigned. The test kit runs from a bench supply.
 
 ## Status, October 2026
 
 The project map is the
 [GitHub milestones](https://github.com/sssamuelll/sam17/milestones):
 eight stages, each with its "done when" in the description, and every issue
-hangs from one of them. As of 11 October 2026:
+hangs from one of them. As of 11 October 2026, and 24 October for the two
+power supply rows:
 
 | Milestone | Done when | Where it stands |
 |---|---|---|
-| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | Parked until the first note; the v5 "brick" had its review on 8 September, with decisions still conditional |
-| 2 · Power supply v4 in copper | The supply boards are built and measured on the bench | Parked until the first note |
+| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its board is routed and its gates pass; the 16 open questions of §9.2, the unsigned parts proposal and ten open issues stand between it and copper |
+| 2 · Power supply v4 in copper | The supply boards are built and measured on the bench | Not started. The v5 bring-up is written as a checked sheet of 104 measurements with their limits ([`check_bringup.py`](hardware/01-power-supply/v5/check_bringup.py)) |
 | 3 · The brain boots | Our firmware runs on the N657, speaks USB MIDI and lights the display | In progress: the firmware has run on the NUCLEO-N657X0-Q since 1 October, and the J2 link has 26 hours of soak without a fault |
 | 4 · Test kit: brain plus one voice | A MIDI note comes in and one voice sounds through the J2 | The current front: the J2 header and master are on paper, and the full voice board is being drawn in KiCad |
 | 5 · The remaining boards | The rest of the boards are in KiCad with their gates green | Pending |
@@ -127,7 +134,7 @@ sam17/
 │   ├── thesis.pdf           The 2020 thesis; its summary in summary.md.
 │   └── architecture*.md     Monophonic (thesis), polyphonic and compute architecture.
 ├── hardware/
-│   ├── 01-power-supply/     Power supply: v1 to v4, bring-up and budgets.
+│   ├── 01-power-supply/     Power supply: v1 to v5, bring-up and budgets; v5 is the one built.
 │   ├── 02-midi-cv/          The brain: the N657 board and the J2 budgets.
 │   ├── 03-vco/              The voice: 16 channels, FM matrix and patch bay (its 4-VCO v1, superseded).
 │   ├── 04..07/              Mixer, VCF, ADSR and VCA from the thesis, dissolved into the voice.
@@ -151,6 +158,7 @@ sam17/
    [the voice module](docs/superpowers/specs/2026-08-23-modulo-voz-total-design.md),
    [the brain v2](docs/superpowers/specs/2026-08-21-modulo-2-v2-cerebro-design.md),
    [the whole instrument](docs/superpowers/specs/2026-09-03-instrumento-entero-design.md),
+   [the power supply v5](docs/superpowers/specs/2026-09-05-fuente-v5-ladrillo-design.md),
    and for the link between brain and voice the J2
    [header](docs/superpowers/specs/2026-09-02-cabecera-j2-design.md) and
    [master](docs/superpowers/specs/2026-09-03-maestro-j2-recuperacion-design.md).
