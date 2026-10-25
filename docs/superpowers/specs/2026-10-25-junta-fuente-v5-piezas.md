@@ -71,6 +71,7 @@ se restituye, y el tiristor digital, si se queda.
 | **Qué hace** | Los dos rieles de rack con un módulo doble de 30 W: 18,6 W declarados (`ladrillo_budget.py`) |
 | **Lo que aguanta** | Su carga declarada y la ventana de entrada: 4:1, arranque a 8,8 V máx. (`traco_thn30wi.pdf` p. 2) |
 | **Lo que falla** | (a) **D-F4 en rack no está en la placa** (§3.3). (b) **La regulación cruzada solo está garantizada entre el 25 y el 100 % de carga asimétrica** («Cross Regulation (25% / 100% asym. load) dual output models: 5% max.», p. 2), y `check_absmax.py` la aplica siempre. Con la fila B vacía el −12 V va al 0 % y el +12 V al 44 % (la pantalla): fuera de hoja, contra un crowbar que dispara desde 13,50 V. (c) **La carcasa queda a 3–8 K de su protección térmica.** Con la pérdida del guion (2,46 W) o la del 89 % típico (2,30 W), a 15,0 K/W (p. 4), sube 34,5–36,9 K; con el aire del cajón a 62,6–65 °C llega a 97–102 °C, contra un corte desde 105 °C (p. 3). Si corta, vuelve sola hacia los 100 °C, y el MCU no lo ve |
+| **Con la nota `thn30wi-cc`** | `traco_thn30wi_characteristic_curves.pdf` p. 11, en lecturas de figura. A 24 V de entrada pierde 2,35 W con el 62 % de potencia total (18,6 de 30 W). A 15,0 K/W típ. la carcasa queda en 97,9–100,3 °C con el aire a 62,6–65 °C. El borde de su derating es esa misma cuenta con la carcasa a 105 °C, el corte mínimo: la cuenta lo pone a 69,8 °C de aire con el 62 % y a 60,6 °C con el 84 %, y la curva a 70,6 y 61,0 °C. La cuenta rehecha no cumple los 100 °C en todo el intervalo de aire: de la condición de carcasa queda la medida. Cómo se lee la curva con las salidas desiguales es §4.7 |
 | **Veredicto** | **FIRMABLE CON CONDICIÓN**: D-F4 en rack resuelta (§4.4); la regulación cruzada por debajo del 25 % contestada por TRACO y medida en banco (el −12 V al 0 y al 24 %, con el +12 V al 44–84 %, contra 13,50 V); y la carcasa medida a carga declarada con aire de 62,6–65 °C, con criterio de 100 °C, o la nota de derating de TRACO versionada y la cuenta rehecha (§3.6) |
 
 ### P2 — +5 V digital aislado: Mornsun URB2405YMD-20WR3 (`PS2`)
@@ -89,6 +90,7 @@ se restituye, y el tiristor digital, si se queda.
 | **Qué hace** | Los crudos de la cascada, uno cableado invertido, recortados a 15,5 V (D-V3) |
 | **Lo que aguanta** | Con la cascada a 450 mA, cada rama lleva 0,620 A: 9,85 W, el 49 % (`ladrillo_budget.py`). Sus 1,74 W a 17,6 K/W (p. 4) son 30,6 K: con el aire del cajón, la carcasa queda por debajo de sus 105 °C (p. 3). Es lo mínimo que deja D-V3, porque el recorte es «(single output models only)» (p. 2) |
 | **Lo que falla** | (a) **La constante del recorte no tiene hoja.** `R32`/`R33` = 45,3 kΩ salen de «R = 10000\*2.5/(15.5-2.5-12.5) - 5110 = 44.9k (nota TRACO)» (`bom.csv:69`). La hoja remite a una nota de la web (p. 2) que no está versionada, y la propuesta (§9.1) dice que la fórmula es de la serie sin WI. (b) **El borde bajo del OVP de `U19` queda 0,18 V por encima del máximo sano del crudo** (16,19 contra 16,012 V, `check_absmax.py`), y el THN 20 no declara cuánto se desvía ante un escalón, solo «Response Time 250 µs typ. (25% Load Step)» (p. 2). Un alivio de carga en la rama de `U1` puede abrir `U19` y gastar un intento. (c) `curvas.py` le atribuye una frase de derating que su hoja no tiene (§3.6) |
+| **Con las notas de TRACO** | (a) se cierra. La nota de ajuste (`traco_thn15wi_thn20wi_thn30wi_voltage_adjustment.pdf` p. 1) cubre la serie WI y da para los xx13WI G = 10000, H = 5110, K = 12,5 y L = 2,5, las constantes de `bom.csv:69`. La resistencia de subida va de Trim a −Vout, como `R32` (`PS4` 4–5) y `R33` (`PS5` 4–5) en la netlist, y 45,3 kΩ dan 15,50 V. Con la resistencia en corto, la misma fórmula da 19,89 V, la cifra que la propuesta sacaba de la nota sin WI. (b) sigue, ya con número: la captura típica de un escalón del 25 % (`traco_thn20wi_characteristic_curves.pdf` p. 8, 100 mV/div) sube unos 0,19 V contra 0,18 V de ventana, y el OVP de `U19` corta en 8,5–14 µs (`tps2663.pdf` p. 8), así que un sobreimpulso de ~100 µs le da tiempo. La pérdida al 49 % es 1,29 W (p. 7), no 1,74 W: la carcasa sube 22,7 K. El derating sin disipador (potencia plena hasta 63 °C, −2,85 %/°C) deja el 49 % hasta unos 81 °C de aire |
 | **Veredicto** | **FIRMABLE CON CONDICIÓN**: la nota de recorte de la serie WI versionada, o la constante por escrito de TRACO; y las 3 muestras de §9.4 de la propuesta midiendo, con `R32`/`R33` montadas, el valor estático y el pico de un alivio de carga contra 16,19 V |
 
 ### P4 — +5 V de rack: Mornsun K7805T-1000R3 (`PS3`)
@@ -161,7 +163,7 @@ la salida unida a la tierra de red, «insert a “B” in the part number where 
 “A” is located» (nota 3, p. 5). La referencia es `TE90A2449F01` o
 `TE90B2449F01`.
 
-`TE90A2403F01` está en 13 líneas de 9 archivos: la propuesta,
+`TE90A2403F01` está en 15 líneas de 9 archivos: la propuesta,
 `ladrillo_budget.py`, `curvas.py`, `recuperacion_budget.py`, `check_bringup.py`,
 `test_curvas.py`, `medidas.csv`, `docs/references.md` y
 `docs/modules/01-power-supply.md`.
@@ -254,6 +256,19 @@ a 85 °C, y su hoja da +95 °C de máximo para la salida de 5 V (p. 3), con la
 curva en una figura. El paso 7 de `medidas.csv` pide «<= 85» °C de carcasa a
 45 °C de ambiente para los THN, y esos 85 °C no son de carcasa: en sus hojas,
 85 °C es el ambiente con disipador, y la carcasa admite 105 °C (p. 3).
+
+Las notas bajan como PDF desde la ficha de cada serie y están versionadas:
+`traco_thn30wi_characteristic_curves.pdf` (THN 30-2422WI en pp. 11–12) y
+`traco_thn20wi_characteristic_curves.pdf` (THN 20-2413WI en pp. 7–8). En
+convección natural y sin disipador, el THN 30-2422WI da potencia plena hasta
+54 °C y cae 2,31 puntos por grado; el THN 20-2413WI, hasta 63 °C y 2,85 puntos
+por grado. Los dos llegan a cero hacia los 100–102 °C (lecturas de figura, como
+todas las de esta nota). Con ellas, `PS4` pasa de un rojo a 90,2 °C de aire a
+uno hacia los 81 °C. `PS1` se sale: por la corriente del +12 V pide el 84 % y la
+curva se lo da hasta 61 °C, con el aire a 62,6 °C. Por potencia total, que es
+el eje de la figura, pide el 62 % y cabe hasta 70,6 °C. Las curvas entran en
+`curvas.py` con esa lectura decidida (§4.7): con la de hoy,
+`derating_budget.py` sale rojo.
 
 **Cierra:** las notas de derating de TRACO versionadas, o su respuesta por
 escrito, y las curvas rehechas; con ellas, la cuenta de la carcasa de `PS1`
@@ -396,6 +411,19 @@ de los dos, el que case con la variante del TE90.
 - `L3` también SRP1265A-220M, y `R32`/`R33` con la misma referencia al 0,1 %
   que `R45`/`R46`: dos referencias menos. `L3` cambia de huella.
 
+### 4.7 Cómo se lee el derating de `PS1`
+
+La curva de TRACO está en potencia de salida, y `PS1` lleva sus dos salidas
+desiguales: el +12 V al 84 % de su corriente, el −12 V al 40 % y el total al
+62 %. `derating_budget.py` toma la mayor de las fracciones (§3.6).
+
+| Opción | Qué pasa | Qué pide |
+|---|---|---|
+| **Por potencia total** | `PS1` cabe hasta 70,6 °C de aire: +8,0 K | La guarda deja de mirar la corriente de cada salida, y TRACO confirma por escrito que la curva vale con las salidas desiguales |
+| **Por la mayor fracción, como hoy** | `PS1` se sale a 61 °C: 1,6 K por debajo del aire de diseño | Un cambio de placa o de carga. Con el disipador `THN-HS1` (13,8 K/W típ., p. 4) la curva da el 84 % hasta 64,2 °C: +1,6 K. O menos +12 V: la pantalla (#480) son 550 mA de los 1,05 A |
+
+En las dos, la carcasa se mide con criterio de 100 °C (P1).
+
 ---
 
 ## 5. Qué falta para firmar
@@ -403,7 +431,7 @@ de los dos, el que case con la variante del TE90.
 | | |
 |---|---|
 | **Papel** | El arnés (§3.1), la referencia del TE90 (§3.2), la cita de `curvas.py` (§3.6), el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), y la propuesta enmendada (§3.9) |
-| **Gratis: preguntas** | **TRACO:** la regulación cruzada por debajo del 25 %, la constante de recorte WI, la desviación transitoria del THN 20 y del THN 30, si el THN 30 baja las dos salidas a la vez, y las notas de derating. **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo) y la 19 (el acople con el KPJX). **Mornsun:** el umbral de sobrecorriente del K78. **Mean Well**, solo si el respaldo sigue: el sobreimpulso al soltar el 100 % de carga |
+| **Gratis: preguntas** | **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, y si su derating vale por potencia total con las salidas desiguales (§4.7). La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo) y la 19 (el acople con el KPJX). **Mornsun:** el umbral de sobrecorriente del K78. **Mean Well**, solo si el respaldo sigue: el sobreimpulso al soltar el 100 % de carga |
 | **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y si se retira, `SCR4` sin montar (§4.5) |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
 | **Placa** | D-F4 en rack, si se restituye (§4.4); el filtro de los crowbars, si el digital se queda (§4.5); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |
@@ -414,8 +442,10 @@ de los dos, el que case con la variante del TE90.
 - La correspondencia física cara a cara entre KPJX-PM-4S y KPPX-4P: su dibujo
   no trae texto. §3.1 no depende de ella, porque en las dos hojas de ladrillo
   los pines 1 y 2 tienen polaridad opuesta.
-- Las notas de TRACO (derating `thn20wi-cc` y `thn30wi-cc`, recorte
-  `thn20wi-adj`): la web pinta las curvas sin PDF descargable.
+- ~~Las notas de TRACO (derating `thn20wi-cc` y `thn30wi-cc`, recorte
+  `thn20wi-adj`): la web pinta las curvas sin PDF descargable.~~ Sí bajan,
+  desde el panel «Application Notes» de la ficha de cada serie, y están
+  versionadas (P3, §3.6).
 - La curva del TE90 a 45 °C y la del URB, que son imágenes.
 - Cómo falla un K78: su hoja no lo dice, y §3.5 parte de cómo falla un buck.
 - El firmware del MSP430: solo la FSM de `recuperacion_budget.py`.
