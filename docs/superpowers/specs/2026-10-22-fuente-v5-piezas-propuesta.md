@@ -1,6 +1,6 @@
 # Fuente v5: propuesta de piezas (convertidores, ladrillo, conector)
 
-**Fecha**: 2026-10-22 · **Estado**: **PROPUESTA sin firmar.** No elige pieza, no cierra ningún HUECO de [v5 §9.2](2026-09-05-fuente-v5-ladrillo-design.md), no toca el [pliego](2026-09-08-pliego-ladrillo.md) y no autoriza fabricar ni comprar. Ordena lo que hay en hojas de datos para que una junta pueda firmar o descartar, pieza por pieza.
+**Fecha**: 2026-10-22 · **Estado**: **PROPUESTA sin firmar.** No elige pieza, no cierra ningún HUECO de [v5 §9.2](2026-09-05-fuente-v5-ladrillo-design.md), no toca el [pliego](2026-09-08-pliego-ladrillo.md) y no autoriza fabricar ni comprar. Ordena lo que hay en hojas de datos para que una junta pueda firmar o descartar, pieza por pieza. **Junta del 2026-10-25:** [`2026-10-25-junta-fuente-v5-piezas.md`](2026-10-25-junta-fuente-v5-piezas.md): ninguna pieza sale firmable tal cual, y las cifras de este papel que encontró viejas siguen aquí hasta su enmienda (#495).
 
 > **Nota de la revisión de #474:** donde este texto dice `TPS26630`, la BOM monta **`TPS26631PWPR`**: TI solo vende el TPS26630 en VQFN-24 (`tps2663.pdf`, orderables). RON, OVP e `I_OL` son los mismos en los dos (misma hoja); lo que cambia es la sobrecarga: el TPS26631 deja pasar hasta 2 × `I_OL` durante 25,5 ms antes de limitar, y su corte rápido está en 3 × `I_OL` (`tps2663.pdf` p. 7, 23; lo comprueba `recuperacion_budget.py`). Lo que se compra lo dice [`bom.csv`](../../../hardware/01-power-supply/v5/bom.csv), no esta propuesta.
 
