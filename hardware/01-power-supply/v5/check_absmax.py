@@ -13,18 +13,30 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
        ladrillo) al filtro LC (`22 uH` + `47 uF` + `0,68 ohm` + `220 uF`).
      - `U1` es el `LT1963A` (D-F8, `lt1963a-rev-g-2021-02.pdf` p. 2), cuyo
        maximo absoluto de entrada es **+-20,0 V**.
-     - Con el eFuse **TI TPS26631** (`tps2663.pdf` p. 6-8: `V(OVPR) = 1,176 ..
-       1,224 V`, corte en `8,5..14 us`, `RON <= 53 mohm`) **antes del filtro LC,
-       sensando del lado del modulo** (disparo nominal `16,55 V`, borde bajo
-       `16,19 V` > maximo sano `16,01 V`, borde alto `16,92 V`) y el TVS
-       **Bourns SMBJ16A** (`bourns_smbj.pdf` p. 2: `V_WM = 16,0 V`, `V_BR =
-       17,8..19,7 V`) en `U1 IN`:
-         * Con tope (sensado antes del LC, `t_corte = 14 us`, falla de `36 V`):
-           el pico en `U1 IN` es **18,11 V < 20,0 V** (margen `+1,89 V`).
-         * Sin tope: el pico en el LC sube a **38,59 V > 20,0 V** (ROJO).
-         * Mutante con sensado DESPUES del LC: cuando el nodo de `U1` cruza
-           `16,92 V`, la bobina de `22 uH` ya lleva corriente acumulada y el
-           pico tras cortar sube a **22,48 V > 20,0 V** (ROJO: mutante cazado).
+     - El eFuse **TI TPS26631** (`U19`) va **antes del filtro LC, sensando del
+       lado del modulo**, y corta por lo PRIMERO que llegue (`tps2663.pdf`):
+         * OVP: `V(OVPR) = 1,176 .. 1,224 V` (p. 6; disparo nominal `16,55 V`,
+           borde bajo `16,19 V` > maximo sano `16,01 V`, borde alto `16,92 V`),
+           corte en `<= 14 us` (p. 8);
+         * disparo rapido: `3 x I(OL)` en el TPS26631 (p. 7), con `I(OL)` de
+           `R34` y su +-10 % (`recuperacion_budget.py`), respuesta `<= 4,5 us`
+           (p. 9, soft short); por encima de `I(SCP) = 45 A`, `<= 1 us` (p. 9).
+     - `L2` es una **Bourns SRP1265A-220M** (`bourns_srp1265a.pdf`): 22 uH
+       +-20 % (p. 1) y su curva L-I hasta 12 A (p. 3), que el modelo sigue
+       punto a punto. Con la `SRR1260-220M` que montaba antes (Isat 3,7 A) el
+       modelo llevaba la bobina a 12,7 A con sus 22 uH enteros: una pieza que
+       no existe. Con la SRR saturando, el pico dependia de una curva que su
+       hoja no publica; con la SRP la corriente se queda dentro de la curva.
+     - Peor caso: arranca en el maximo sano en vacio, sin carga, con `L2`,
+       `C3` y `C1` en el borde bajo de su tolerancia, y falla de `36 V`:
+         * con tope, el pico en `U1 IN` queda por debajo de `20,0 V` y la
+           corriente de `L2` dentro de la curva publicada (cifras en demo());
+         * sin eFuse, sin disparo rapido, o sin disparo rapido y sensando
+           DESPUES del LC: ROJO. El disparo rapido es lo que salva a `U1`, y
+           su retardo maximo tiene canario.
+       El TVS **Bourns SMBJ16A** (`bourns_smbj.pdf` p. 2: `V_WM = 16,0 V`,
+       `V_BR = 17,8..19,7 V`) en `U1 IN` queda de respaldo: con el tope no
+       llega a conducir.
 
   2. **`U2` (`LT3015`, D-F9, T18):**
      - `IN Pin Voltage` maximo absoluto de **+-33,0 V** (`lt3015-rev-b.pdf` p. 2),
@@ -65,6 +77,9 @@ FUERA DE CONTRATO (se imprime al final): el contrato es de fallo simple
     sale cubierto por M3, no por requisito: la fila `U4,U5` lo guarda.
 
 LO QUE ESTE CALCULO NO CUBRE (se imprime al final):
+  * La curva L-I de la SRP1265A-220M es TIPICA (p. 3): se lee de la figura,
+    se baja 0,5 uH y se le aplica el -20 % de la tolerancia. Mas alla de 12 A
+    no hay curva, y la guarda de `U1` exige no pasar de ahi.
   * `OUT` de `U19` baja a `-V_F` de `D19` (hasta `0,55 V` a `3 A`) durante el
     corte. La hoja da `-0,3 V` absoluto en DC y pide ese Schottky (p. 36, 38),
     sin cifra de transitorio.
@@ -92,27 +107,32 @@ sys.path.insert(0, os.path.join(DIR, "..", "..", "tools"))
 from bom_valores import filas, valor  # noqa: E402
 from canario import borde_rojo  # noqa: E402
 
-_MARGEN = []
+_MODULOS: dict = {}
 
 
-def _margen():
-    """margen_budget.py de la v5, cargado al usarlo y no al importar: la v4
-    carga este modulo para el modelo RK4, y con su propio directorio en
-    sys.path el margen_budget de la v5 acababa importando el rizado_budget
-    equivocado. Por ruta y con nombre propio, por la misma razon; y si otro
-    guion ya lo cargo (check_bringup, ladrillo_budget), se usa ese: volver a
-    cargarlo con el rizado_budget de la v5 ya en sys.modules no funciona."""
-    if not _MARGEN:
-        ruta = os.path.normcase(os.path.abspath(os.path.join(DIR, "margen_budget.py")))
+def _modulo(nombre: str):
+    """Un guion de la v5, cargado al usarlo y no al importar: la v4 carga este
+    modulo para el modelo RK4, y con su propio directorio en sys.path el
+    margen_budget de la v5 acababa importando el rizado_budget equivocado. Por
+    ruta y con nombre propio, por la misma razon; y si otro guion ya lo cargo
+    (check_bringup, ladrillo_budget), se usa ese: volver a cargarlo con el
+    rizado_budget de la v5 ya en sys.modules no funciona."""
+    if nombre not in _MODULOS:
+        ruta = os.path.normcase(os.path.abspath(os.path.join(DIR, f"{nombre}.py")))
         ya = next((m for m in list(sys.modules.values())
                    if os.path.normcase(os.path.abspath(getattr(m, "__file__", None) or "")) == ruta), None)
         if ya is None:
-            spec = importlib.util.spec_from_file_location("_v5_margen_budget", ruta)
+            spec = importlib.util.spec_from_file_location(f"_v5_{nombre}", ruta)
             assert spec and spec.loader
             ya = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = ya     # un @dataclass busca su modulo aqui
             spec.loader.exec_module(ya)
-        _MARGEN.append(ya)
-    return _MARGEN[0]
+        _MODULOS[nombre] = ya
+    return _MODULOS[nombre]
+
+
+def _margen():
+    return _modulo("margen_budget")
 
 
 def v_sano_max_u1_v() -> float:
@@ -134,11 +154,49 @@ TOL_DIVISOR_01PCT_FRAC = 0.002         # dos resistencias de 0,1 %
 V_DISPARO_MIN_U1_V = V_DISPARO_NOM_U1_V * (1.0 - TOL_OVPR_TPS26631_FRAC - TOL_DIVISOR_01PCT_FRAC)
 V_DISPARO_MAX_U1_V = V_DISPARO_NOM_U1_V * (1.0 + TOL_OVPR_TPS26631_FRAC + TOL_DIVISOR_01PCT_FRAC)
 T_CORTE_OVP_MAX_S = 14.0e-6            # tps2663.pdf p. 8: 8,5 us typ, 14 us max
+# Disparo rapido del TPS26631: 3 x I(OL) (p. 7), con I(OL) de R34 y su +-10 %
+# (recuperacion_budget.py); respuesta 2,2..4,5 us en corto blando y 1 us por
+# encima de I(SCP) (p. 9).
+FACTOR_FASTTRIP_TPS26631 = 3.0
+T_FASTTRIP_MAX_S = 4.5e-6
+I_SCP_TPS2663_A = 45.0
+T_SCP_MAX_S = 1.0e-6
+
+
+def i_fasttrip_max_u19_a() -> float:
+    rec = _modulo("recuperacion_budget")
+    return FACTOR_FASTTRIP_TPS26631 * rec.corriente_limite_tps26631_a("R34", rec.TOL_ILIM_U19_FRAC)[2]
+
+
+# L2 = SRP1265A-220M. Curva L-I de bourns_srp1265a.pdf p. 3, leida de la
+# figura (22,4 / 22,0 / 20,9 / 19,9 / 18,5 / 16,8 uH) y bajada 0,5 uH; encima,
+# el -20 % de la tolerancia de p. 1. Es la inductancia con polarizacion, y se
+# usa como incremental, que es la que fija di/dt.
+MPN_L2 = "SRP1265A-220M"
+CURVA_L2_A_UH = ((0.0, 21.9), (2.4, 21.5), (4.8, 20.4), (7.2, 19.4), (9.6, 18.0), (12.0, 16.3))
+TOL_L2_FRAC = 0.20
+# C3 (47 uF) y C1 (220 uF): +-20 %, la tolerancia de serie del electrolitico de
+# aluminio. Ninguna de las dos hojas esta en el arbol.
+TOL_ELECTROLITICO_FRAC = 0.20
+
+
+def l2_h(i_a: float, tol: bool = True) -> float:
+    """Inductancia de L2 a `i_a`. Mas alla de la curva se sostiene su ultimo
+    punto: eso solo lo usan los mutantes rojos, y ahi el modelo se queda corto,
+    no largo. La guarda de U1 exige no salir de la curva."""
+    i = abs(i_a)
+    l_uh = CURVA_L2_A_UH[-1][1]
+    for (a, la), (b, lb) in zip(CURVA_L2_A_UH, CURVA_L2_A_UH[1:]):
+        if a <= i <= b:
+            l_uh = la + (lb - la) * (i - a) / (b - a)
+            break
+    return l_uh * 1e-6 * ((1.0 - TOL_L2_FRAC) if tol else 1.0)
+
 
 # Parametros del filtro LC amortiguado + TVS Bourns SMBJ16A (bourns_smbj.pdf p. 2)
-L_LC_H = valor("L2")
-# TPS2663x RON max (53m) + bobina (30m, la DCR MAS BAJA amortigua menos: cota
-# pesimista para el pico) + fuente/traza (50m).
+# TPS2663x RON max (53m) + bobina (30m, por debajo de los 32,5 tipicos de la
+# SRP1265A-220M: la DCR MAS BAJA amortigua menos, cota pesimista para el pico)
+# + fuente/traza (50m).
 R_SERIE_LC_OHM = 0.053 + 0.030 + 0.050
 C_LC_F = valor("C3")
 C_DAMP_F = valor("C1")
@@ -284,16 +342,35 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
                t_corte_s: float = T_CORTE_OVP_MAX_S,
                sensa_antes_del_lc: bool = True,
                con_efuse: bool = True,
-               con_tvs: bool = True) -> dict[str, float]:
+               con_tvs: bool = True,
+               con_disparo_rapido: bool = True,
+               t_disparo_rapido_s: float = T_FASTTRIP_MAX_S,
+               i_disparo_rapido_a: float | None = None,
+               peor_caso: bool = True) -> dict[str, float]:
     """Integracion RK4 del escalon de fallo sobre el LC amortiguado de U1 (#334).
 
+    U19 abre por lo primero que llegue: el OVP (`t_corte_s` desde que ve el
+    disparo), el disparo rapido (`t_disparo_rapido_s` desde que i_L pasa de
+    3 x I(OL)) o el corto franco (1 us desde I(SCP)).
+
+    `peor_caso`: arranca en el maximo sano en vacio y sin carga, con L2, C3 y
+    C1 en el borde bajo de su tolerancia. Sin el, el banco: 15,50 V, la rama
+    cargada y las piezas en su valor central.
+
     Estado:
-      i_L: corriente en la bobina de 22 uH (A)
-      v_1: tension en el condensador principal de 47 uF = entrada de U1 (V)
-      v_d: tension en el condensador de amortiguacion de 220 uF (V)
+      i_L: corriente en L2 (A)
+      v_1: tension en el condensador principal C3 = entrada de U1 (V)
+      v_d: tension en el condensador de amortiguacion C1 (V)
     """
-    v0 = 15.50
-    i_l = i_carga = _margen().corriente_rama_a("U1")   # D-F1 + Iq de U1 (#343)
+    if peor_caso:
+        v0, i_l, i_carga = v_sano_max_u1_v(), 0.0, 0.0
+        c_lc, c_damp = (C_LC_F * (1.0 - TOL_ELECTROLITICO_FRAC),
+                        C_DAMP_F * (1.0 - TOL_ELECTROLITICO_FRAC))
+    else:
+        v0 = 15.50
+        i_l = i_carga = _margen().corriente_rama_a("U1")   # D-F1 + Iq de U1 (#343)
+        c_lc, c_damp = C_LC_F, C_DAMP_F
+    i_rapido = i_fasttrip_max_u19_a() if i_disparo_rapido_a is None else i_disparo_rapido_a
     v_1 = v0 - i_l * R_SERIE_LC_OHM
     v_d = v_1
 
@@ -301,13 +378,19 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
     t_fin = 250.0e-6
     n_pasos = int(t_fin / dt)
 
-    t_deteccion: float | None = 0.0 if (con_efuse and sensa_antes_del_lc and v_fallo_v >= v_disparo_v) else None
+    # Instante en que U19 abre: el minimo de los tres disparos que hayan saltado.
+    t_abre = float("inf")
+    if con_efuse and sensa_antes_del_lc and v_fallo_v >= v_disparo_v:
+        t_abre = t_corte_s
+    ovp_visto = rapido_visto = scp_visto = False
     v_pico = v_1
+    i_max = i_l
     e_tvs_j = 0.0
 
     i_corte = None
 
     def derivadas(il: float, v1: float, vd: float, cortado: bool) -> tuple[float, float, float, float]:
+        l_h = l2_h(il, tol=peor_caso)
         if cortado:
             # El eFuse abrio: si i_L > 0, el Schottky D19 de OUT a GNDA descarga
             # la bobina contra v1; si i_L <= 0, la bobina queda en 0 A. Con
@@ -316,25 +399,30 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
             if il <= 0.0:
                 dil = 0.0
             else:
-                dil = (-v1 - il * R_SERIE_LC_OHM) / L_LC_H
+                dil = (-v1 - il * R_SERIE_LC_OHM) / l_h
         else:
-            dil = (v_fallo_v - v1 - il * R_SERIE_LC_OHM) / L_LC_H
+            dil = (v_fallo_v - v1 - il * R_SERIE_LC_OHM) / l_h
 
         i_damp = (v1 - vd) / R_DAMP_OHM
         i_tvs = 0.0
         if con_tvs and v1 > V_BR_SMBJ16A_V:
             i_tvs = (v1 - V_BR_SMBJ16A_V) / R_DIN_SMBJ16A_OHM
 
-        dv1 = (il - i_carga - i_damp - i_tvs) / C_LC_F
-        dvd = i_damp / C_DAMP_F
+        dv1 = (il - i_carga - i_damp - i_tvs) / c_lc
+        dvd = i_damp / c_damp
         p_tvs = v1 * i_tvs
         return dil, dv1, dvd, p_tvs
 
     for paso in range(n_pasos):
         t = paso * dt
-        if con_efuse and not sensa_antes_del_lc and t_deteccion is None and v_1 >= v_disparo_v:
-            t_deteccion = t
-        cortado = (t_deteccion is not None) and (t >= t_deteccion + t_corte_s)
+        if con_efuse:
+            if not sensa_antes_del_lc and not ovp_visto and v_1 >= v_disparo_v:
+                ovp_visto, t_abre = True, min(t_abre, t + t_corte_s)
+            if con_disparo_rapido and not rapido_visto and i_l >= i_rapido:
+                rapido_visto, t_abre = True, min(t_abre, t + t_disparo_rapido_s)
+            if con_disparo_rapido and not scp_visto and i_l >= I_SCP_TPS2663_A:
+                scp_visto, t_abre = True, min(t_abre, t + T_SCP_MAX_S)
+        cortado = t >= t_abre
         if cortado and i_corte is None:
             i_corte = i_l
         if cortado and i_l < 0.0:
@@ -359,16 +447,20 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
 
         if v_1 > v_pico:
             v_pico = v_1
+        i_max = max(i_max, i_l)
         e_tvs_j += p_tvs * dt
 
     return {"v_pico_v": v_pico, "energia_tvs_mj": e_tvs_j * 1e3,
-            "i_rueda_libre_a": max(0.0, i_corte or 0.0)}
+            "i_rueda_libre_a": max(0.0, i_corte or 0.0), "i_max_a": i_max,
+            "t_abre_us": t_abre * 1e6}
 
 
 I_FSM_SS34_A = 80.0                    # mdd_ss34.pdf p. 1 (8,3 ms; el pulso de L2 dura us)
 
 P_BASE: dict[str, float] = {
     "t_corte_us": T_CORTE_OVP_MAX_S * 1e6,
+    "t_disparo_rapido_us": T_FASTTRIP_MAX_S * 1e6,
+    "i_disparo_rapido_a": None,             # None: el de R34 (i_fasttrip_max_u19_a)
     "v_disparo_u1_v": V_DISPARO_MAX_U1_V,
     "i_mantenimiento_scr_a": I_MANTENIMIENTO_BT151_A,
     "r64_ohm": valor("R64"),
@@ -415,9 +507,14 @@ def _guarda_u1_rk4(p: dict[str, float]) -> None:
         sensa_antes_del_lc=True,
         con_efuse=True,
         con_tvs=True,
+        t_disparo_rapido_s=p["t_disparo_rapido_us"] * 1e-6,
+        i_disparo_rapido_a=p["i_disparo_rapido_a"],
     )
     assert res["v_pico_v"] <= V_ABSMAX_U1_V, (
-        f"U1 supera absmax: pico {res['v_pico_v']:.2f} V > {V_ABSMAX_U1_V:.1f} V")
+        f"#334: U1 supera absmax: pico {res['v_pico_v']:.2f} V > {V_ABSMAX_U1_V:.1f} V")
+    assert res["i_max_a"] <= CURVA_L2_A_UH[-1][0], (
+        f"#334: L2 llega a {res['i_max_a']:.1f} A, fuera de la curva L-I publicada "
+        f"(hasta {CURVA_L2_A_UH[-1][0]:.0f} A): el pico no vale")
 
 
 def _guarda_enganche_scr(p: dict[str, float]) -> None:
@@ -437,28 +534,41 @@ def demo() -> int:
     tabla = leer_csv()
     filas_bom = filas()
 
-    con_tope = escalon_lc(v_fallo_v=36.0, sensa_antes_del_lc=True,
-                          con_efuse=True, con_tvs=True)
-    sin_tope = escalon_lc(v_fallo_v=36.0, sensa_antes_del_lc=True,
-                          con_efuse=False, con_tvs=False)
-    post_lc = escalon_lc(v_fallo_v=36.0, sensa_antes_del_lc=False,
-                         con_efuse=True, con_tvs=False)
+    assert filas_bom["L2"]["mpn"] == MPN_L2, (
+        f"L2 es {filas_bom['L2']['mpn']} y la curva L-I del modelo es de la {MPN_L2}")
+    assert abs(CURVA_L2_A_UH[0][1] * 1e-6 - valor("L2")) <= 0.05 * valor("L2"), (
+        "la curva de L2 no arranca en el valor de la BOM")
+    con_tope = escalon_lc(v_fallo_v=36.0)
+    banco = escalon_lc(v_fallo_v=36.0, peor_caso=False)
+    sin_tope = escalon_lc(v_fallo_v=36.0, con_efuse=False, con_tvs=False)
+    sin_rapido = escalon_lc(v_fallo_v=36.0, con_tvs=False, con_disparo_rapido=False)
+    post_lc = escalon_lc(v_fallo_v=36.0, sensa_antes_del_lc=False, con_tvs=False,
+                         con_disparo_rapido=False)
 
     print("  1. Simulacion RK4 de #334 (escalon de 36 V sobre el filtro LC de U1):")
     print(f"    maximo sano en vacio:             {v_sano_max_u1_v():.3f} V")
     print(f"    banda de disparo TPS26631 (0,1%): {V_DISPARO_MIN_U1_V:.2f} .. {V_DISPARO_MAX_U1_V:.2f} V "
           f"(nom {V_DISPARO_NOM_U1_V:.2f} V)")
-    print(f"    [verde] CON TPS26631 antes del LC (14 us) + SMBJ16A: "
-          f"pico = {con_tope['v_pico_v']:.2f} V <= {V_ABSMAX_U1_V:.1f} V "
-          f"(energia TVS {con_tope['energia_tvs_mj']:.2f} mJ)")
-    print(f"    [rojo ] SIN proteccion (puente 36 V):                "
-          f"pico = {sin_tope['v_pico_v']:.2f} V >  {V_ABSMAX_U1_V:.1f} V")
-    print(f"    [rojo ] MUTANTE sensando DESPUES del LC (sin TVS):   "
-          f"pico = {post_lc['v_pico_v']:.2f} V >  {V_ABSMAX_U1_V:.1f} V\n")
+    print(f"    disparo rapido de U19:            {i_fasttrip_max_u19_a():.2f} A max (3 x I(OL) de R34), "
+          f"<= {T_FASTTRIP_MAX_S * 1e6:.1f} us")
+    print(f"    [verde] peor caso (sano max, sin carga, L2/C3/C1 -20 %): pico = "
+          f"{con_tope['v_pico_v']:.2f} V <= {V_ABSMAX_U1_V:.1f} V; L2 llega a "
+          f"{con_tope['i_max_a']:.1f} A (curva hasta {CURVA_L2_A_UH[-1][0]:.0f} A); U19 abre a "
+          f"{con_tope['t_abre_us']:.1f} us (energia TVS {con_tope['energia_tvs_mj']:.2f} mJ)")
+    print(f"    banco (15,50 V, rama cargada, piezas centrales): pico = {banco['v_pico_v']:.2f} V")
+    # Un mutante es rojo si U1 pasa de 20 V o si L2 sale de su curva: fuera de
+    # ella el modelo sostiene la inductancia de 12 A y su pico se queda corto.
+    i_curva = CURVA_L2_A_UH[-1][0]
+    for nombre, r in (("SIN eFuse (puente 36 V)                      ", sin_tope),
+                      ("MUTANTE sin disparo rapido (OVP antes del LC)  ", sin_rapido),
+                      ("MUTANTE sin disparo rapido y OVP DESPUES del LC", post_lc)):
+        assert r["v_pico_v"] > V_ABSMAX_U1_V or r["i_max_a"] > i_curva, (
+            f"{nombre.strip()} sale verde: el tope no depende de lo que el mutante quita")
+        print(f"    [rojo ] {nombre}: pico = {r['v_pico_v']:5.2f} V, L2 a {r['i_max_a']:5.1f} A "
+              f"(rojo con > {V_ABSMAX_U1_V:.1f} V o > {i_curva:.0f} A)")
+    print()
 
-    assert con_tope["v_pico_v"] < V_ABSMAX_U1_V
-    assert sin_tope["v_pico_v"] > V_ABSMAX_U1_V
-    assert post_lc["v_pico_v"] > V_ABSMAX_U1_V
+    _guarda_u1_rk4(dict(P_BASE))
 
     print("  2. Ventanas de disparo en rack (D-F6: BT151-500R + TL431BI) y digital (T19):")
     for riel, d in RACK_RIELES.items():
@@ -478,8 +588,7 @@ def demo() -> int:
     assert "D19" in filas_bom, "el modelo descarga L2 por D19 y D19 no esta en bom.csv"
     i_rueda = con_tope["i_rueda_libre_a"]
     assert i_rueda < I_FSM_SS34_A, f"D19 lleva {i_rueda:.1f} A >= I_FSM {I_FSM_SS34_A:.0f} A"
-    print(f"    [verde] pico en D19 al cortar: {i_rueda:.1f} A < I_FSM {I_FSM_SS34_A:.0f} A "
-          f"(sin contar el corte por sobrecorriente de U19, que llega antes)")
+    print(f"    [verde] pico en D19 al cortar: {i_rueda:.1f} A < I_FSM {I_FSM_SS34_A:.0f} A")
 
     print("\n  4. U18 (TPS709) tras R64 + D2:")
     _guarda_u18(dict(P_BASE))
@@ -530,16 +639,13 @@ def demo() -> int:
 
     _guarda_u1_rk4(dict(P_BASE))
     _guarda_enganche_scr(dict(P_BASE))
-    # Canario de retardo cuando falla el TVS (solo el TPS26631 cortando antes del LC):
-    def _guarda_u1_solo_efuse(p: dict[str, float]) -> None:
-        r = escalon_lc(v_fallo_v=36.0, v_disparo_v=p["v_disparo_u1_v"],
-                       t_corte_s=p["t_corte_us"] * 1e-6,
-                       sensa_antes_del_lc=True, con_efuse=True, con_tvs=False)
-        assert r["v_pico_v"] <= V_ABSMAX_U1_V, (
-            f"U1 supera absmax: pico {r['v_pico_v']:.2f} V > {V_ABSMAX_U1_V:.1f} V")
-
-    t_max_us = borde_rojo(_guarda_u1_solo_efuse, dict(P_BASE), "t_corte_us",
-                          14.0, 100.0, "U1 supera absmax")
+    # Canarios de #334 sobre el disparo rapido, que es el que corta: su retardo
+    # y su umbral (subir R34 de corriente lo sube). El OVP ya no tiene canario:
+    # con el disparo rapido llegando antes, su retardo no mueve el pico.
+    t_rapido_us = borde_rojo(_guarda_u1_rk4, dict(P_BASE), "t_disparo_rapido_us",
+                             T_FASTTRIP_MAX_S * 1e6, 100.0, "#334:")
+    i_rapido_a = borde_rojo(_guarda_u1_rk4, dict(P_BASE), "i_disparo_rapido_a",
+                            i_fasttrip_max_u19_a(), 40.0, "#334:")
     ih_max = borde_rojo(_guarda_enganche_scr, dict(P_BASE), "i_mantenimiento_scr_a",
                         0.040, 5.0, "el crowbar se suelta")
     r64_v = borde_rojo(_guarda_u18, dict(P_BASE), "r64_ohm", valor("R64"), 1.0, "U18 IN")
@@ -548,8 +654,9 @@ def demo() -> int:
                      "puerta corta")
     despeje = borde_rojo(_guarda_i2t, dict(P_BASE), "factor_despeje_i2t", FACTOR_DESPEJE_I2T,
                          1000.0, "deja pasar")
-    print(f"\n  canario #334 (sin TVS): si el corte del TPS26631 tarda > {t_max_us:.1f} us, "
-          f"U1 supera 20,0 V (la hoja garantiza <= 14,0 us)")
+    print(f"\n  canario #334: si el disparo rapido de U19 tarda > {t_rapido_us:.1f} us "
+          f"(la hoja garantiza <= {T_FASTTRIP_MAX_S * 1e6:.1f}), o salta por encima de "
+          f"{i_rapido_a:.1f} A (hoy {i_fasttrip_max_u19_a():.2f}), U1 o L2 salen de su limite")
     print(f"  canario D-F6: con I_H > {ih_max:.2f} A el crowbar se soltaria "
           f"(el BT151-500R pide <= 0,04 A)")
     print(f"  canario U18: R64 < {r64_v:.0f} ohm lleva U18 IN por encima de 30 V, y "
@@ -564,6 +671,8 @@ def demo() -> int:
           f"cubierto por M3 (fila U4,U5), no por requisito")
 
     print("\n  LO QUE NO CUBRE:")
+    print("    - la curva L-I de L2 es tipica (bourns_srp1265a.pdf p. 3): leida, bajada 0,5 uH y "
+          "con el -20 % encima; mas alla de 12 A no hay curva")
     print("    - OUT de U19 a -V_F de D19 (<= 0,55 V a 3 A) durante el corte; la hoja da "
           "-0,3 V en DC y pide el Schottky")
     print("    - pendiente del riel de rack en enchufe en caliente (el SCR aguanta 200 V/us)")

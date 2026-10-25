@@ -1,6 +1,6 @@
 {
  "pcb": "sam17-power-v5.kicad_pcb",
- "pcb_sha256": "ea3ee1957acf5f300ffe1d4250f6885b72e501a769df0b72f4ff94b6293a0afb",
+ "pcb_sha256": "0124bb6b1abcd838d859d359e8b2e1ec321cb3a906ef6456adbe99064b1005fb",
  "kicad_version": "10.0.3",
  "severidades": "todas (--severity-all) + paridad con el esquematico",
  "violations": [],

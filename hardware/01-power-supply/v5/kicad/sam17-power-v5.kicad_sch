@@ -9010,23 +9010,23 @@
 	)
 	(wire
 		(pts
-			(xy 241.3 422.91) (xy 241.3 417.83)
+			(xy 243.84 422.91) (xy 243.84 417.83)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "e3c33353-8ac8-5d5a-9557-aacc29ea36a1")
+		(uuid "a9ba5b58-b081-5724-bd43-2c3b66f1f66f")
 	)
 	(wire
 		(pts
-			(xy 241.3 430.53) (xy 241.3 435.61)
+			(xy 243.84 430.53) (xy 243.84 435.61)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "49d4093e-0d6e-54be-a761-887d09c17009")
+		(uuid "a68a2ef4-4c5b-51b7-8a45-c85d46539dbe")
 	)
 	(wire
 		(pts
@@ -9090,23 +9090,23 @@
 	)
 	(wire
 		(pts
-			(xy 325.12 415.29) (xy 325.12 410.21)
+			(xy 327.66 415.29) (xy 327.66 410.21)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "afe988ef-7b7d-5a2c-aca0-132f43157f57")
+		(uuid "8e108794-11c0-5fb8-9d37-3133f5bc5a89")
 	)
 	(wire
 		(pts
-			(xy 325.12 422.91) (xy 325.12 427.99)
+			(xy 327.66 422.91) (xy 327.66 427.99)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "98ced312-f70a-585f-be09-4214b06894b0")
+		(uuid "658f2b14-7f07-51b3-9fc2-e594ef40157e")
 	)
 	(wire
 		(pts
@@ -15111,25 +15111,25 @@
 	)
 	(global_label "+15V5_EFUSE"
 		(shape passive)
-		(at 241.3 417.83 90)
+		(at 243.84 417.83 90)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "7cf0a639-9111-5870-8458-01487892bc28")
+		(uuid "2dab805c-f8d7-5612-bec6-27d0c0d2a5e4")
 	)
 	(global_label "+15V5_LC"
 		(shape passive)
-		(at 241.3 435.61 270)
+		(at 243.84 435.61 270)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "8caffbad-60dd-5120-8f35-1d07f8372c0c")
+		(uuid "3db4cf1c-0dad-5399-a786-fcba472076d9")
 	)
 	(global_label "+15V5_LC"
 		(shape passive)
@@ -15199,25 +15199,25 @@
 	)
 	(global_label "C1_NEG"
 		(shape passive)
-		(at 325.12 410.21 90)
+		(at 327.66 410.21 90)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "5d1fcd5c-a864-5094-b64f-d0c88336bf5d")
+		(uuid "056504de-a75a-5b31-a833-c0339b514bc3")
 	)
 	(global_label "GNDA"
 		(shape passive)
-		(at 325.12 427.99 270)
+		(at 327.66 427.99 270)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "941ebe16-6f03-5028-aef6-051b9abe9133")
+		(uuid "8fe90c37-385a-52d3-8c42-b20ba516a496")
 	)
 	(global_label "+15V5_LC"
 		(shape passive)
@@ -24917,7 +24917,7 @@
 	)
 	(symbol
 		(lib_id "Device:L")
-		(at 241.3 426.72 0)
+		(at 243.84 426.72 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -24925,7 +24925,7 @@
 		(dnp no)
 		(uuid "42fc430d-b043-5a33-a4ef-262e4dc3c507")
 		(property "Reference" "L2"
-			(at 241.3 401.14 0)
+			(at 243.84 401.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24934,8 +24934,8 @@
 				)
 			)
 		)
-		(property "Value" "22uH SRR1260-220M"
-			(at 241.3 448.85 0)
+		(property "Value" "22uH SRP1265A-220M"
+			(at 243.84 448.85 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24944,8 +24944,8 @@
 				)
 			)
 		)
-		(property "Footprint" "Inductor_SMD:L_Bourns_SRR1260"
-			(at 241.3 426.72 0)
+		(property "Footprint" "sam17:L_Bourns_SRP1265A"
+			(at 243.84 426.72 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24956,7 +24956,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 241.3 426.72 0)
+			(at 243.84 426.72 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24967,7 +24967,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 241.3 426.72 0)
+			(at 243.84 426.72 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24977,8 +24977,8 @@
 				)
 			)
 		)
-		(property "LCSC" "C3224283"
-			(at 241.3 426.72 0)
+		(property "LCSC" "C2041465"
+			(at 243.84 426.72 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24988,8 +24988,8 @@
 				)
 			)
 		)
-		(property "MPN" "SRR1260-220M"
-			(at 241.3 426.72 0)
+		(property "MPN" "SRP1265A-220M"
+			(at 243.84 426.72 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25313,7 +25313,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 325.12 419.1 0)
+		(at 327.66 419.1 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -25321,7 +25321,7 @@
 		(dnp no)
 		(uuid "f7567890-bbcf-5d26-80b1-aea3e97c1956")
 		(property "Reference" "R37"
-			(at 325.12 399.27 0)
+			(at 327.66 399.27 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25331,7 +25331,7 @@
 			)
 		)
 		(property "Value" "0.68"
-			(at 325.12 436.63 0)
+			(at 327.66 436.63 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25341,7 +25341,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_1206_3216Metric"
-			(at 325.12 419.1 0)
+			(at 327.66 419.1 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25352,7 +25352,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 325.12 419.1 0)
+			(at 327.66 419.1 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25363,7 +25363,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 325.12 419.1 0)
+			(at 327.66 419.1 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25374,7 +25374,7 @@
 			)
 		)
 		(property "LCSC" "C19108"
-			(at 325.12 419.1 0)
+			(at 327.66 419.1 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25385,7 +25385,7 @@
 			)
 		)
 		(property "MPN" "1206W4F680LT5E"
-			(at 325.12 419.1 0)
+			(at 327.66 419.1 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

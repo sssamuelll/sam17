@@ -30,7 +30,7 @@ URL = "https://wmsc.lcsc.com/ftps/wm/product/detail?productCode={}"
 def consulta(codigo: str) -> dict:
     # curl y no urllib: el servidor de LCSC rechaza el User-Agent de Python.
     out = subprocess.run(["curl", "-sS", "-m", "30", "-A", "curl/8.5.0", URL.format(codigo)],
-                         capture_output=True, text=True, check=True).stdout
+                         capture_output=True, text=True, encoding="utf-8", check=True).stdout
     r = (json.loads(out).get("result") or {})
     return {"lcsc": codigo, "mpn": r.get("productModel") or "",
             "fabricante": r.get("brandNameEn") or "", "encapsulado": r.get("encapStandard") or "",

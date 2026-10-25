@@ -68,6 +68,13 @@ PLANOS = {
         "faston": 5.0,
         "patilla": 0.8,
     },
+    "L2": {
+        # Recommended Layout: 14.2 entre bordes exteriores y 8.0 entre interiores,
+        # o sea pads de 3.1 y centros a 14.2 - 3.1.
+        "hoja": f"{DS}/bourns_srp1265a.pdf p. 1 (Recommended Layout)",
+        "dist": {("1", "2"): 14.2 - (14.2 - 8.0) / 2},
+        "patilla": 0.0,
+    },
 }
 PS_IGUALES = {"PS4": "PS1", "PS5": "PS1"}   # THN 20WI = THN 30WI, mismo 1x1 pulgada
 
@@ -139,7 +146,7 @@ def main() -> int:
         return 1
     if huecos:
         return 2
-    print(f"\nOK: check_huellas v5 -- {len(PLANOS) + len(PS_IGUALES)} huellas de modulo "
+    print(f"\nOK: check_huellas v5 -- {len(PLANOS) + len(PS_IGUALES)} huellas propias "
           "casan con su plano (distancias, vista y taladro)")
     return 0
 

@@ -100,6 +100,6 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 8,crowbar_digital+5_corriente_enclavado_a,A,registro,,,,,,"#476 REGISTRO: corriente media por el SCR de digital+5 enclavado, y si es constante o a pulsos (osciloscopio en el shunt o pinza)"
 8,crowbar_digital+5_subida_base_scr_30min_k,K,<= 44.2354,,,,,,#476: base del SCR de digital+5 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
 8,fusible_abre_sin_dano_a_pistas,si/no,= si,,,,,,check_absmax: fusible Bourns SF-1206F corta corriente de falta sin danar PCB
-8,pico_transitorio_U1_con_clamp_v,V,<= 18.5,18.1319,,,,,check_absmax (#334): simulacion RK4 de escalon 36 V con SMBJ16A < 20.0 V absmax
+8,pico_transitorio_U1_con_clamp_v,V,<= 18.5,16.4193,,,,,"check_absmax (#334): escalon de 36 V en la salida de PS4 con la rama a 15,5 V y cargada; U19 corta por disparo rapido. El peor caso de la hoja queda en 17.40 V < 20.0 V absmax"
 8,ruido_riel_ultra_20MHz_uvrms,uVrms,<= 0.3,,,,,,rizado_budget: ruido residual total de la cascada en ancho de banda de 20 MHz
 8,ruido_riel_ultra_LNA_10Hz_100kHz_uvrms,uVrms,<= 0.8,,,,,,rizado_budget: ruido en banda de audio 10 Hz - 100 kHz (< 0.80 uVrms)

@@ -189,6 +189,24 @@ arranque~~ **la reserva de arranque queda por demostrar** (enmienda de D-V2 del
 > independiente limita o interrumpe ese recorrido dentro de los límites
 > documentados, incluidos sus tiempos y tolerancias?»
 >
+> **ENMIENDA (2026-10-25, #334): contestada en diseño; queda el ensayo.** El
+> recorrido es el de M3: el módulo puenteado pone hasta 36 V en `+15V5_RAW`
+> (cota: `U16` corta por encima de 32,7 V), y de ahí `U19` → `L2` →
+> `C3`/`C1` → `IN` de `U1`. Lo interrumpe `U19` (TPS26631) por lo primero que
+> llegue: el disparo rápido a 3 × I(OL) (3,28 A máx. con `R34`) en ≤ 4,5 µs,
+> o el OVP a ≤ 16,92 V en ≤ 14 µs (`tps2663.pdf` p. 6–9). En el peor caso
+> —máximo sano en vacío, sin carga, `L2`, `C3` y `C1` en el borde bajo de su
+> tolerancia— `U19` abre a los 7,4 µs, `L2` llega a 8,7 A y el pico en `IN`
+> de `U1` es **17,40 V** contra 20,0 V; el `SMBJ16A` no conduce
+> (`check_absmax.py`). Para que eso valga, `L2` pasa a ser una **Bourns
+> SRP1265A-220M** (Isat 12 A y curva L–I publicada hasta 12 A,
+> `bourns_srp1265a.pdf` p. 1 y 3). Con la `SRR1260-220M` (Isat 3,7 A) el
+> modelo llevaba 12,7 A por 22 µH enteros, y con la bobina saturada el pico
+> dependía de una curva que su hoja no publica. Cada reintento de `U19`
+> repite el mismo recorrido y su `FLT` gasta intento en M5. Queda el ensayo,
+> que pide la placa: `check_bringup.py`, paso 8,
+> `pico_transitorio_U1_con_clamp_v` (16,42 V predichos en el banco, ≤ 18,5 V).
+>
 > **H-V2-AISLAMIENTO — HUECO: evidencia del ladrillo.** La firma de D-V1
 > remite aquí clase, aislamiento y fuga; no se eligen por inferencia del
 > rendimiento del guion. **Pregunta exacta al fabricante:** «¿Qué clase de
@@ -820,7 +838,7 @@ de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 | `H-V2-TRANSITORIOS` | envolvente admisible en cada interfaz, y quién limita lo que llega a los pre-reguladores | diseño |
 | `H-V2-RESERVA` | carga capacitiva y corriente de arranque admisibles, contra lo que la cadena exige | **fabricante** |
 | `H-V2-RECUPERACION` | ~~política de rearranque~~ **decidida 08-09: reintentos con abandono (§9.3)**; faltan intervalo, cupo, condición de abandono y estado de rieles | ~~**Samuel** +~~ fabricante |
-| `H-V2-CORTO-DCDC` | qué limita el corto entrada↔salida antes de `IN` de `U1` — **es el #334** | diseño |
+| `H-V2-CORTO-DCDC` | ~~qué limita el corto entrada↔salida antes de `IN` de `U1` — **es el #334**~~ **cerrado en diseño el 2026-10-25 (#334, §3): `U19` corta por disparo rápido, con `L2` = SRP1265A-220M; 17,40 V de pico en el peor caso.** Su ensayo (paso 8 del bring-up) necesita la placa y no bloquea el cobre | diseño |
 | `H-V2-AISLAMIENTO` | clase, aislamiento y fuga de la referencia, con hoja o certificado | **fabricante** |
 | `H-V5-CONECTOR` | pareja y polaridad, con hoja que acredite límites y resistencia de contacto | diseño |
 | `H-V5-RETENCION` | retención y alivio de tracción, con su ensayo | diseño |

@@ -80,8 +80,8 @@ flowchart LR
   and the cascade of linear regulators carried over from v4. The v5 board is
   routed on four layers with a clean DRC
   ([`hardware/01-power-supply/v5/fab`](hardware/01-power-supply/v5/fab)), but
-  it is not cleared for copper yet: the 16 open questions in §9.2 of the spec
-  are the condition for fabrication, several of them answered only by the
+  it is not cleared for copper yet: the open questions in §9.2 of the spec,
+  15 of the original 16, are the condition for fabrication, several of them answered only by the
   manufacturers, and the
   [parts proposal](docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
   is unsigned. The test kit runs from a bench supply.
@@ -91,12 +91,12 @@ flowchart LR
 The project map is the
 [GitHub milestones](https://github.com/sssamuelll/sam17/milestones):
 eight stages, each with its "done when" in the description, and every issue
-hangs from one of them. As of 11 October 2026, and 24 October for the two
+hangs from one of them. As of 11 October 2026, and 25 October for the two
 power supply rows:
 
 | Milestone | Done when | Where it stands |
 |---|---|---|
-| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its board is routed and its gates pass; the 16 open questions of §9.2, the unsigned parts proposal and ten open issues stand between it and copper |
+| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its board is routed and its gates pass; 15 open questions of §9.2, the unsigned parts proposal and nine open issues stand between it and copper |
 | 2 · Power supply v4 in copper | The supply boards are built and measured on the bench | Not started. The v5 bring-up is written as a checked sheet of 104 measurements with their limits ([`check_bringup.py`](hardware/01-power-supply/v5/check_bringup.py)) |
 | 3 · The brain boots | Our firmware runs on the N657, speaks USB MIDI and lights the display | In progress: the firmware has run on the NUCLEO-N657X0-Q since 1 October, and the J2 link has 26 hours of soak without a fault |
 | 4 · Test kit: brain plus one voice | A MIDI note comes in and one voice sounds through the J2 | The current front: the J2 header and master are on paper, and the full voice board is being drawn in KiCad |

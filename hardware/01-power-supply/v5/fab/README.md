@@ -9,7 +9,7 @@ reexporta, la puerta se pone roja.
 
 ```
 DRC (kicad-cli, todas las severidades + paridad)  0 infracciones · 0 sin conectar · 0 de paridad
-cobre            1506 pistas, 285 vías (72 térmicas de U1/U2, 107 de masa cosidas)
+cobre            1510 pistas, 284 vías (72 térmicas de U1/U2, 107 de masa cosidas)
 stackup          F.Cu señal+potencia | In1 masas GND24/GNDA/GNDD | In2 señal | B.Cu señal+masa
 ```
 
@@ -28,7 +28,7 @@ La placa de #474 que había aquí antes no tenía ni una pista (161 huellas,
 | Capas | **4** |
 | Cobre | 1 oz exterior: los caminos de 3 A están calculados con ese espesor |
 | Espesor | 1.6 mm, FR-4 |
-| Vías | 266 de 0.6 / 0.3 mm y 19 de 0.8 / 0.4 mm (redes de potencia); las huellas DFN traen sus vías térmicas de 0.2 mm |
+| Vías | 263 de 0.6 / 0.3 mm y 21 de 0.8 / 0.4 mm (redes de potencia); las huellas DFN traen sus vías térmicas de 0.2 mm |
 | Pista mínima | 0.187 mm (la entrada a los pines de 0.45 mm de paso) |
 | Holgura mínima | 0.15 mm |
 
@@ -83,9 +83,9 @@ huellas (SOT-23, electrolíticos, DFN) no coincide con el de su biblioteca y
   posiciones que se compra en LCSC; una SMD de la placa que no esté en
   `bom.csv` es un error.
 
-Seis referencias no caben en la serigrafía de las zonas densas y van solo
+Ocho referencias no caben en la serigrafía de las zonas densas y van solo
 en F.Fab (el dibujo de montaje de `../pcb/sam17-power-v5.pdf`): R3, R22,
-R40, R41, R67 y R78.
+R41, R43, R70, R71, R78 y FB1.
 
 ## Regenerar
 
