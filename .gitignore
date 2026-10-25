@@ -189,6 +189,7 @@ docs/reference/datasheets/*.pdf
 !docs/reference/datasheets/tps2663.pdf
 !docs/reference/datasheets/lm74502.pdf
 !docs/reference/datasheets/bourns_smbj.pdf
+!docs/reference/datasheets/bourns_srp1265a.pdf
 !docs/reference/datasheets/bourns_sf1206f.pdf
 !docs/reference/datasheets/tl431.pdf
 !docs/reference/datasheets/msp430fr2111.pdf

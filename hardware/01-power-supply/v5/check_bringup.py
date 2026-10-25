@@ -387,8 +387,10 @@ def _puntos() -> list[Punto]:
                "check_absmax: fusible Bourns SF-1206F corta corriente de falta sin danar PCB",
                literal="si"))
     p.append(P("8", "pico_transitorio_U1_con_clamp_v", "V",
-               "check_absmax (#334): simulacion RK4 de escalon 36 V con SMBJ16A < 20.0 V absmax",
-               predicho=check_absmax.escalon_lc()["v_pico_v"],
+               "check_absmax (#334): escalon de 36 V en la salida de PS4 con la rama a 15,5 V y "
+               "cargada; U19 corta por disparo rapido. El peor caso de la hoja queda en "
+               f"{check_absmax.escalon_lc()['v_pico_v']:.2f} V < 20.0 V absmax",
+               predicho=check_absmax.escalon_lc(peor_caso=False)["v_pico_v"],
                hi=18.5))
     p.append(P("8", "ruido_riel_ultra_20MHz_uvrms", "uVrms",
                "rizado_budget: ruido residual total de la cascada en ancho de banda de 20 MHz",

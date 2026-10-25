@@ -1,4 +1,4 @@
-"""Genera las huellas propias de los modulos Mornsun de la fuente v5.
+"""Genera las huellas propias de la fuente v5: los modulos Mornsun y la bobina L2.
 
     python build_huellas.py
 
@@ -11,6 +11,8 @@ las vuelve a leer del .kicad_mod y las compara con la misma hoja.
 Los TRACO THN 20WI/30WI no estan aqui: son el 1x1 pulgada estandar de TRACO y
 KiCad ya trae esa huella (Converter_DCDC_TRACO_THL30-xxxxWI_THT, mismos seis
 pines en las mismas cotas que la p. 4/5 de sus hojas).
+
+La Bourns SRP1265A de L2 tampoco la trae KiCad (tiene la SRP1245A, otra talla).
 """
 from __future__ import annotations
 
@@ -47,6 +49,19 @@ K78 = {
               "10": (-5.08, -5.05), "7": (2.54, -5.05), "6": (5.08, -5.05)},
     # Cuerpo 15.24 x 8.50 (sin patillas), centrado.
     "cuerpo": (-7.62, -4.25, 7.62, 4.25),
+}
+
+# Bourns SRP1265A, bobina de L2 (#334). bourns_srp1265a.pdf p. 1,
+# "Recommended Layout": 14.2 mm entre los bordes exteriores de los pads, 8.0
+# entre los interiores, 5.0 de alto -> pads de 3.1 x 5.0 con los centros a
+# 11.1 mm. "Product Dimensions": cuerpo de 13.5 x 12.5 mm, con los terminales
+# en los lados de 13.5. Origen en el centro.
+SRP = {
+    "nombre": "L_Bourns_SRP1265A",
+    "hoja": f"{DS}/bourns_srp1265a.pdf p. 1",
+    "pad_smd": (3.1, 5.0),
+    "pines": {"1": (-5.55, 0.0), "2": (5.55, 0.0)},
+    "cuerpo": (-6.75, -6.25, 6.75, 6.25),
 }
 
 
@@ -145,8 +160,30 @@ def k78() -> str:
     return "\n".join(out) + "\n"
 
 
+def srp() -> str:
+    d = SRP
+    x0, y0, x1, y1 = d["cuerpo"]
+    w, h = d["pad_smd"]
+    out = _cabecera(d["nombre"],
+                    f"Bourns SRP1265A, bobina apantallada 13.5 x 12.5 mm, {d['hoja']}",
+                    "inductor Bourns SRP1265A SMD", y0 - 1.5, y1 + 1.5)
+    out.append('  (attr smd)')
+    out.append(_rect(x0, y0, x1, y1, "F.Fab", 0.1))
+    # Los pads asoman 0.35 mm por los lados de 13.5: la serigrafia va solo
+    # arriba y abajo, que no los toca.
+    for y in (y0 - 0.12, y1 + 0.12):
+        out.append(_linea(x0 - 0.12, y, x1 + 0.12, y, "F.SilkS", 0.12))
+    xc = max(x1, max(abs(x) for x, _ in d["pines"].values()) + w / 2) + 0.25
+    out.append(_rect(-xc, y0 - 0.25, xc, y1 + 0.25, "F.CrtYd", 0.05))
+    for num, (x, y) in d["pines"].items():
+        out.append(f'  (pad "{num}" smd rect (at {x:g} {y:g}) (size {w:g} {h:g}) '
+                   f'(layers "F.Cu" "F.Paste" "F.Mask") (uuid "{_u()}"))')
+    out.append(")")
+    return "\n".join(out) + "\n"
+
+
 def main() -> int:
-    for d, texto in ((URB, urb()), (K78, k78())):
+    for d, texto in ((URB, urb()), (K78, k78()), (SRP, srp())):
         ruta = os.path.join(PRETTY, d["nombre"] + ".kicad_mod")
         with open(ruta, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(texto)

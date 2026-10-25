@@ -147,7 +147,10 @@ C_F = 47e-6
 # 1,4 A, y resonancia propia tipica. Sin hoja: son las COTAS que la pieza
 # elegida en la tanda B tiene que cumplir, y el canario dice cuanto margen hay.
 DCR_OHM = 0.030
-SRF_L_HZ = 8e6
+# La SRF se baja a la de la L2 que monta la v5, Bourns SRP1265A-220M: 6 MHz
+# tipicos (bourns_srp1265a.pdf p. 1; la hoja no da minimo). Con la cota de
+# 8 MHz la pieza no cumplia. La de L3 (SRR1260-220M) es 13,4 MHz.
+SRF_L_HZ = 6e6
 # ESTIMADO: electrolitico de baja ESR de 47 uF/25 V con su ESL de patilla.
 ESR_OHM = 0.030
 ESL_H = 10e-9

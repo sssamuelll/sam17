@@ -94,9 +94,10 @@ RIZADO_VPP = {"rack+12": 0.150, "rack-12": 0.150, "rack+5": 0.080}
 # (lt1963a-rev-g-2021-02.pdf p. 2). El OVP de PS1 (IRM-20-15) llega a 20,25 V
 # sostenidos (meanwell-irm-20-spec-2025-11-21.pdf p. 2), lo que sin proteccion
 # deja -0,25 V de margen (#334). El tope M3 (TI TPS26631, tps2663.pdf p. 6-8:
-# V(OVPR) = 1,176..1,224 V, corte en 8,5..14 us, antes del filtro LC + TVS
-# Bourns SMBJ16A, bourns_smbj.pdf p. 2, en U1 IN) corta a 16,92 V maximos de
-# umbral y sujeta el pico inductivo tras el LC por debajo de 20,0 V.
+# V(OVPR) = 1,176..1,224 V, corte en 8,5..14 us, y disparo rapido a 3 x I(OL)
+# en <= 4,5 us, p. 7 y 9; antes del filtro LC + TVS Bourns SMBJ16A,
+# bourns_smbj.pdf p. 2, en U1 IN) corta a 16,92 V maximos de umbral o por
+# corriente, lo que llegue antes, y sujeta el pico tras el LC por debajo de 20,0 V.
 # EL PICO NO SE ESCRIBE: SE CALCULA. Hasta #474 aqui habia un 18,08 a mano y
 # el guarda lo comparaba con los 20,0 V de U1 -- una puerta que no podia
 # ponerse roja por ningun cambio de diseno. Ahora sale del modelo RK4 de la v5
@@ -126,11 +127,15 @@ V_DISPARO_TOPE_U1_MAX_V = TOPE_V5.V_DISPARO_MAX_U1_V
 T_CORTE_TOPE_US = TOPE_V5.T_CORTE_OVP_MAX_S * 1e6   # tps2663.pdf p. 8: 14 us max
 
 
+def tope_u1(v_fallo_v: float, t_corte_us: float = T_CORTE_TOPE_US) -> dict[str, float]:
+    """El tope M3 cortando antes del LC y el SMBJ16A en U1: pico y corriente de L2."""
+    return TOPE_V5.escalon_lc(v_fallo_v=v_fallo_v, t_corte_s=t_corte_us * 1e-6,
+                              sensa_antes_del_lc=True, con_efuse=True, con_tvs=True)
+
+
 def v_pico_tope_u1_v(v_fallo_v: float, t_corte_us: float = T_CORTE_TOPE_US) -> float:
     """Pico en U1 IN con el tope M3 cortando antes del LC y el SMBJ16A en U1."""
-    return TOPE_V5.escalon_lc(v_fallo_v=v_fallo_v, t_corte_s=t_corte_us * 1e-6,
-                              sensa_antes_del_lc=True, con_efuse=True,
-                              con_tvs=True)["v_pico_v"]
+    return tope_u1(v_fallo_v, t_corte_us)["v_pico_v"]
 
 # --- el crowbar de D-F6: piezas y cifras leidas de hoja (#340) ------------
 # SCR: NXP BT151-500R (docs/reference/datasheets/nxp-bt151-500r.pdf, Rev. 05).
@@ -208,10 +213,16 @@ def _guarda_tope_u1(p: dict[str, float]) -> None:
     filas = leer_absmax()
     u1 = next(f for f in filas if f["victima"] == "U1 LT1963A")
     lim_u1 = float(u1["v_absmax"])
-    v_pico = v_pico_tope_u1_v(p["v_fallo_tope_v"], p["t_corte_tope_us"])
-    assert v_pico < lim_u1, (
-        f"U1 LT1963A fuera de maximo absoluto (#334): le llegan {v_pico:.2f} V "
+    r = tope_u1(p["v_fallo_tope_v"], p["t_corte_tope_us"])
+    assert r["v_pico_v"] < lim_u1, (
+        f"U1 LT1963A fuera de maximo absoluto (#334): le llegan {r['v_pico_v']:.2f} V "
         f"contra {lim_u1:.1f} V de limite (lt1963a-rev-g-2021-02.pdf p. 2)")
+    # Con el disparo rapido de U19 el pico casi no sube con el fallo, pero L2
+    # sale de su curva L-I (v5/check_absmax.py) y ahi el pico ya no vale.
+    i_curva = TOPE_V5.CURVA_L2_A_UH[-1][0]
+    assert r["i_max_a"] <= i_curva, (
+        f"L2 fuera de su curva L-I (#334): {r['i_max_a']:.1f} A contra {i_curva:.0f} A "
+        f"publicados (bourns_srp1265a.pdf p. 3); el pico de U1 deja de valer")
 
 
 def _guarda_crowbar(p: dict[str, float]) -> None:
@@ -282,7 +293,8 @@ def main() -> int:
     print(f"  #334 cerrada con el tope M3 ({TOPE_U1_REF}): sin tope, el OVP de")
     print(f"  PS1 llega a {ovp:.2f} V > {lim_u1:.1f} V (margen {lim_u1 - ovp:+.2f} V);")
     print(f"  con el TPS26631 antes del LC (disparo <= {V_DISPARO_TOPE_U1_MAX_V:.2f} V,")
-    print("  corte <= 14 us, tps2663.pdf p. 6-8) y el SMBJ16A en U1 IN, el")
+    print("  corte <= 14 us, o disparo rapido a 3 x I(OL) en <= 4,5 us, tps2663.pdf")
+    print("  p. 6-9) y el SMBJ16A en U1 IN, el")
     print(f"  modelo RK4 de la v5 da {v_pico_u1:.2f} V de pico (margen "
           f"{lim_u1 - v_pico_u1:+.2f} V).")
     print("\n  Y el fallo DOBLE (PS1 en OVP y U1 en corto), que se documenta y")
@@ -409,9 +421,9 @@ def main() -> int:
     # el pico como parametro el borde salia en el propio limite, que es una
     # tautologia.
     v_u1 = borde_rojo(_guarda_tope_u1, dict(P_BASE), "v_fallo_tope_v",
-                      OVP_V["PS1/PS2 (IRM-20-15)"][1], 60.0, "fuera de maximo absoluto")
+                      OVP_V["PS1/PS2 (IRM-20-15)"][1], 60.0, "(#334)")
     print(f"  canario U1: con un fallo de mas de {v_u1:.1f} V delante del tope, "
-          f"U1 (LT1963A) sale de maximo absoluto")
+          f"U1 (LT1963A) sale de maximo absoluto o L2 de su curva")
 
     print(f"\n  ESTIMADO: {len(ESTIMADOS)}; HUECO: {len(HUECOS)}")
     for e in ESTIMADOS:

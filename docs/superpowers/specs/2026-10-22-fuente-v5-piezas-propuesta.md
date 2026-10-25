@@ -149,6 +149,8 @@ Dos agentes sin contacto entre sí, 2026-10-22. Cada uno escribió lo que necesi
 - **Lado alto (real):** con el disparo en su borde alto (16,92 V) y una falla de 36 V, el pico en `U1` sale **18,08 V < 20,0 V**. Si el disparo sube o el retardo pasa de 43 µs, el pico supera 20 V. Con sensado después del LC, **22,21 V > 20,0 V**: falla.
 - **Lado bajo (por construcción, no es margen):** el disparo nominal deja el borde bajo justo encima del máximo sano (16,19 V) con divisores de 0,1 %.
 
+> **Nota (#334, 2026-10-25): el lado alto no lo cortaba el OVP, y la bobina no aguantaba el modelo.** El modelo de arriba cortaba a los 14 µs del OVP con 12,7 A en una `SRR1260-220M` de 22 µH, y esa bobina satura a 3,7 A (25 % de caída). Lo que corta primero es el disparo rápido del `TPS26631`: 3 × I(OL) (p. 7; 3,28 A máx. con `R34`) en ≤ 4,5 µs (p. 9). `check_absmax.py` lo modela ahora, junto con la curva L–I de la bobina, y `L2` pasa a ser una **Bourns SRP1265A-220M** (`bourns_srp1265a.pdf`: Isat 12 A, curva hasta 12 A en p. 3; LCSC C2041465). Peor caso (máximo sano en vacío, sin carga, `L2`, `C3` y `C1` a −20 %): **17,40 V** en `U1`, `L2` a 8,7 A, y el `SMBJ16A` no conduce. Sin el disparo rápido, `L2` sale de su curva y el pico deja de valer, así que el canario está en su retardo (7,2 µs contra 4,5 garantizados). `L3` sigue siendo la `SRR1260-220M`.
+
 ### 9.2 Reintentos con abandono (H-V2-RECUPERACION)
 
 **El pin Remote del THN no sirve como actuador del abandono** (ver §2 punto 2, **[comprobado]**). Realización comprobada contra hojas (`recuperacion_budget.py` en `v5/`):
