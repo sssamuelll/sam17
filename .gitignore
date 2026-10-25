@@ -176,6 +176,9 @@ docs/reference/datasheets/*.pdf
 # Fuente v5 (2026-10-22): convertidores DC-DC, ladrillos 24 V, conectores y protecciones M3/M4/M5/D-F6
 !docs/reference/datasheets/traco_thn30wi.pdf
 !docs/reference/datasheets/traco_thn20wi.pdf
+!docs/reference/datasheets/traco_thn30wi_characteristic_curves.pdf
+!docs/reference/datasheets/traco_thn20wi_characteristic_curves.pdf
+!docs/reference/datasheets/traco_thn15wi_thn20wi_thn30wi_voltage_adjustment.pdf
 !docs/reference/datasheets/recom_rpmb20.pdf
 !docs/reference/datasheets/mornsun_urb_ymd20wr3.pdf
 !docs/reference/datasheets/mornsun_k78_t1000r3.pdf

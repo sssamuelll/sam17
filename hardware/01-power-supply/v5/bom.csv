@@ -19,7 +19,7 @@ U20,LM393B,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,1,Texas Instruments,LM393BIDR,C28
 "Q3,Q4,Q5,Q6",MMBT3906,Package_TO_SOT_SMD:SOT-23,4,onsemi,MMBT3906LT1G,C53444,LCSC,Excitador de puerta de los crowbar D-F6 (TL431 -> PNP -> SCR).
 "SCR1,SCR2,SCR3,SCR4",BT151-500R,Package_TO_SOT_THT:TO-220-3_Vertical,4,WeEn,"BT151-500R,127",C9211,LCSC,"Tiristor de crowbar D-F6. 1 = K, 2 = A, 3 = G (nxp-bt151-500r.pdf p. 2)."
 PS1,THN 30-2422WI,Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT,1,TRACO,THN 30-2422WI,,Farnell/Mouser,"+-12 V de rack, 30 W. Pinout 1x1 pulgada estandar TRACO (traco_thn30wi.pdf p. 5). LCSC lo lista (C6553108) sin stock."
-"PS4,PS5",THN 20-2413WI,Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT,2,TRACO,THN 20-2413WI,,Farnell/Mouser,+-15.5 V crudos. Trim HACIA ARRIBA con 45.3k de Trim a -Vout (nota TRACO thn15/20/30wi voltage adjustment). LCSC lo lista (C7361463) sin stock.
+"PS4,PS5",THN 20-2413WI,Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT,2,TRACO,THN 20-2413WI,,Farnell/Mouser,+-15.5 V crudos. Trim HACIA ARRIBA con 45.3k de Trim a -Vout (traco_thn15wi_thn20wi_thn30wi_voltage_adjustment.pdf p. 1). LCSC lo lista (C7361463) sin stock.
 PS2,URB2405YMD-20WR3,sam17:Converter_DCDC_Mornsun_URB_YMD-20WR3_Horizontal_THT,1,Mornsun,URB2405YMD-20WR3,,Mouser,"+5 V digital aislado M1. 1 Ctrl, 2 GND, 3 Vin, 4 +Vo, 5 Trim, 6 0V (mornsun_urb_ymd20wr3.pdf p. 6). En LCSC solo hay clones de otras marcas con el mismo nombre: no valen."
 PS3,K7805T-1000R3,sam17:Converter_DCDC_Mornsun_K78_T-1000R3_SMD,1,Mornsun,K7805T-1000R3,,Mouser,"+5 V de rack, NO aislado: su GND es GND24 y la union con GNDA es NT1. No esta en LCSC: se suelda a mano o se consigna a JLC."
 NT1,NetTie GND24-GNDA,NetTie:NetTie-2_SMD_Pad2.0mm,1,—,—,,—,"Unica union entre GND24 y GNDA, en los pads de masa de PS3. Es cobre: no se compra."
@@ -66,7 +66,7 @@ R5,9.31k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD079K31L,C865720,LC
 R7,9.09k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD079K09L,C865717,LCSC,U2: -1.22 V * (1 + (9.09k + RV3)/1.00k) = -12.31..-13.53 V.
 "R21,R22,R23,R24",100k 0.1%,Resistor_SMD:R_0805_2012Metric,4,Yageo,RT0805BRD07100KL,C122537,LCSC,Rama alta de los divisores del ADS1115.
 "R25,R26,R27,R28",20.0k 0.1%,Resistor_SMD:R_0805_2012Metric,4,Yageo,RT0805BRD0720KL,C469660,LCSC,Rama baja de los divisores del ADS1115.
-"R32,R33",45.3k,Resistor_SMD:R_0805_2012Metric,2,UniOhm,0805W8F4532T5E,C17701,LCSC,Trim de PS4/PS5 a -Vout: R = 10000*2.5/(15.5-2.5-12.5) - 5110 = 44.9k (nota TRACO).
+"R32,R33",45.3k,Resistor_SMD:R_0805_2012Metric,2,UniOhm,0805W8F4532T5E,C17701,LCSC,Trim de PS4/PS5 a -Vout: R = 10000*2.5/(15.5-2.5-12.5) - 5110 = 44.9k con G H K L de los xx13WI (traco_thn15wi_thn20wi_thn30wi_voltage_adjustment.pdf p. 1).
 R11,4.02k,Resistor_SMD:R_0805_2012Metric,1,UniOhm,0805W8F4021T5E,C17663,LCSC,"ILIM de U16: 18.1/4.02 = 4.50 A, banda 4.185..4.815 A (tps2663.pdf p. 7, p. 22 ec. 5): bajo el disparo minimo del TE90 (4.875 A)."
 R34,18.2k,Resistor_SMD:R_0805_2012Metric,1,UniOhm,0805W8F1822T5E,C17497,LCSC,ILIM de U19: 0.99 A.
 "R1,R2,R57,R58,R59,R60",2.2k,Resistor_SMD:R_0805_2012Metric,6,UniOhm,0805W8F2201T5E,C17520,LCSC,LED de +-12 V ultra y pull-ups I2C.
