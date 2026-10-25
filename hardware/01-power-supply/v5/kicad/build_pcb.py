@@ -1291,6 +1291,48 @@ def rescatar() -> tuple[int, list[str]]:
     return cerradas, abiertas_final
 
 
+def _recortar(board, t) -> bool:
+    """Acorta una pista fija hasta el ultimo contacto de su red. True si la toco.
+
+    Una salida fija (COBRE) que Freerouting no continua desde su punta sino
+    desde mas atras deja la punta colgando (U4.9: via encima del tramo, a
+    0.8 mm del final). Mas alla del ultimo contacto el cobre no lleva
+    corriente: se corta ahi y lo de dentro queda como estaba.
+    """
+    a, b = t.GetStart(), t.GetEnd()
+    dx, dy = b.x - a.x, b.y - a.y
+    largo2 = dx * dx + dy * dy
+    if not largo2:
+        return False
+    r, red, capa, yo = t.GetWidth() / 2, t.GetNetCode(), t.GetLayer(), t.m_Uuid.AsString()
+    contactos = []
+    for o in board.GetTracks():
+        if o.GetNetCode() != red or o.m_Uuid.AsString() == yo:
+            continue
+        if isinstance(o, pcbnew.PCB_VIA):
+            puntos = [(o.GetPosition(), o.GetWidth(capa) / 2)]
+        elif o.GetLayer() == capa:
+            puntos = [(o.GetStart(), o.GetWidth() / 2), (o.GetEnd(), o.GetWidth() / 2)]
+        else:
+            continue
+        for p, rp in puntos:
+            s = ((p.x - a.x) * dx + (p.y - a.y) * dy) / largo2
+            if 0 <= s <= 1 and math.hypot(p.x - a.x - s * dx, p.y - a.y - s * dy) <= r + rp:
+                contactos.append(s)
+    for fp in board.GetFootprints():
+        for pad in fp.Pads():
+            if pad.GetNetCode() == red and pad.IsOnLayer(capa):
+                contactos += [s for s, p in ((0.0, a), (1.0, b)) if pad.HitTest(p)]
+    if not contactos:
+        return False
+    s0, s1 = min(contactos), max(contactos)
+    if (s0, s1) == (0.0, 1.0) or s0 == s1:     # nada que cortar, o un rabo entero: que lo diga el DRC
+        return False
+    t.SetStart(pcbnew.VECTOR2I(round(a.x + s0 * dx), round(a.y + s0 * dy)))
+    t.SetEnd(pcbnew.VECTOR2I(round(a.x + s1 * dx), round(a.y + s1 * dy)))
+    return True
+
+
 def limpiar_colgantes() -> int:
     """Quita los tramos y vias que Freerouting deja colgando. Devuelve cuantos.
 
@@ -1298,6 +1340,7 @@ def limpiar_colgantes() -> int:
     ya rellenada), no una regla propia: se borra exactamente lo que el DRC
     senala, nunca algo bloqueado (cobre de potencia, costuras), y se repite
     porque quitar un rabo puede dejar colgando el tramo que lo alimentaba.
+    Lo bloqueado que cuelga no se borra: se recorta (_recortar).
     """
     total = 0
     for _ in range(6):
@@ -1307,14 +1350,17 @@ def limpiar_colgantes() -> int:
         if not uuids:
             break
         board = pcbnew.LoadBoard(PCB)
-        sobran = [t for t in board.GetTracks() if t.m_Uuid.AsString() in uuids and not t.IsLocked()]
-        if not sobran:
+        marcadas = [t for t in board.GetTracks() if t.m_Uuid.AsString() in uuids]
+        sobran = [t for t in marcadas if not t.IsLocked()]
+        recortadas = [t for t in marcadas if t.IsLocked() and not isinstance(t, pcbnew.PCB_VIA)
+                      and _recortar(board, t)]
+        if not sobran and not recortadas:
             break
         for t in sobran:
             quitar(board, t)
         guardar(PCB, board)
         rellenar(PCB)
-        total += len(sobran)
+        total += len(sobran) + len(recortadas)
     return total
 
 
@@ -1424,7 +1470,7 @@ def main() -> int:
     termicas = tras_el_ruteo()
     rellenar(PCB)
     if quitados := limpiar_colgantes():
-        print(f"limpieza: {quitados} tramos o vias colgando que dejo Freerouting")
+        print(f"limpieza: {quitados} tramos o vias colgando que dejo Freerouting, quitados o recortados")
     if alivios := resolver_termicos():
         print(f"alivios termicos sin radios resueltos por pad: {' '.join(alivios)}")
     board = rellenar(PCB)

@@ -1,8 +1,8 @@
 (export
 	(version "E")
 	(design
-		(source "D:\\Desktop\\projects\\sam17\\.claude\\worktrees\\fuente-v5\\hardware\\01-power-supply\\v5\\kicad\\sam17-power-v5.kicad_sch")
-		(date "2026-10-23T17:35:21")
+		(source "D:\\Desktop\\projects\\sam17\\.claude\\worktrees\\v5-334\\hardware\\01-power-supply\\v5\\kicad\\sam17-power-v5.kicad_sch")
+		(date "2026-10-25T12:25:59")
 		(tool "Eeschema 10.0.3")
 		(sheet
 			(number "1")
@@ -4643,15 +4643,15 @@
 		)
 		(comp
 			(ref "L2")
-			(value "22uH SRR1260-220M")
-			(footprint "Inductor_SMD:L_Bourns_SRR1260")
+			(value "22uH SRP1265A-220M")
+			(footprint "sam17:L_Bourns_SRP1265A")
 			(fields
 				(field
-					(name "LCSC") "C3224283")
+					(name "LCSC") "C2041465")
 				(field
-					(name "MPN") "SRR1260-220M")
+					(name "MPN") "SRP1265A-220M")
 				(field
-					(name "Footprint") "Inductor_SMD:L_Bourns_SRR1260")
+					(name "Footprint") "sam17:L_Bourns_SRP1265A")
 				(field
 					(name "Datasheet")
 				)
@@ -4666,11 +4666,11 @@
 			)
 			(property
 				(name "LCSC")
-				(value "C3224283")
+				(value "C2041465")
 			)
 			(property
 				(name "MPN")
-				(value "SRR1260-220M")
+				(value "SRP1265A-220M")
 			)
 			(property
 				(name "Sheetname")
