@@ -42,7 +42,7 @@ Cargas del [guion](../../../hardware/01-power-supply/v5/ladrillo_budget.py) (dec
 4. **Hot-plug.** Mornsun lo prohíbe en hoja («Hot Plug: Unavailable», `mornsun_urb_ymd20wr3.pdf` p. 1). TRACO y RECOM no lo declaran. Hay que preguntar.
 5. **Ruido.** Las hojas dan rizado pico a pico a 20 MHz de ancho de banda y sin espectro (`THN 20WI`: 75 mVp-p típ. / 100 mVp-p máx. a 330 kHz; `URB2405YMD-20WR3`: 50 mVp-p típ. / 100 mVp-p máx. a 300 kHz). El LC y el rechazo de los LDO (`LT1963A` + `LT3045` y `LT3015` + `LT3094`) atenúan esa banda por debajo de los 0,30 µVrms presupuestados para rizado dentro de los 0,8 µVrms de la cascada.
 6. **GNDD.** La capacidad de aislamiento (hasta 1500 pF en THN, 2000 pF típ. en URB2405YMD-20WR3 p. 3) acopla en AC GNDD con el retorno de 24 V mientras conserva ≥ 1000 MΩ en DC (> 1 MΩ exigidos en la fuente). Pesa sobre H-V5-PE.
-7. **Dimensionado de los crudos:** 0,65 A declarado o 0,334 A del censo (HUECO 5) decide si bastan módulos de 10 W.
+7. ~~**Dimensionado de los crudos:** 0,65 A declarado o 0,334 A del censo (HUECO 5) decide si bastan módulos de 10 W.~~ **Decidido el 2026-10-23 (450 mA/riel, §8 punto 3): no bastan; siguen los de 20 W.**
 8. **Precios y stock:** solo Octopart, sin definir; THN 20-2411 con stock visto en Mouser, Farnell, RS y TME. Mornsun aparece bajo marca Hi-Link en Octopart: revisar marca antes de comprar.
 
 ## 3. Ladrillo
@@ -119,8 +119,8 @@ Cortar el cable certificado del ladrillo y soldarle otro enchufe rompe lo que L1
 ## 8. Lo que hay que decidir, en este orden
 
 1. ~~El camino del enchufe~~ **Decidido el 2026-10-22: camino 1, enchufe nativo del ladrillo** (§4). La pareja sale de la referencia de ladrillo.
-2. **Si el piso de 80 W aguanta** o se vuelve a mirar el presupuesto con las eficiencias de hoja antes de elegir ladrillo.
-3. **Si los crudos se dimensionan por 0,65 A o por el censo** (HUECO 5).
+2. ~~**Si el piso de 80 W aguanta** o se vuelve a mirar el presupuesto con las eficiencias de hoja antes de elegir ladrillo.~~ **Aguanta (2026-10-25).** `ladrillo_budget.py` pide al ladrillo **65,36 W** en el peor caso declarado (ladrillo en su borde bajo de 22,8 V, cordón de 2 m a 2,867 A, digital en el máximo de #256 y pantalla a 550 mA de cita), con el 88 % mín. de hoja del `URB2405YMD-20WR3` y rendimientos ESTIMADO en el resto; con los típicos de hoja los DC-DC piden 1,42 W menos. El TE90, el de menos margen, da 82,5 W a 45 °C (p. 3): **+17,14 W**, y la autocomprobación del guion pone rojo cualquier candidato que no cubra la demanda. **H-PL-ENTREGA sigue abierto:** la cifra vinculante pide rendimientos garantizados, y tres de los cuatro modelos montados solo publican típicos.
+3. ~~**Si los crudos se dimensionan por 0,65 A o por el censo** (HUECO 5).~~ **Decidido el 2026-10-23: 450 mA/riel** (v5 §8, punto 5). Con la corriente de tierra de los LDO y el `Iq` del pre-regulador, cada `THN 20-2413WI` lleva hasta 0,620 A: 9,85 W, el 49 % de sus 20 W (`ladrillo_budget.py`). Uno de 10 W quedaría al 98 %: siguen los de 20 W.
 4. **Junta** sobre esta propuesta, antes de pedir nada a los fabricantes ni pedir muestras; luego firma.
 
 ---
