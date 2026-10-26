@@ -156,6 +156,11 @@ no llegó a la BOM del chasis.
 del ladrillo declarado; y un paso de bring-up que compruebe la polaridad de
 `X1` con cada ladrillo antes de conectar `J1`.
 
+**Hecho el 2026-10-26:** el arnés de §4.1 en `bom-chasis.csv`, sin `X1P`, con
+el contacto de masa sin conectar (§4.2) y el tornillo de 6,60 mm más el grueso
+de la trasera; `check_arnes.py` cruza el mapa con la hoja del TE90 y con la
+netlist, y el paso 1 de `medidas.csv` mide la polaridad con el arnés suelto.
+
 ### 3.2 ALTA — la referencia del TE90 pide un barril (P5, P6) · #488
 
 «The “03” in the standard model number is replaced by the applicable digits
@@ -373,10 +378,20 @@ da polaridad buena, inversión bloqueada o 0 V, y nunca un corto. Las tres
 lentes encontraron el corto por separado; dos proponen esta salida, y la
 tercera el arnés para un solo ladrillo, apoyada en el contrato exclusivo.
 
-**Decidido el 2026-10-26: un pin por polo.** `X1.1` → `J1.1` y `X1.2` →
+~~**Decidido el 2026-10-26: un pin por polo.** `X1.1` → `J1.1` y `X1.2` →
 `J1.2`, con 3 y 4 sin conectar. Faltan el arnés en `bom-chasis.csv`, la
 constante del conector en `ladrillo_budget.py` (de 30 a 60 mΩ), y la puerta y
-el paso de banco de §3.1.
+el paso de banco de §3.1.~~
+
+**Reabierto y decidido el 2026-10-26: dos pines por polo, para el TE90.** La
+tabla de arriba solo comparaba los 2,87 A continuos por pin con los 7,5 A. Con
+un pin por polo, `recuperacion_budget.py` sale rojo: `U16` deja pasar hasta
+2 × I_OL durante 25,5 ms (`tps2663.pdf` p. 7 y 23), 9,64 A en lo alto de su
+banda, contra los 7,5 A de un pin. Bajar `R11` no cabe: el pulso pide la banda
+por debajo de 3,26 A y la holgura del cordón la pide por encima de 4,0 A. El
+TPS26630, sin ese pulso, solo se vende en VQFN-24 (reruteo). El arnés queda
+1+3 → `J1.1` y 2+4 → `J1.2`; un ladrillo cableado de otra forma entra en
+hiccup sin quemar nada, y el contrato ya nombra solo el TE90.
 
 ### 4.2 La variante del TE90: A o B
 
@@ -473,12 +488,12 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | El arnés (§3.1), la referencia del TE90, `TE90A2449F01` (§3.2, §4.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
+| **Papel** | ~~El arnés (§3.1)~~, la referencia del TE90, `TE90A2449F01` (§3.2, §4.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
 | **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y `SCR4` sin montar (§4.5) |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
 | **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |
-| **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con cada ladrillo antes de conectar `J1` (§3.1); y «los dos o ninguno» en `PS1` (§4.4) |
+| **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con el ladrillo antes de conectar `J1` (§3.1); y «los dos o ninguno» en `PS1` (§4.4) |
 
 ## 6. Lo que la junta no pudo comprobar
 

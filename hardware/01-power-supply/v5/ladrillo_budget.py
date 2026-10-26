@@ -149,8 +149,10 @@ LADRILLOS_45C_W = {
 # --- la cadena de entrada de 24 V (D-V5, M5) -------------------------------
 # Conector Kycon KPJX-PM-4S + KPPX-4P (kycon_KPJX-PM-4S.pdf p. 1,
 # kycon_KPPX-4P.pdf p. 1): 30 mohm max por pin, 7.5 A/pin, 2 pines en paralelo
-# por polo -> 15 mohm por polo, 30 mohm de bucle ida y vuelta.
+# por polo -> 15 mohm por polo, 30 mohm de bucle ida y vuelta. Los pines por
+# polo los cruza check_arnes.py con el arnes de bom-chasis.csv.
 R_CONTACTO_PIN_OHM = 0.030
+I_MAX_PIN_A = 7.5
 N_PINES_PARALELO = 2
 R_BUCLE_CONECTOR_OHM = 2.0 * (R_CONTACTO_PIN_OHM / N_PINES_PARALELO)
 # Vigilante de entrada M5: TI TPS26631 (tps2663.pdf p. 7: RON max 53 mohm a
