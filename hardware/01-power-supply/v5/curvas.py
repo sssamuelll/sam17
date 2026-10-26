@@ -2,8 +2,8 @@
 
     python curvas.py
 
-Releva a `v4/curvas.py` para los convertidores DC-DC interiores y los ladrillos
-AC-DC candidatos de la v5, manteniendo los cuatro reguladores de la cascada
+Releva a `v4/curvas.py` para los convertidores DC-DC interiores y el ladrillo
+AC-DC de la v5, manteniendo los cuatro reguladores de la cascada
 ultra (`LT1963A`, `LT3015`, `LT3045`, `LT3094`). Ninguna serie conserva ya al
 `LM2941` retirado por D-F8.
 
@@ -92,35 +92,6 @@ DERATING_V5: dict[str, tuple[Punto, ...]] = {
         (45.0,  82.5 / 90.0),
         (70.0,  0.50),
     ),
-    # Mean Well GST120A24-R7B a 230 VAC (`meanwell-GST120A-spec.pdf` p. 3,
-    # "Derating Curve" curva 230 VAC): 100 % (120 W) de -30 C a +50 C, cae
-    # linealmente al 50 % en +70 C.
-    "GST120A24-R7B-230V": (
-        (-30.0, 1.00),
-        (45.0,  1.00),
-        (50.0,  1.00),
-        (70.0,  0.50),
-    ),
-    # Mean Well GST120A24-R7B a 100 VAC (`meanwell-GST120A-spec.pdf` p. 3,
-    # "Derating Curve" curva 100 VAC): 100 % hasta 40 C, 90 % a 45 C, 80 % a
-    # 50 C, 40 % a 70 C.
-    "GST120A24-R7B-100V": (
-        (-30.0, 1.00),
-        (40.0,  1.00),
-        (45.0,  0.90),
-        (50.0,  0.80),
-        (70.0,  0.40),
-    ),
-    # Mean Well GSM120A24-R7B (`meanwell-GSM120A-spec.pdf` p. 3, "Derating
-    # Curve" a 230 VAC): 100 % de -30 C a +40 C, 90 % a 45 C, 80 % a 50 C,
-    # 40 % a 70 C.
-    "GSM120A24-R7B": (
-        (-30.0, 1.00),
-        (40.0,  1.00),
-        (45.0,  0.90),
-        (50.0,  0.80),
-        (70.0,  0.40),
-    ),
 }
 
 FUENTES_DERATING_V5: dict[str, tuple[str, int, str]] = {
@@ -151,18 +122,6 @@ FUENTES_DERATING_V5: dict[str, tuple[str, int, str]] = {
     "TE90A2403F01": (
         "docs/reference/datasheets/ae-TE90-datasheet.pdf", 3,
         "Operating Temperature: 90 W <= 40 C, -1.5 W/C to 45 W @ 70 C (82.5 W @ 45 C)",
-    ),
-    "GST120A24-R7B-230V": (
-        "docs/reference/datasheets/meanwell-GST120A-spec.pdf", 3,
-        "Derating Curve (230 VAC): 100% <= 50 C, 50% @ 70 C",
-    ),
-    "GST120A24-R7B-100V": (
-        "docs/reference/datasheets/meanwell-GST120A-spec.pdf", 3,
-        "Derating Curve (100 VAC): 100% <= 40 C, 90% @ 45 C, 80% @ 50 C, 40% @ 70 C",
-    ),
-    "GSM120A24-R7B": (
-        "docs/reference/datasheets/meanwell-GSM120A-spec.pdf", 3,
-        "Derating Curve (230 VAC): 100% <= 40 C, 90% @ 45 C, 80% @ 50 C, 40% @ 70 C",
     ),
 }
 
@@ -308,11 +267,8 @@ def _demo() -> int:
         print(f"    {pieza:<20} @ 65 C: {100*f65:5.1f}%   @ 85 C: {100*f85:5.1f}%   "
               f"({pdf} p.{pag})")
 
-    print("\n  2. Derating de ladrillos externos a T_amb = 45 C (sala de diseno):")
-    for pieza, w_nom in (("TE90A2403F01", 90.0),
-                         ("GST120A24-R7B-230V", 120.0),
-                         ("GST120A24-R7B-100V", 120.0),
-                         ("GSM120A24-R7B", 120.0)):
+    print("\n  2. Derating del ladrillo externo a T_amb = 45 C (sala de diseno):")
+    for pieza, w_nom in (("TE90A2403F01", 90.0),):
         pdf, pag, _ = FUENTES_DERATING_V5[pieza]
         f45 = derating(pieza, 45.0)
         print(f"    {pieza:<20} @ 45 C: {100*f45:5.1f}% ({w_nom*f45:5.1f} W)   "
