@@ -274,6 +274,12 @@ el eje de la figura, pide el 62 % y cabe hasta 70,6 °C. Las curvas entran en
 escrito, y las curvas rehechas; con ellas, la cuenta de la carcasa de `PS1`
 (P1) y los criterios del paso 7.
 
+**Hecho el 2026-10-26.** `curvas.py` lleva las dos curvas de las notas, cada
+punto en el borde frío del trazo, y `test_curvas.py` las coteja con las
+lecturas de la figura. `derating_budget.py` aplica la lectura de §4.7. El paso
+7 pide la carcasa de los dos THN por debajo de 100 °C, 5 K bajo los 105 °C de
+sus hojas (p. 3).
+
 ### 3.7 MEDIA — `recuperacion_budget.py` usa un temporizador de `U16` que la placa no activa (P5, P7) · #493
 
 `T_CB_MAX_S = 31e-3  # tps2663.pdf p. 8: tCB(dly) a 2 x I_OL`
@@ -382,6 +388,10 @@ que no se enclave; o mantenerlo con el ensayo de P5. Dos lentes lo condicionan
 a ese ensayo o a un rearme acreditado, y la tercera pide quedarse con uno solo
 de los dos, el que case con la variante del TE90.
 
+**Decidido el 2026-10-26: el respaldo Mean Well sale**, por su enclavamiento de
+sobretensión desde el 105 % (P5 (d)). El TE90 queda como única referencia.
+Falta retirarlo de la propuesta, de `ladrillo_budget.py` y de `curvas.py`.
+
 ### 4.4 D-F4 en el par de rack
 
 | Opción | Qué pide |
@@ -424,14 +434,23 @@ desiguales: el +12 V al 84 % de su corriente, el −12 V al 40 % y el total al
 
 En las dos, la carcasa se mide con criterio de 100 °C (P1).
 
+**Decidido el 2026-10-26: por potencia total**, con dos condiciones: la
+carcasa de `PS1` medida por debajo de 100 °C a carga declarada con el aire a
+62,6–65 °C (`medidas.csv`, paso 7), y la confirmación escrita de TRACO de que
+su curva vale así con las salidas desiguales. Aparte, ninguna salida pasa de su
+corriente nominal: el +12 V va al 84 % de 1,25 A. Con la curva de `curvas.py`,
+`derating_budget.py` pone el rojo de `PS1` con el aire a 70,3 °C, +7,8 K. Son
+0,3 K menos que la recta de §3.6, porque cada punto toma el borde frío del
+trazo.
+
 ---
 
 ## 5. Qué falta para firmar
 
 | | |
 |---|---|
-| **Papel** | El arnés (§3.1), la referencia del TE90 (§3.2), la cita de `curvas.py` (§3.6), el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), y la propuesta enmendada (§3.9) |
-| **Gratis: preguntas** | **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, y si su derating vale por potencia total con las salidas desiguales (§4.7). La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo) y la 19 (el acople con el KPJX). **Mornsun:** el umbral de sobrecorriente del K78. **Mean Well**, solo si el respaldo sigue: el sobreimpulso al soltar el 100 % de carga |
+| **Papel** | El arnés (§3.1), la referencia del TE90 (§3.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), el retiro del respaldo Mean Well (§4.3), y la propuesta enmendada (§3.9) |
+| **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
 | **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y si se retira, `SCR4` sin montar (§4.5) |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
 | **Placa** | D-F4 en rack, si se restituye (§4.4); el filtro de los crowbars, si el digital se queda (§4.5); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |

@@ -330,15 +330,23 @@ def _puntos() -> list[Punto]:
                "y el peor caso calor_del_cajon_w()",
                lo=0.90 * ladrillo_budget.entrada_dcdc_tipica_hoja_w(),
                hi=ladrillo_budget.calor_del_cajon_w()))
+    # #492: las dos carcasas TRACO admiten 105 C (el THN 30 empieza ahi su corte
+    # termico) y el criterio deja 5 K. En PS1 es ademas la condicion de su
+    # derating por potencia total (junta de piezas v5, sec. 4.7).
+    aire = f"{derating_budget.aire_cajon_c():.1f}-65 C"
     p.append(P("7", "temperatura_carcasa_THN30_c", "C",
-               "T10 / T27: temperatura de carcasa THN 30-2422WI a 45 C ambiente (< 85 C max)",
-               hi=85.0))
+               f"T10 / T27 / #492: carcasa de PS1 (THN 30-2422WI) a carga declarada, con el aire "
+               f"junto al modulo a {aire} (sala de 45 C, caja cerrada); su corte termico "
+               "empieza en 105 C (traco_thn30wi.pdf p. 3)",
+               hi=100.0))
     p.append(P("7", "temperatura_carcasa_URB2405_c", "C",
                "T10 / T27: temperatura de carcasa URB2405YMD-20WR3 a 45 C ambiente (< 80 C max)",
                hi=80.0))
     p.append(P("7", "temperatura_carcasa_THN20_c", "C",
-               "T10 / T27: temperatura de carcasa THN 20-2413WI a 45 C ambiente (< 85 C max)",
-               hi=85.0))
+               f"T10 / T27 / #492: carcasa de PS4 y PS5 (THN 20-2413WI) a carga declarada, con el "
+               f"aire junto al modulo a {aire} (sala de 45 C, caja cerrada); la carcasa admite "
+               "105 C max. (traco_thn20wi.pdf p. 3)",
+               hi=100.0))
     # #478: la union de U1 y U2 por la aleta, Tj = aleta + P * theta_JC
     # (tj_budget.py). En U2 es su unica cota: su tabla no cubre su cobre.
     for reg, pieza, aleta in (("U1", "LT1963A", "GND (GNDA, lt1963a p. 2)"),

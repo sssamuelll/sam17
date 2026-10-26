@@ -33,24 +33,30 @@ def _valida_serie(nombre: str, pts: tuple[Punto, ...]) -> None:
 #    Abscisa: temperatura ambiente en grados Celsius.
 # ---------------------------------------------------------------------------
 DERATING_V5: dict[str, tuple[Punto, ...]] = {
-    # TRACO THN 30-2422WI (`traco_thn30wi.pdf` p. 2, "Operating temperature
-    # range -40C to +85C, derating above 65C without heatsink, max case
-    # temperature +105C"): 100 % hasta 65 C, cae linealmente a 0 % en 105 C.
+    # Los dos THN: la hoja remite el derating a su nota de curvas ("Power
+    # Derating - High Temperature: Depending on model, See application note",
+    # `traco_thn30wi.pdf` y `traco_thn20wi.pdf` p. 3). Son lecturas de la
+    # figura "Derating Output Load versus Ambient Temperature", traza "Natural
+    # Convection", sin disipador. Su eje es "OUTPUT POWER (%)": la potencia de
+    # todas las salidas juntas (#492, junta de piezas v5 sec. 4.7). Cada punto
+    # toma el borde frio del trazo.
+    # TRACO THN 30-2422WI (`traco_thn30wi_characteristic_curves.pdf` p. 11):
+    # 100 % hasta 54 C, -2,33 puntos por grado hasta el 10 % y 0 % en 100 C.
     "THN-30-2422WI": (
         (-40.0, 1.00),
-        (65.0,  1.00),
-        (85.0,  0.50),
-        (105.0, 0.00),
+        (54.0,  1.00),
+        (75.5,  0.50),
+        (93.0,  0.10),
+        (100.0, 0.00),
     ),
-    # TRACO THN 20-2413WI (`traco_thn20wi.pdf` p. 2, "Operating temperature
-    # range -40C to +85C, derating above 75C without heatsink, max case
-    # temperature +105C"): 100 % hasta 75 C, cae linealmente a 0 % en 105 C.
+    # TRACO THN 20-2413WI (`traco_thn20wi_characteristic_curves.pdf` p. 7):
+    # 100 % hasta 63 C, -2,89 puntos por grado hasta el 10 % y 0 % en 101 C.
     "THN-20-2413WI": (
         (-40.0, 1.00),
-        (65.0,  1.00),
-        (75.0,  1.00),
-        (90.0,  0.50),
-        (105.0, 0.00),
+        (63.0,  1.00),
+        (80.3,  0.50),
+        (94.3,  0.10),
+        (101.0, 0.00),
     ),
     # Mornsun URB2405YMD-20WR3 (`mornsun_urb_ymd20wr3.pdf` p. 3, Fig. 1
     # "Temperature Derating Curve" a 24 VDC): 100 % de -40 C a +65 C, cae
@@ -119,12 +125,16 @@ DERATING_V5: dict[str, tuple[Punto, ...]] = {
 
 FUENTES_DERATING_V5: dict[str, tuple[str, int, str]] = {
     "THN-30-2422WI": (
-        "docs/reference/datasheets/traco_thn30wi.pdf", 2,
-        "Operating temperature range -40..+85 C, derating above 65 C, Tc max 105 C",
+        "docs/reference/datasheets/traco_thn30wi_characteristic_curves.pdf", 11,
+        "Derating Output Load versus Ambient Temperature, Natural Convection "
+        "(lectura de figura, % de potencia de salida): 100% <= 54 C, 50% @ 75.5 C, "
+        "10% @ 93 C, 0% @ 100 C",
     ),
     "THN-20-2413WI": (
-        "docs/reference/datasheets/traco_thn20wi.pdf", 2,
-        "Operating temperature range -40..+85 C, derating above 75 C, Tc max 105 C",
+        "docs/reference/datasheets/traco_thn20wi_characteristic_curves.pdf", 7,
+        "Derating Output Load versus Ambient Temperature, Nature Convection "
+        "(lectura de figura, % de potencia de salida): 100% <= 63 C, 50% @ 80.3 C, "
+        "10% @ 94.3 C, 0% @ 101 C",
     ),
     "URB2405YMD-20WR3": (
         "docs/reference/datasheets/mornsun_urb_ymd20wr3.pdf", 3,
@@ -289,7 +299,7 @@ def psrr_db(regulador: str, f_hz: float) -> float:
 
 def _demo() -> int:
     print("curvas.py v5 -- derating de convertidores/ladrillos y PSRR de cascada\n")
-    print("  1. Derating de convertidores interiores a T_case = 65 C (techo v5 sec.6):")
+    print("  1. Derating de convertidores interiores con el aire a 65 C (techo v5 sec.6):")
     for pieza in ("THN-30-2422WI", "THN-20-2413WI", "URB2405YMD-20WR3",
                   "K7805T-1000R3", "RPMB5.0-2.0"):
         pdf, pag, _ = FUENTES_DERATING_V5[pieza]

@@ -39,14 +39,35 @@ def test_derating_monotono_y_anclado() -> None:
         assert abs(cv.derating(nombre, 25.0) - 1.0) < 1e-12
 
     # Puntos exactos de hoja a 65 C (convertidores) y 45 C (ladrillos):
-    assert abs(cv.derating("THN-30-2422WI", 65.0) - 1.00) < 1e-12
-    assert abs(cv.derating("THN-20-2413WI", 75.0) - 1.00) < 1e-12
     assert abs(cv.derating("URB2405YMD-20WR3", 65.0) - 1.00) < 1e-12
     assert abs(cv.derating("URB2405YMD-20WR3", 75.0) - 0.75) < 1e-12
     assert abs(cv.derating("K7805T-1000R3", 65.0) - 0.92) < 1e-12
     assert abs(cv.derating("TE90A2403F01", 45.0) * 90.0 - 82.5) < 1e-9
     assert abs(cv.derating("GST120A24-R7B-230V", 45.0) * 120.0 - 120.0) < 1e-9
     assert abs(cv.derating("GSM120A24-R7B", 45.0) * 120.0 - 108.0) < 1e-9
+
+
+# Lecturas de las figuras de TRACO en conveccion natural, sin disipador
+# (traco_thn30wi_characteristic_curves.pdf p. 11, traco_thn20wi_characteristic_curves.pdf
+# p. 7): a cada temperatura, la banda que ocupa el trazo rojo, en fraccion de
+# potencia de salida. Solo en el tramo que baja: junto al codo, la raya negra
+# del 100 % tapa la roja.
+LECTURAS_THN = {
+    "THN-30-2422WI": ((55.0, 0.965, 0.985), (60.0, 0.851, 0.876), (62.6, 0.795, 0.811),
+                      (65.0, 0.738, 0.754), (70.0, 0.624, 0.641), (75.0, 0.503, 0.527),
+                      (80.0, 0.389, 0.418), (85.0, 0.276, 0.292), (90.0, 0.162, 0.182)),
+    "THN-20-2413WI": ((65.0, 0.928, 0.957), (70.0, 0.786, 0.821), (75.0, 0.644, 0.669),
+                      (80.0, 0.508, 0.531), (85.0, 0.354, 0.392), (90.0, 0.215, 0.246)),
+}
+
+
+def test_thn_dentro_del_trazo() -> None:
+    """La curva de cada THN cae dentro del trazo de su figura, nunca por encima."""
+    for nombre, lecturas in LECTURAS_THN.items():
+        for t, lo, hi in lecturas:
+            f = cv.derating(nombre, t)
+            assert lo - 0.01 <= f <= hi, (
+                f"{nombre} a {t:g} C da {f:.3f}; la figura pone el trazo en {lo:.3f}..{hi:.3f}")
 
 
 def test_no_extrapola() -> None:
@@ -69,6 +90,7 @@ def main() -> int:
     test_archivos_fuente_existen()
     test_sin_lm2941()
     test_derating_monotono_y_anclado()
+    test_thn_dentro_del_trazo()
     test_no_extrapola()
     print("OK: test_curvas.py v5")
     return 0
