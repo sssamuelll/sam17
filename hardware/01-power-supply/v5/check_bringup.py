@@ -378,11 +378,11 @@ def _puntos() -> list[Punto]:
 
     # --- Paso 8: Protecciones y ruido extremo -----------------------------
     for riel_crowbar in check_absmax.RACK_RIELES:
-        v_disp = check_absmax.RACK_RIELES[riel_crowbar]["disparo_v"]
+        d = check_absmax.RACK_RIELES[riel_crowbar]
         p.append(P("8", f"disparo_crowbar_{riel_crowbar}", "V",
-                   f"check_absmax: disparo de proteccion en {riel_crowbar}",
-                   predicho=v_disp,
-                   tol=check_absmax.TOL_DISPARO_TL431BI_V))
+                   f"check_absmax: disparo de proteccion en {riel_crowbar}, banda de la "
+                   "hoja del TL431BI (banda_disparo_v)",
+                   predicho=d["disparo_v"], lo=d["banda_v"][0], hi=d["banda_v"][1]))
     # #476: el crowbar enclavado contra el limite de su convertidor. Un pulso en
     # la puerta del SCR con el riel vivo; si el convertidor entra en hiccup la
     # corriente cae bajo I_H, el SCR se suelta y el riel vuelve. Si se queda en
