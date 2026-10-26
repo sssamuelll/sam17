@@ -78,7 +78,9 @@ huellas (SOT-23, electrolíticos, DFN) no coincide con el de su biblioteca y
   PS1 (THN 30-2422WI), PS4/PS5 (THN 20-2413WI), PS2 (URB2405YMD-20WR3) y
   PS3 (K7805T-1000R3, SMD).
 - **THT con código LCSC** (se compran en LCSC y van a mano): conectores,
-  SCR1–SCR4, RV2/RV3, SW1, puntos de prueba.
+  SCR1–SCR3, RV2/RV3, SW1, puntos de prueba.
+- **Sin montar** (`supplier` «SIN MONTAR» en `bom.csv`): SCR4 y su disparo
+  (U25, Q6, R51, R52, R56, R73, R77, R81). Las huellas quedan en la placa.
 - `bom_jlc.py` lo decide por la placa: entra cada huella SMD del fichero de
   posiciones que se compra en LCSC; una SMD de la placa que no esté en
   `bom.csv` es un error.

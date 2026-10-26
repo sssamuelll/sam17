@@ -152,6 +152,10 @@ def _puntos() -> list[Punto]:
                "#487 / junta sec. 4.2: el contacto de masa de X1 no va al chasis; M2 "
                "une el chasis al retorno de continua, no a un PE del cordon",
                literal="si"))
+    p.append(P("0", "SCR4_y_su_disparo_sin_montar", "si/no",
+               "#490 / junta sec. 4.5: SCR4, U25, Q6, R51, R52, R56, R73, R77 y R81 sin "
+               "soldar; con el disparo montado, un escalon de carga del URB lo dispara",
+               literal="si"))
     p.append(P("0", "continuidad_estrella_GNDA_a_chasis", "mohm",
                "T17 / M2: estrella analogica de masa J5 atornillada al chasis",
                hi=20.0))
@@ -373,7 +377,7 @@ def _puntos() -> list[Punto]:
                tol=2.0))
 
     # --- Paso 8: Protecciones y ruido extremo -----------------------------
-    for riel_crowbar in ("rack+12", "rack-12", "rack+5", "digital+5"):
+    for riel_crowbar in check_absmax.RACK_RIELES:
         v_disp = check_absmax.RACK_RIELES[riel_crowbar]["disparo_v"]
         p.append(P("8", f"disparo_crowbar_{riel_crowbar}", "V",
                    f"check_absmax: disparo de proteccion en {riel_crowbar}",
