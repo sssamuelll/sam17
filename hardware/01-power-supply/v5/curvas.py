@@ -66,14 +66,16 @@ DERATING_V5: dict[str, tuple[Punto, ...]] = {
         (65.0,  1.00),
         (85.0,  0.50),
     ),
-    # Mornsun K7805T-1000R3 (`mornsun_k78_t1000r3.pdf` p. 3, Fig. 1 "Temperature
-    # Derating Curve" para Vin = 8..26 VDC): 100 % de -40 C a +60 C, cae
-    # linealmente al 60 % en +85 C (a 65 C da 92 %).
-    "K7805T-1000R3": (
+    # TRACO THN 20-2411WI (`traco_thn20wi_characteristic_curves.pdf` p. 3,
+    # "Derating Output Load versus Ambient Temperature", conveccion natural;
+    # lectura de figura igual que la del 2413WI): 100 % hasta 65,5 C, 50 % a
+    # 79,9 C, 10 % a 91,5 C y 0 % en 102,7 C.
+    "THN-20-2411WI": (
         (-40.0, 1.00),
-        (60.0,  1.00),
-        (65.0,  0.92),
-        (85.0,  0.60),
+        (65.5,  1.00),
+        (79.9,  0.50),
+        (91.5,  0.10),
+        (102.7, 0.00),
     ),
     # RECOM RPMB5.0-2.0 (`recom_rpmb20.pdf` p. 1, 3, "Thermal Derating" a
     # Vin = 24 V): 100 % (2,0 A) de -40 C a +75 C, cae a 0 A en +100 C.
@@ -111,9 +113,11 @@ FUENTES_DERATING_V5: dict[str, tuple[str, int, str]] = {
         "docs/reference/datasheets/mornsun_urb_ymd20wr3.pdf", 3,
         "Fig. 1 Temperature Derating Curve (Vin=24 VDC): 100% <= 65 C, 50% @ 85 C",
     ),
-    "K7805T-1000R3": (
-        "docs/reference/datasheets/mornsun_k78_t1000r3.pdf", 3,
-        "Fig. 1 Temperature Derating Curve (Vin=8..26 VDC): 100% <= 60 C, 60% @ 85 C",
+    "THN-20-2411WI": (
+        "docs/reference/datasheets/traco_thn20wi_characteristic_curves.pdf", 3,
+        "Derating Output Load versus Ambient Temperature, Natural Convection "
+        "(lectura de figura, % de potencia de salida): 100% <= 65.5 C, 50% @ 79.9 C, "
+        "10% @ 91.5 C, 0% @ 102.7 C",
     ),
     "RPMB5.0-2.0": (
         "docs/reference/datasheets/recom_rpmb20.pdf", 3,
@@ -259,8 +263,8 @@ def psrr_db(regulador: str, f_hz: float) -> float:
 def _demo() -> int:
     print("curvas.py v5 -- derating de convertidores/ladrillos y PSRR de cascada\n")
     print("  1. Derating de convertidores interiores con el aire a 65 C (techo v5 sec.6):")
-    for pieza in ("THN-30-2422WI", "THN-20-2413WI", "URB2405YMD-20WR3",
-                  "K7805T-1000R3", "RPMB5.0-2.0"):
+    for pieza in ("THN-30-2422WI", "THN-20-2413WI", "THN-20-2411WI",
+                  "URB2405YMD-20WR3", "RPMB5.0-2.0"):
         pdf, pag, _ = FUENTES_DERATING_V5[pieza]
         f65 = derating(pieza, 65.0)
         f85 = derating(pieza, 85.0)

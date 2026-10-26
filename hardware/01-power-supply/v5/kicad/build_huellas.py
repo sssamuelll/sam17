@@ -1,10 +1,9 @@
-"""Genera las huellas propias de la fuente v5: los modulos Mornsun y la bobina L2.
+"""Genera las huellas propias de la fuente v5: el modulo Mornsun y la bobina L2.
 
     python build_huellas.py
 
 Las que habia (#474) eran una sola huella generica de 6 pines repetida para el
-URB y los dos TRACO -- que no se parecen entre si -- y un K78 de 3 pads en
-linea cuando la pieza es un SMD de 8 pines en dos filas. Aqui las cotas salen
+URB y los dos TRACO -- que no se parecen entre si. Aqui las cotas salen
 del plano de cada hoja, escritas en una tabla con su pagina; check_huellas.py
 las vuelve a leer del .kicad_mod y las compara con la misma hoja.
 
@@ -34,21 +33,6 @@ URB = {
               "6": (20.32, 0.0), "5": (20.32, 10.16), "4": (20.32, 20.32)},
     # Caja de 25.40 x 25.40 con los pines a 2.54 del borde.
     "cuerpo": (-2.54, -2.54, 22.86, 22.86),
-}
-
-# Mornsun K78_T-1000R3, SMD. mornsun_k78_t1000r3.pdf p. 5, "PCB Layout":
-# pads de 1.00 x 2.10 mm a paso 2.54; 12.20 mm entre los bordes exteriores de
-# las dos filas -> 10.10 mm entre centros. Fila de abajo 1..5, fila de arriba
-# 10 (sobre el 1), 7 (sobre el 4) y 6 (sobre el 5). Origen en el centro.
-K78 = {
-    "nombre": "Converter_DCDC_Mornsun_K78_T-1000R3_SMD",
-    "hoja": f"{DS}/mornsun_k78_t1000r3.pdf p. 5",
-    "pad_smd": (1.0, 2.1),
-    "pines": {"1": (-5.08, 5.05), "2": (-2.54, 5.05), "3": (0.0, 5.05),
-              "4": (2.54, 5.05), "5": (5.08, 5.05),
-              "10": (-5.08, -5.05), "7": (2.54, -5.05), "6": (5.08, -5.05)},
-    # Cuerpo 15.24 x 8.50 (sin patillas), centrado.
-    "cuerpo": (-7.62, -4.25, 7.62, 4.25),
 }
 
 # Bourns SRP1265A, bobina de L2 (#334). bourns_srp1265a.pdf p. 1,
@@ -85,29 +69,6 @@ def _linea(xa: float, ya: float, xb: float, yb: float, capa: str, ancho: float) 
             f'(stroke (width {ancho:g}) (type default)) (layer "{capa}") (uuid "{_u()}"))')
 
 
-def _silueta_con_huecos(caja: tuple, pads: list, w: float, h: float, aire: float = 0.2) -> list[str]:
-    """Contorno de serigrafia que se corta donde lo cruza un pad.
-
-    El cuerpo del K78 mide 8.50 mm de alto y sus pads (2.10 mm) asoman por
-    fuera: un rectangulo de serigrafia con las cotas del cuerpo pasa por
-    encima de los ocho pads, y el fabricante lo recorta contra la mascara.
-    Aqui cada lado horizontal se parte en tramos que dejan `aire` a cada pad.
-    """
-    x0, y0, x1, y1 = caja
-    out = [_linea(x0, y0, x0, y1, "F.SilkS", 0.12), _linea(x1, y0, x1, y1, "F.SilkS", 0.12)]
-    for y in (y0, y1):
-        cortes = sorted((px - w / 2 - aire, px + w / 2 + aire) for px, py in pads
-                        if py - h / 2 - aire <= y <= py + h / 2 + aire)
-        xa = x0
-        for ca, cb in cortes:
-            if ca > xa:
-                out.append(_linea(xa, y, ca, y, "F.SilkS", 0.12))
-            xa = max(xa, cb)
-        if xa < x1:
-            out.append(_linea(xa, y, x1, y, "F.SilkS", 0.12))
-    return out
-
-
 def _cabecera(nombre: str, descr: str, tags: str, ref_y: float, val_y: float) -> list[str]:
     _SEMILLA.update(nombre=nombre, n=0)
     return [f'(footprint "{nombre}"', "  (version 20241229)",
@@ -138,28 +99,6 @@ def urb() -> str:
     return "\n".join(out) + "\n"
 
 
-def k78() -> str:
-    d = K78
-    x0, y0, x1, y1 = d["cuerpo"]
-    w, h = d["pad_smd"]
-    out = _cabecera(d["nombre"],
-                    f"Mornsun K78_T-1000R3 SMD, 8 pads en dos filas, {d['hoja']}",
-                    "DC-DC Mornsun K78 SMD buck", -7.6, 7.6)
-    out.append('  (attr smd)')
-    out.append(_rect(x0, y0, x1, y1, "F.Fab", 0.1))
-    out.extend(_silueta_con_huecos((x0 - 0.12, y0 - 0.12, x1 + 0.12, y1 + 0.12),
-                                   list(d["pines"].values()), w, h))
-    out.append(_rect(x0 - 0.5, -6.6, x1 + 0.5, 6.6, "F.CrtYd", 0.05))
-    # Marca del pin 1 en serigrafia, fuera del pad.
-    out.append(f'  (fp_circle (center -7.0 6.3) (end -6.8 6.3) (stroke (width 0.2) '
-               f'(type default)) (fill solid) (layer "F.SilkS") (uuid "{_u()}"))')
-    for num, (x, y) in d["pines"].items():
-        out.append(f'  (pad "{num}" smd rect (at {x:g} {y:g}) (size {w:g} {h:g}) '
-                   f'(layers "F.Cu" "F.Paste" "F.Mask") (uuid "{_u()}"))')
-    out.append(")")
-    return "\n".join(out) + "\n"
-
-
 def srp() -> str:
     d = SRP
     x0, y0, x1, y1 = d["cuerpo"]
@@ -183,7 +122,7 @@ def srp() -> str:
 
 
 def main() -> int:
-    for d, texto in ((URB, urb()), (K78, k78()), (SRP, srp())):
+    for d, texto in ((URB, urb()), (SRP, srp())):
         ruta = os.path.join(PRETTY, d["nombre"] + ".kicad_mod")
         with open(ruta, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(texto)

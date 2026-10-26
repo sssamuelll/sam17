@@ -24,8 +24,8 @@ SCR4,BT151-500R,Package_TO_SOT_THT:TO-220-3_Vertical,1,WeEn,"BT151-500R,127",C92
 PS1,THN 30-2422WI,Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT,1,TRACO,THN 30-2422WI,,Farnell/Mouser,"+-12 V de rack, 30 W. Pinout 1x1 pulgada estandar TRACO (traco_thn30wi.pdf p. 5). LCSC lo lista (C6553108) sin stock."
 "PS4,PS5",THN 20-2413WI,Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT,2,TRACO,THN 20-2413WI,,Farnell/Mouser,+-15.5 V crudos. Trim HACIA ARRIBA con 45.3k de Trim a -Vout (traco_thn15wi_thn20wi_thn30wi_voltage_adjustment.pdf p. 1). LCSC lo lista (C7361463) sin stock.
 PS2,URB2405YMD-20WR3,sam17:Converter_DCDC_Mornsun_URB_YMD-20WR3_Horizontal_THT,1,Mornsun,URB2405YMD-20WR3,,Mouser,"+5 V digital aislado M1. 1 Ctrl, 2 GND, 3 Vin, 4 +Vo, 5 Trim, 6 0V (mornsun_urb_ymd20wr3.pdf p. 6). En LCSC solo hay clones de otras marcas con el mismo nombre: no valen."
-PS3,K7805T-1000R3,sam17:Converter_DCDC_Mornsun_K78_T-1000R3_SMD,1,Mornsun,K7805T-1000R3,,Mouser,"+5 V de rack, NO aislado: su GND es GND24 y la union con GNDA es NT1. No esta en LCSC: se suelda a mano o se consigna a JLC."
-NT1,NetTie GND24-GNDA,NetTie:NetTie-2_SMD_Pad2.0mm,1,—,—,,—,"Unica union entre GND24 y GNDA, en los pads de masa de PS3. Es cobre: no se compra."
+PS3,THN 20-2411WI,Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT,1,TRACO,THN 20-2411WI,,Farnell/Mouser,"+5 V de rack, aislado (#491): un buck no aislado con la entrada puenteada a la salida ponia 24 V en el riel antes que el crowbar. Mismo 1x1 pulgada que PS4/PS5 (traco_thn20wi.pdf p. 4); Trim y Remote al aire."
+NT1,NetTie GND24-GNDA,NetTie:NetTie-2_SMD_Pad2.0mm,1,—,—,,—,"Unica union entre GND24 y GNDA, entre PS5 y PS3. Con los cinco convertidores aislados no lleva corriente de carga. Es cobre: no se compra."
 L2,22uH SRP1265A-220M,sam17:L_Bourns_SRP1265A,1,Bourns,SRP1265A-220M,C2041465,LCSC,"Bobina del filtro LC de +15.5 V (#334): 22 uH +-20 %, Isat 12 A, Irms 9 A, DCR 37 mohm max, SRF 6 MHz tip (bourns_srp1265a.pdf p. 1) y curva L-I publicada (p. 3). Con la SRR1260 (Isat 3.7 A) el fallo de 36 V la saturaba antes de que U19 cortara."
 L3,22uH SRR1260-220M,Inductor_SMD:L_Bourns_SRR1260,1,Bourns,SRR1260-220M,C3224283,LCSC,"Bobina del filtro LC de -15.5 V: 22 uH, el valor de rizado_budget.py. Isat 3.7 A, DCR 43 mohm (catalogo). La rama negativa no lleva tope: el modelo de #334 es solo de L2."
 "C1,C2",220uF 35V,Capacitor_SMD:CP_Elec_8x10,2,Panasonic,EEEFK1V221P,C178562,LCSC,"Cd de la rama de amortiguamiento (Rd = 0.68 ohm + Cd = 220 uF, rizado_budget.py)."
@@ -33,6 +33,7 @@ L3,22uH SRR1260-220M,Inductor_SMD:L_Bourns_SRR1260,1,Bourns,SRR1260-220M,C322428
 "C17,C18",47uF 35V,Capacitor_SMD:CP_Elec_6.3x7.7,2,Lelon,VZH470M1VTR-0607,C249923,LCSC,"Salida de U1/U2: 47 uF electrolitico declarado en margen_budget.py (COUT_U1_F, ESR 0.3 ohm dentro de 0..3 ohm)."
 C14,100uF 50V,Capacitor_SMD:CP_Elec_8x10,1,Panasonic,EEEFK1H101P,C178548,LCSC,"Cin del URB2405 (mornsun_urb_ymd20wr3.pdf p. 4, Fig. 2: 100 uF/50 V)."
 C29,100uF 25V,Capacitor_SMD:CP_Elec_6.3x7.7,1,Nichicon,UCD1E101MCL1GS,C250945,LCSC,"Cout del URB2405 (p. 4, Fig. 2: 100 uF/16 V)."
+C39,1000uF 16V,Capacitor_SMD:CP_Elec_10x10,1,Lelon,VZH102M1CTR-1010,C249844,LCSC,"Frena la fuga de PS3 (#491): con los 7.6 A del limite del THN, 0.0076 V/us; SCR3 dispara antes de los 6.0 V de +5V_AUX (check_absmax.py)."
 "R37,R38",0.68,Resistor_SMD:R_1206_3216Metric,2,UniOhm,1206W4F680LT5E,C19108,LCSC,Rd de la rama de amortiguamiento.
 "FB1,FB2",BLM21PG600SN1D,Inductor_SMD:L_0805_2012Metric,2,Murata,BLM21PG600SN1D,C18305,LCSC,"Perla tras el LC, hacia U1/U2."
 D10,SMBJ16A,Diode_SMD:D_SMB,1,Littelfuse,SMBJ16A,C151254,LCSC,"TVS unidireccional en U1 IN (tope M3, #334)."
@@ -63,7 +64,7 @@ R52,10.0k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD0710KL,C110775,SI
 R41,10.2k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD0710K2L,C865134,LCSC,Canal - de D-F4 (de VREF a -15.5 V) con R42 = 59.0k: dispara a 2.495 V * 59.0/10.2 = 14.43 V.
 R42,59.0k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD0759KL,C865570,LCSC,Canal - de D-F4 con R41 = 10.2k (58.3k no tiene stock en 0805 0.1%).
 "R45,R46",45.3k 0.1%,Resistor_SMD:R_0805_2012Metric,2,Yageo,RT0805BRE0745K3L,C866072,LCSC,Crowbar +-12 V de rack: 2.495 V * (1 + 45.3/10) = 13.80 V. 50 ppm/C: no hay 0805 0.1% de 25 ppm con stock.
-R49,13.3k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD0713K3L,C865182,LCSC,Crowbar +5 V de rack: 5.81 V.
+R49,12.7k 0.1%,Resistor_SMD:R_0805_2012Metric,1,UniOhm,TC0525B1272T5G,C50670219,LCSC,Crowbar +5 V de rack: 5.66 V nominal (check_absmax.py da la banda).
 R51,12.7k 0.1%,Resistor_SMD:R_0805_2012Metric,1,UniOhm,TC0525B1272T5G,C50670219,SIN MONTAR,"Sin montar: el disparo del +5 V digital (SCR4), T19 (junta de piezas v5 sec. 4.5). La huella queda en la placa."
 R5,9.31k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD079K31L,C865720,LCSC,U1: 1.21 V * (1 + (9.31k + RV2)/1.00k) = 12.47..13.69 V.
 "R6,R8",1.00k 0.1%,Resistor_SMD:R_0805_2012Metric,2,Yageo,RT0805BRD071KL,C110774,LCSC,Rama baja de los divisores de U1/U2.
@@ -93,8 +94,7 @@ C8,4.7uF 25V X7R,Capacitor_SMD:C_0805_2012Metric,1,Yageo,CC0805KKX7R8BB475,C3542
 "C11,C13",22nF 50V X7R,Capacitor_SMD:C_0805_2012Metric,2,Samsung,CL21B223KBANNNC,C1729,LCSC,dVdT de U16/U19: 2 V/ms.
 C12,1nF 50V C0G,Capacitor_SMD:C_0805_2012Metric,1,Yageo,CC0805JRNPO9BN102,C62774,LCSC,RST/NMI del MSP430.
 "C19,C21",470nF 50V X7R,Capacitor_SMD:C_0805_2012Metric,2,Samsung,CL21B474KBFNNNE,C13967,LCSC,C_SET de los LT3045/LT3094.
-"C16,C20,C22,C36,C37,C38",22uF 25V X7R,Capacitor_SMD:C_1210_3225Metric,6,Murata,GRM32ER71E226KE15L,C21397,LCSC,Salida de PS3 (K78 C2) y entrada/salida de la cascada ultra: >= 10 uF efectivos a 12 V.
-C15,10uF 50V X7R,Capacitor_SMD:C_1210_3225Metric,1,Murata,GRM32ER71H106KA12L,C77102,LCSC,Entrada de PS3 (K78 C1: 10 uF/50 V).
+"C16,C20,C22,C36,C37,C38",22uF 25V X7R,Capacitor_SMD:C_1210_3225Metric,6,Murata,GRM32ER71E226KE15L,C21397,LCSC,Salida de PS3 (el 10 uF de la medida de rizado, traco_thn20wi.pdf p. 2) y entrada/salida de la cascada ultra: >= 10 uF efectivos a 12 V.
 "RV2,RV3",1k 3296W,Potentiometer_THT:Potentiometer_Bourns_3296W_Vertical,2,Bourns,3296W-1-102LF,C57089,LCSC,Ajuste fino de +13.10 V y -12.90 V.
 SW1,Pulsador 6x6,Button_Switch_THT:SW_PUSH_6mm,1,Omron,B3F-1000,C93157,LCSC,Rearme manual del enclavamiento M5 (>= 2 s).
 J3,Bornera 4P 5.08 mm,"TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-4-5.08_1x04_P5.08mm_Horizontal",1,Phoenix Contact,1715747,C5443561,LCSC,"Fila de invitados (D-B2): 1 +12V_RACK, 2 GNDA, 3 -12V_RACK, 4 +5V_RACK."

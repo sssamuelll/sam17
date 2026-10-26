@@ -41,7 +41,10 @@ def test_derating_monotono_y_anclado() -> None:
     # Puntos exactos de hoja a 65 C (convertidores) y 45 C (ladrillo):
     assert abs(cv.derating("URB2405YMD-20WR3", 65.0) - 1.00) < 1e-12
     assert abs(cv.derating("URB2405YMD-20WR3", 75.0) - 0.75) < 1e-12
-    assert abs(cv.derating("K7805T-1000R3", 65.0) - 0.92) < 1e-12
+    assert abs(cv.derating("THN-20-2411WI", 65.0) - 1.00) < 1e-12
+    # Tramo 65,5 C (100 %) -> 79,9 C (50 %): a 72,7 C, punto medio, da 75 %.
+    assert abs(cv.derating("THN-20-2411WI", 79.9) - 0.50) < 1e-12
+    assert abs(cv.derating("THN-20-2411WI", 72.7) - 0.75) < 1e-12
     assert abs(cv.derating("TE90A2449F01", 45.0) * 90.0 - 82.5) < 1e-9
 
 

@@ -261,6 +261,32 @@ los copió al disparo de 5,8 V. Con la hoja, ±12 V dispara entre 13,37 y
 sus 150 mVpp a carga ligera: 5,49 V, 0,19 V bajo el disparo. Siguen abiertos el
 puente del K78 y `+5V_AUX`.
 
+**Hecho el 2026-10-26, el convertidor (firmado por Samuel ese día).** `PS3` pasa
+a **TRACO THN 20-2411WI**, flyback aislado de la familia de `PS1`, `PS4` y `PS5`,
+en la misma huella de 1 × 1 pulgada (`traco_thn20wi.pdf` p. 1–4). Con la entrada
+y la salida separadas por la barrera de 1600 VDC, el puente del K78 sale del
+contrato (propuesta sec. 9.1), y `check_absmax.py` exige que `PS3` sea un
+módulo aislado. Lo que el THN sí trae es su fuga: con el lazo roto empuja hasta
+su límite (190 % de 4 A, p. 2), y con `C16` sola el riel subía 0,35 V/µs, así
+que los 2 µs típicos del disparo de `SCR3` dejaban `+5V_AUX` en 6,55 V. La hoja
+de firma no lo traía, y Samuel decidió el mismo día las dos piezas que faltaban:
+
+- **`C39`**, 1000 µF (Lelon VZH102M1CTR-1010), que deja la subida en
+  0,0095 V/µs y el pico en 5,88 V. Aguanta hasta 15 µs de retardo del disparo.
+- **`+5V_AUX` detrás de `F4`**, como pedía el «Cierra» de arriba. Cuando `F4`
+  abre tras el disparo, la telemetría, el +5 V auxiliar del módulo 2 y el
+  pull-up de `SHDN_CASCADE` se apagan, en vez de quedarse con el OVP del THN
+  (hasta 8,20 V). La cascada se para con ellos.
+
+`R49` pasa a 12,7 kΩ: el disparo, entre 5,53 y 5,86 V, sobre un máximo sano de
+5,15 V. Las víctimas de `+5V_AUX` tienen su fila en `absmax.csv`. Siguen en «lo
+que no cubre»:
+
+- la desviación transitoria del THN 20 (pregunta a TRACO);
+- la fuga como fuente a su límite, que es una cota;
+- el dI/dt de la descarga de `C39` por `SCR3`, que la hoja del BT151 limita a
+  50 A/µs (p. 3).
+
 ### 3.6 MEDIA — `curvas.py` cita una frase de derating que las hojas de TRACO no tienen (P1, P2, P3) · #492
 
 `curvas.py:36–38` atribuye al THN 30-2422WI, en su p. 2, «Operating
@@ -474,12 +500,13 @@ cuentan tres crowbars.
   queda.
 - `D10` sin montar, o con su trabajo escrito: no conduce en ningún caso
   modelado.
-- `F2` a `F5` a 0 Ω en la misma huella, o con su trabajo escrito: ninguno tiene
-  apertura garantizada contra su convertidor (#476). Con `F4` a 0 Ω, además,
-  `+5V_AUX` no se queda sin tope tras el disparo: `SCR3` la sujeta hasta que
-  `U16` enclava (§3.5).
-- `PS2` y `PS3` a THN 20-2411WI: una familia, un proveedor y OVP publicado.
-  Cuesta reruteo y el rendimiento garantizado del digital (P2).
+- `F2`, `F3` y `F5` a 0 Ω en la misma huella, o con su trabajo escrito: ninguno
+  tiene apertura garantizada contra su convertidor (#476). `F4` ya no: desde el
+  2026-10-26 el THN de `PS3` lo abre (5 A mínimo contra 2 A), y es lo que corta
+  `+5V_AUX` tras el disparo (§3.5).
+- ~~`PS3` a THN 20-2411WI~~ (hecho el 2026-10-26, §3.5). `PS2` a THN 20-2411WI:
+  una familia, un proveedor y OVP publicado. Cuesta reruteo y el rendimiento
+  garantizado del digital (P2).
 - `L3` también SRP1265A-220M, y `R32`/`R33` con la misma referencia al 0,1 %
   que `R45`/`R46`: dos referencias menos. `L3` cambia de huella.
 
@@ -511,11 +538,11 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y la propuesta enmendada (§3.9) |
+| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), ~~el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5)~~, ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y la propuesta enmendada (§3.9) |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
 | **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y ~~`SCR4` sin montar (§4.5)~~ |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
-| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |
+| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y ~~la toma de `+5V_AUX`, si se mueve (§3.5)~~: detrás de `F4`, con `PS3` en THN y `C39` |
 | **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con el ladrillo antes de conectar `J1` (§3.1); y «los dos o ninguno» en `PS1` (§4.4) |
 
 ## 6. Lo que la junta no pudo comprobar

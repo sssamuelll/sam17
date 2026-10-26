@@ -167,16 +167,21 @@ OHM_POR_M_CORDON = 0.0132
 LARGO_CORDON_M = 2.0
 # UVLO maximo de arranque de los convertidores interiores:
 # URB2405YMD-20WR3: 9.0 V max (mornsun_urb_ymd20wr3.pdf p. 2)
-# THN 20-2413WI / THN 30-2422WI: 8.8 V max (traco_thn20wi.pdf / thn30wi.pdf p. 1)
-# K7805T-1000R3: 8.0 V min de rango operativo (mornsun_k78_t1000r3.pdf p. 1)
+# THN 20-2411WI / THN 20-2413WI / THN 30-2422WI: 8.8 V max (traco_thn20wi.pdf /
+# thn30wi.pdf p. 2, "Under Voltage Lockout 24 Vin models")
 V_ARRANQUE_DCDC_MAX_V = 9.0
 
 # --- los convertidores de dentro (M1, H-CENSO-ETA-DIGITAL) -----------------
-# Cotas de diseno para el presupuesto termico. Las hojas de TRACO, Mornsun K78
-# y RECOM solo publican el tipico (ver ESTIMADOS).
+# Cotas de diseno para el presupuesto termico. Las hojas de TRACO y Mornsun
+# solo publican el tipico (ver ESTIMADOS).
 ETA_BUCK = 0.90
 ETA_INVERSOR = 0.85
 ETA_AISLADO = 0.85
+# PS3, TRACO THN 20-2411WI (#491): la hoja da 89 % tipico (traco_thn20wi.pdf
+# p. 1) y la figura "Efficiency versus Output Load" a Vin = 24 V da 83 % con el
+# 20 % de carga (0,8 A de 4 A), que es el punto de trabajo del riel
+# (traco_thn20wi_characteristic_curves.pdf p. 3).
+ETA_RACK5 = 0.83
 # M1 (H-CENSO-ETA-DIGITAL): Mornsun URB2405YMD-20WR3 publica 88 % minimo
 # garantizado y 90 % tipico a plena carga (mornsun_urb_ymd20wr3.pdf p. 1).
 ETA_DIGITAL_AISLADO = 0.88
@@ -185,7 +190,7 @@ ETA_DIGITAL_AISLADO = 0.88
 ETA_HOJA_TIPICA = {
     "+12 rack (bus fila B + pantalla)": 0.89,   # TRACO THN 30-2422WI p. 1 (89% typ)
     "-12 rack (bus fila B)": 0.89,              # TRACO THN 30-2422WI p. 1 (89% typ)
-    "+5 rack (bus fila B + +5V_AUX)": 0.88,     # RECOM RPMB5.0-2.0 p. 2 (88% typ)
+    "+5 rack (bus fila B + +5V_AUX)": 0.89,     # TRACO THN 20-2411WI p. 1 (89% typ)
     "+5 digital (4 x N657 + host USB)": 0.90,   # Mornsun URB2405YMD-20WR3 p. 1 (90% typ, 88% min)
     "crudo +cascada (a U1)": 0.89,              # TRACO THN 20-2413WI p. 1 (89% typ)
     "crudo -cascada (a U2)": 0.89,              # TRACO THN 20-2413WI p. 1 (89% typ)
@@ -198,11 +203,12 @@ SETPOINT_V = {"U1": 13.10, "U2": 12.90}
 V_ULTRA_SALIDA_V = 12.0
 
 ESTIMADOS = (
-    f"ETA_BUCK={ETA_BUCK}, ETA_INVERSOR={ETA_INVERSOR}, ETA_AISLADO={ETA_AISLADO}: "
-    "THN 30-2422WI, THN 20-2413WI, K7805T-1000R3 y RPMB5.0-2.0 solo publican "
-    "tipicos (el K78 da 93/85 % a Vin min/max, p. 1). ETA_BUCK queda POR ENCIMA "
-    "del tipico en +12 rack (89 %) y +5 rack (88 % del RPMB); la rama -12 y las "
-    "de la cascada van por debajo",
+    f"ETA_BUCK={ETA_BUCK}, ETA_INVERSOR={ETA_INVERSOR}, ETA_AISLADO={ETA_AISLADO}, "
+    f"ETA_RACK5={ETA_RACK5}: THN 30-2422WI, THN 20-2413WI y THN 20-2411WI solo "
+    "publican tipicos (89 % los tres, p. 1). ETA_BUCK queda POR ENCIMA del "
+    "tipico en +12 rack (89 %); la rama -12 y las de la cascada van por debajo. "
+    "ETA_RACK5 es la lectura de la figura de eficiencia a 24 V con el 20 % de "
+    "carga (curvas p. 3), por debajo del tipico",
     f"TOL_CRUDO={TOL_CRUDO}: +-2,5 % conservador tras recorte Trim (+-1 % base en thn20wi.pdf p. 2)",
     "IGND_LDO_ULTRA_MAX_A: la fila de 500 mA de la hoja aplicada a ~325 mA por "
     "pieza; es cota por arriba, la hoja no publica la de 325 mA",
@@ -262,8 +268,8 @@ def rieles(*, eta_digital: float = ETA_DIGITAL_AISLADO) -> list[dict]:
          "a": FILA_B_A, "eta": ETA_INVERSOR,
          "pieza": "TRACO THN 30-2422WI (rama -12 V)"},
         {"nombre": "+5 rack (bus fila B + +5V_AUX)", "v": V_RIEL["rack+5"],
-         "a": FILA_B_A + AUX_A, "eta": ETA_BUCK,
-         "pieza": "Mornsun K7805T-1000R3 (PS3) / RECOM RPMB5.0-2.0"},
+         "a": FILA_B_A + AUX_A, "eta": ETA_RACK5,
+         "pieza": "TRACO THN 20-2411WI (PS3, aislado)"},
         {"nombre": "+5 digital (4 x N657 + host USB)", "v": 5.0,
          "a": DIGITAL_A, "eta": eta_digital,
          "pieza": "Mornsun URB2405YMD-20WR3 (aislado M1, 88% min)"},
@@ -464,7 +470,7 @@ def censo_optimista_w() -> float:
     filas = [
         (V_RIEL["rack+12"], 0.300 + PANTALLA_A, ETA_BUCK),
         (V_RIEL["rack-12"], 0.300, ETA_INVERSOR),
-        (V_RIEL["rack+5"], 0.300 + AUX_CENSO_A, ETA_BUCK),
+        (V_RIEL["rack+5"], 0.300 + AUX_CENSO_A, ETA_RACK5),
         (5.0, DIGITAL_TYP_A, ETA_DIGITAL_AISLADO),
         (v_alto, CASCADA_CENSO_A, ETA_AISLADO),
         (v_alto, CASCADA_CENSO_A, ETA_AISLADO),
@@ -487,7 +493,7 @@ def no_cubre() -> tuple[str, ...]:
         f"{V_LADRILLO * (1 + TOL_LADRILLO):.1f} V)",
         "El cordon con el cobre a 20 C: caliente cae mas y tira mas corriente",
         "La carga de cada convertidor contra su nominal con derating: PS3 lleva "
-        f"{FILA_B_A + AUX_A:.2f} A de su 1 A (K7805T-1000R3); el derating vive "
+        f"{FILA_B_A + AUX_A:.2f} A de sus 4 A (THN 20-2411WI); el derating vive "
         "en curvas.py y nadie cruza las dos cosas",
         "Solo regimen permanente: ni arranque, ni dv/dt del eFuse, ni transitorios",
     )

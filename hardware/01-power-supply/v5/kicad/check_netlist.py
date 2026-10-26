@@ -54,10 +54,14 @@ CONTRATO = [
      "entrada; FUENTE de Q2 y VS/SRC del LM74502 (proteccion de polaridad)"),
     ("+24V_PROT", {"Q2.5", "U16.1", "U16.2", "U16.3", "U16.6", "R12.1"},
      "drenador de Q2 -> IN e IN_SYS del eFuse U16"),
-    ("+24V_SW", {"U16.18", "U16.19", "U16.20", "PS1.1", "PS2.3", "PS3.1", "PS3.2",
+    ("+24V_SW", {"U16.18", "U16.19", "U16.20", "PS1.1", "PS2.3", "PS3.1",
                  "PS4.1", "PS5.1"}, "salida de U16 a los cinco convertidores"),
-    ("GND24", {"J1.2", "PS1.2", "PS2.2", "PS3.3", "PS3.7", "PS4.2", "PS5.2", "U16.9",
+    ("GND24", {"J1.2", "PS1.2", "PS2.2", "PS3.2", "PS4.2", "PS5.2", "U16.9",
                "U16.21", "U17.6", "U18.2", "NT1.1"}, "retorno del ladrillo"),
+    ("+5V_RAW_RACK", {"PS3.3", "C16.1", "C39.1", "F4.1"},
+     "PS3 aislado (#491) con el electrolitico que frena su fuga"),
+    ("+5V_FUSED_RACK", {"F4.2", "R30.1", "R20.1", "U12.10", "U14.10"},
+     "+5V_AUX cuelga despues de F4 (#491): un F4 abierto la corta"),
     ("+15V5_RAW", {"PS4.3", "U19.1", "U19.2", "U19.3", "U19.6", "R35.1"},
      "PS4 -> eFuse U19, con el OVP sensando ANTES del LC (#334)"),
     ("+15V5_EFUSE", {"U19.18", "U19.19", "U19.20", "L2.1"}, "U19 -> L2"),
@@ -131,7 +135,7 @@ def main() -> int:
     # 2. Masas
     gnda, gnd24, gndd = nets.get("GNDA", set()), nets.get("GND24", set()), nets.get("GNDD", set())
     puentes = {n.split(".")[0] for n in gnd24} & {n.split(".")[0] for n in gnda}
-    puentes -= {"PS1", "PS4", "PS5"}          # el aislamiento de un modulo no es un puente
+    puentes -= {"PS1", "PS3", "PS4", "PS5"}   # el aislamiento de un modulo no es un puente
     if puentes != {"NT1"}:
         fallos.append(f"GND24 y GNDA se tocan en {sorted(puentes)}: tiene que ser SOLO NT1")
     toca_gndd = ({n.split(".")[0] for n in gndd} & ({n.split(".")[0] for n in gnda} |
@@ -211,7 +215,7 @@ def main() -> int:
             fallos.append(f"D-F4: falta la histeresis {r_h} desde SHDN_CASCADE")
 
     disparos = {"1": ("R45", "R47", 13.8), "2": ("R46", "R48", 13.8),
-                "3": ("R49", "R50", 5.8), "4": ("R51", "R52", 5.65)}
+                "3": ("R49", "R50", 5.66), "4": ("R51", "R52", 5.65)}
     for n, (ra, rb, obj) in disparos.items():
         v = 2.495 * (1 + valor(ra) / valor(rb))
         if not cerca(v, obj, 0.05):

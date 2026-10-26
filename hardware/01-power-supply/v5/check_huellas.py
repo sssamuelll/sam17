@@ -55,13 +55,6 @@ PLANOS = {
         "giro": ("1", "6", "2", +1),
         "patilla": 1.0,
     },
-    "PS3": {
-        "hoja": f"{DS}/mornsun_k78_t1000r3.pdf p. 5 (PCB Layout, top view)",
-        "dist": {("1", "2"): 2.54, ("2", "3"): 2.54, ("3", "4"): 2.54, ("4", "5"): 2.54,
-                 ("1", "10"): 10.10, ("4", "7"): 10.10, ("5", "6"): 10.10},
-        "giro": ("1", "5", "10", -1),
-        "patilla": 0.0,
-    },
     "J5": {
         "hoja": "Vogt AG, Steckzungen fuer gedruckte Schaltungen, 3866A.68: A 5 = 5.0 mm",
         "dist": {},
@@ -76,7 +69,7 @@ PLANOS = {
         "patilla": 0.0,
     },
 }
-PS_IGUALES = {"PS4": "PS1", "PS5": "PS1"}   # THN 20WI = THN 30WI, mismo 1x1 pulgada
+PS_IGUALES = {"PS3": "PS1", "PS4": "PS1", "PS5": "PS1"}   # THN 20WI = THN 30WI, mismo 1x1 pulgada
 
 
 def ruta_huella(fp: str) -> str:

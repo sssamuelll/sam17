@@ -10,7 +10,7 @@ externo de 24 VDC (TE90A2449F01) y cinco
 convertidores DC-DC internos:
   - PS_RACK_PM:  TRACO THN 30-2422WI (+-12 V rack, 30 W)
   - PS_DIG:      Mornsun URB2405YMD-20WR3 (+5 V digital aislado, 20 W)
-  - PS_RACK_5V:  Mornsun K7805T-1000R3 (+5 V rack buck, 5 W)
+  - PS_RACK_5V:  TRACO THN 20-2411WI (+5 V rack, aislado, 20 W)
   - PS_RAW_P:    TRACO THN 20-2413WI (+15.5 V crudo cascada, 20 W)
   - PS_RAW_N:    TRACO THN 20-2413WI (-15.5 V crudo cascada, 20 W)
 
@@ -70,12 +70,12 @@ COLS = [
 PASOS_ESPERADOS = {"0", "1", "2", "2b", "2c", "3", "4", "5", "6", "7", "8"}
 
 TOL_TELE = 0.01  # +-1 %: divisores al 0.1 % mas error de ADC
-MODULOS_DCDC = ("THN30_mas12", "THN30_menos12", "URB2405_5V", "K7805_5V", "THN20_mas15", "THN20_menos15")
+MODULOS_DCDC = ("THN30_mas12", "THN30_menos12", "URB2405_5V", "THN20_5V", "THN20_mas15", "THN20_menos15")
 V_DCDC = {
     "THN30_mas12": 12.0,
     "THN30_menos12": -12.0,
     "URB2405_5V": 5.0,
-    "K7805_5V": 5.0,
+    "THN20_5V": 5.0,
     "THN20_mas15": 15.5,
     "THN20_menos15": -15.5,
 }
@@ -84,7 +84,7 @@ RIZADO_MAX_VPP = {
     "THN30_mas12": 0.100,
     "THN30_menos12": 0.100,
     "URB2405_5V": 0.100,
-    "K7805_5V": 0.075,
+    "THN20_5V": 0.075,       # traco_thn20wi.pdf p. 2: 75 mVp-p typ. (1uF X7R || 10uF TC)
     "THN20_mas15": 0.100,
     "THN20_menos15": 0.100,
 }
@@ -355,7 +355,7 @@ def _puntos() -> list[Punto]:
                "T10 / T27: temperatura de carcasa URB2405YMD-20WR3 a 45 C ambiente (< 80 C max)",
                hi=80.0))
     p.append(P("7", "temperatura_carcasa_THN20_c", "C",
-               f"T10 / T27 / #492: carcasa de PS4 y PS5 (THN 20-2413WI) a carga declarada, con el "
+               f"T10 / T27 / #492: carcasa de PS3, PS4 y PS5 (THN 20-2411WI / -2413WI) a carga declarada, con el "
                f"aire junto al modulo a {aire} (sala de 45 C, caja cerrada); la carcasa admite "
                "105 C max. (traco_thn20wi.pdf p. 3)",
                hi=100.0))
