@@ -306,8 +306,9 @@ P_RECINTO_MAX = _CONSTANTE_RECINTO_W + sum(PERDIDA_RECINTO_W.values())
 # case, que es un dato y no un defecto.
 # Las aberturas de D-F3 son las persianas del case (2026-10-11), y esta base
 # no las sigue a proposito: es la v4, que no se monta (D-V4). Ver
-# test_el_area_base_es_la_que_el_case_tiene_hoy().
-A_EF_BASE_MM2 = 3299.0
+# test_el_area_base_es_la_que_el_case_tiene_hoy(). Era 3299.0 hasta que la
+# ventana de red se achico a 30 x 18 (#130) y la rejilla gano una columna.
+A_EF_BASE_MM2 = 3314.7
 H_TIRO_CAJON_M = 0.105
 # Spec del chasis sec.3.3: exterior derivado 338.6 x 176.6 x 83 mm.
 H_TIRO_RECINTO_M = 0.083

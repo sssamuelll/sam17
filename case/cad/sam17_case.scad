@@ -1335,6 +1335,13 @@ module talon_2d() {
         for (z = nariz_m4_z())
             translate([z - chapa_z0(), d - m4_pie_borde()])
                 circle(d = pem_cls_m4 + kerf);
+        // #130: los dos pasos del M4 que sube desde la base a la CLS-M4 de la
+        // escuadra del enchufe, que se apoya ENCIMA de este pie. De paso (Ø4.5,
+        // la tuerca va en la escuadra), a escuadra_pie_dentro mas adentro que el
+        // canto de las tuercas del propio pie.
+        for (z = escuadra_m4_z())
+            translate([z - chapa_z0(), d - (escuadra_m4_x() - talon_x_pie())])
+                circle(d = d_M4_paso + kerf);
         // el corte en U, de corte_pestana de ancho, POR FUERA de la pestana:
         // la pestana mide talon_pestana_ancho x su desarrollo, y el corte la
         // rodea por los dos lados y por el fondo, dejando el doblez sin cortar
@@ -1425,6 +1432,11 @@ module talon() {
             translate([talon_m4_x(), -0.1, z])
                 rotate([-90, 0, 0])
                     cylinder(h = t_costilla + 0.2, d = d_M4_paso + kerf);
+        // los dos pasos del M4 de la escuadra del enchufe (#130)
+        for (z = escuadra_m4_z())
+            translate([escuadra_m4_x(), -0.1, z])
+                rotate([-90, 0, 0])
+                    cylinder(h = t_costilla + 0.2, d = d_M4_paso + kerf);
         // las ventanas de las pestanas, en el pie
         for (zc = talon_pestana_z())
             translate([talon_pestana_x() - talon_pestana_dev(), -0.1,
@@ -1436,6 +1448,191 @@ module talon() {
         translate([talon_pestana_x() - t_costilla, t_costilla,
                    zc - talon_pestana_ancho/2])
             cube([t_costilla, talon_pestana_alto, talon_pestana_ancho]);
+}
+
+// --- LA ESCUADRA DEL ENCHUFE (#130) --------------------------------------
+// Samuel, 2026-10-26: "an L bracket on the floor". Una L de 6082-T6 de
+// t_escuadra, anodizada en negro porque su cara se ve por la ventana de la
+// trasera, con UN doblez a 90 de radio interior radio_doblez_escuadra:
+//   - el PIE, plano sobre el pie del talon, de su canto libre (escuadra_pie_
+//     dentro mas adentro) hasta la placa. Son DOS lenguetas, A y B, porque el
+//     pie del talon lleva la ventana de su pestana y la pestana se alza 8 por
+//     encima: ni el pie ni el doblez pueden pasar por ahi. Cada lengueta lleva
+//     una CLS-M4 prensada, y el M4 sube desde abajo por la base y el talon.
+//   - la PLACA, a escuadra_aire_trasera de la cara interior de la trasera
+//     y de t_escuadra de gruesa, que cierra la ventana por dentro. Rebasa la
+//     ventana escuadra_solape por cada lado y por arriba. Entre las dos
+//     lenguetas su canto de abajo SUBE hasta el alivio: por encima del canto
+//     de arriba de la pestana del talon mas escuadra_aire_talon.
+//   - el enchufe Kycon va atornillado a su DORSO; la nariz de la clavija
+//     (kppx_nariz_d) pasa por un taladro de la placa.
+// GEMELAS de _escuadra() en clearance_budget.py; las mide guarda_enchufe().
+
+// La ventana de la trasera, en mundo. GEMELA de la cuenta de
+// piel_trasera_2d(): x_iec0 + trasera_z0() en z, la banda libre en y.
+function ventana_z0() = trasera_z0() + trasera_au() - iec_margen_der - iec_ancho;
+function ventana_y0() = banda_libre_trasera()[0]
+    + (banda_libre_trasera()[1] - banda_libre_trasera()[0] - iec_alto)/2;
+function ventana_zc() = ventana_z0() + iec_ancho/2;
+function ventana_yc() = ventana_y0() + iec_alto/2;
+
+function escuadra_x_cara() = x_trasera_int() - escuadra_aire_trasera;  // cara delantera de la placa
+function escuadra_x_dorso() = escuadra_x_cara() - t_escuadra;  // dorso: la brida del enchufe
+function escuadra_x_pie() = talon_x_pie() + escuadra_pie_dentro;
+function escuadra_y_pie() = t_costilla;                        // cara de abajo del pie, sobre el del talon
+function escuadra_y_arriba() = ventana_y0() + iec_alto + escuadra_solape;
+// La pestana del talon que cae detras de la ventana: la mas cercana a su centro.
+function escuadra_pestana_z() =
+    let (d = [for (zc = talon_pestana_z()) abs(zc - ventana_zc())])
+    talon_pestana_z()[search(min(d), d)[0]];
+// Medio ancho de lo que las lenguetas dejan libre: la pestana, su corte en U y
+// el aire.
+function escuadra_hueco_z() = talon_pestana_ancho/2 + corte_pestana + escuadra_aire_talon;
+function escuadra_y_alivio() = t_costilla + talon_pestana_alto + escuadra_aire_talon;
+// Una lengueta con su CLS-M4 a m4_pie_borde() de los dos cantos mide al menos el doble.
+function escuadra_lengueta_min() = 2*m4_pie_borde();
+function escuadra_a1() = escuadra_pestana_z() - escuadra_hueco_z();   // donde acaba la lengueta A
+function escuadra_b0() = escuadra_pestana_z() + escuadra_hueco_z();   // donde empieza la B
+function escuadra_z0() = min(ventana_z0() - escuadra_solape,
+                             escuadra_a1() - escuadra_lengueta_min());
+function escuadra_z1() = max(ventana_z0() + iec_ancho + escuadra_solape,
+                             escuadra_b0() + escuadra_lengueta_min());
+function escuadra_m4_z() = [(escuadra_z0() + escuadra_a1())/2,
+                            (escuadra_b0() + escuadra_z1())/2];
+function escuadra_m4_x() = escuadra_x_pie() + m4_pie_borde();
+// El desarrollo: lo que mide el pie hasta el plano de la placa (la arista viva
+// exterior), mas lo que sube la placa, menos la deduccion del doblez. La misma
+// cuenta de pestana_bd(), con el radio y el espesor de esta chapa.
+function escuadra_bd() = 2*(radio_doblez_escuadra + t_escuadra)
+                         - PI/2*(radio_doblez_escuadra + k_factor*t_escuadra);
+function escuadra_pie_largo() = escuadra_x_cara() - escuadra_x_pie();
+function escuadra_placa_alto() = escuadra_y_arriba() - escuadra_y_pie();
+function escuadra_desarrollo_ancho() = escuadra_z1() - escuadra_z0();
+function escuadra_desarrollo_largo() =
+    escuadra_pie_largo() + escuadra_placa_alto() - escuadra_bd();
+// Donde cae en el desarrollo (desde el canto libre del pie) un punto de la
+// PLACA, o sea por encima del doblez, a la altura y del mundo.
+function escuadra_v(y) = escuadra_pie_largo() - escuadra_bd() + (y - escuadra_y_pie());
+
+// El desarrollo plano, VISTO POR LA CARA DE DENTRO del doblez (la del enchufe)
+// y con el doblez subiendo hacia el observador. x = z del mundo menos
+// escuadra_z0(); y = el desarrollo desde el canto libre del pie. Sin lineas de
+// plegado: el taller dobla con las cotas del pliego.
+module escuadra_enchufe_2d() {
+    W = escuadra_desarrollo_ancho();
+    V = escuadra_desarrollo_largo();
+    a1 = escuadra_a1() - escuadra_z0();
+    b0 = escuadra_b0() - escuadra_z0();
+    vr = escuadra_v(escuadra_y_alivio());
+    vn = escuadra_v(ventana_yc());
+    difference() {
+        polygon([[0, 0], [a1, 0], [a1, vr], [b0, vr], [b0, 0],
+                 [W, 0], [W, V], [0, V]]);
+        // las dos CLS-M4, prensadas despues de anodizar
+        for (z = escuadra_m4_z())
+            translate([z - escuadra_z0(), m4_pie_borde()])
+                circle(d = pem_cls_m4 + kerf);
+        // el taladro de la nariz de la clavija y los dos del M2.5 del enchufe
+        translate([ventana_zc() - escuadra_z0(), vn])
+            circle(d = escuadra_agujero_nariz + kerf);
+        for (s = [-1, 1])
+            translate([ventana_zc() + s*kycon_tal_sep/2 - escuadra_z0(), vn])
+                circle(d = escuadra_agujero_m25 + kerf);
+    }
+}
+
+// El perfil de la L en el plano x-y del mundo, con el doblez de radio interior
+// radio_doblez_escuadra: el cuarto de corona que une el pie con la placa.
+module escuadra_perfil_2d() {
+    r = radio_doblez_escuadra;
+    R = r + t_escuadra;
+    cx = escuadra_x_cara() - R;
+    cy = escuadra_y_pie() + R;
+    union() {
+        translate([escuadra_x_pie(), escuadra_y_pie()])
+            square([cx - escuadra_x_pie() + 0.01, t_escuadra]);
+        translate([escuadra_x_dorso(), cy - 0.01])
+            square([t_escuadra, escuadra_y_arriba() - cy + 0.01]);
+        translate([cx, cy]) intersection() {
+            difference() { circle(r = R); circle(r = r); }
+            translate([0, -R]) square([R, R]);
+        }
+    }
+}
+
+// Avellanado a 90 grados de la cabeza del M2.5 del render C: del diametro de la cabeza
+// al del paso, 45 por lado. Solo dibuja; no es cota de fabricacion.
+function avellanado_hondo() = (m25_cabeza_d - escuadra_agujero_m25)/2;
+
+module escuadra_enchufe() {
+    assert(iec_ancho >= kppx_cuerpo_d + 2*ventana_holgura_kppx
+           && iec_alto >= kppx_cuerpo_d + 2*ventana_holgura_kppx,
+           "la ventana de red no da sitio al cuerpo de la clavija con su holgura");
+    difference() {
+        union() {
+            for (q = [[escuadra_z0(), escuadra_a1()], [escuadra_b0(), escuadra_z1()]])
+                translate([0, 0, q[0]]) linear_extrude(q[1] - q[0])
+                    escuadra_perfil_2d();
+            // entre las dos lenguetas, la placa sola, por encima del alivio
+            translate([escuadra_x_dorso(), escuadra_y_alivio(), escuadra_a1()])
+                cube([t_escuadra, escuadra_y_arriba() - escuadra_y_alivio(),
+                      escuadra_b0() - escuadra_a1()]);
+        }
+        translate([escuadra_x_dorso() - 0.1, ventana_yc(), ventana_zc()])
+            rotate([0, 90, 0])
+                cylinder(h = t_escuadra + 0.2, d = escuadra_agujero_nariz + kerf);
+        for (s = [-1, 1])
+            translate([escuadra_x_dorso() - 0.1, ventana_yc(),
+                       ventana_zc() + s*kycon_tal_sep/2])
+                rotate([0, 90, 0])
+                    cylinder(h = t_escuadra + 0.2, d = escuadra_agujero_m25 + kerf);
+        // el avellanado del render C: la cabeza a ras de la cara de la placa
+        if (enchufe_avellanado > 0)
+            for (s = [-1, 1])
+                translate([escuadra_x_cara() - avellanado_hondo(), ventana_yc(),
+                           ventana_zc() + s*kycon_tal_sep/2])
+                    rotate([0, 90, 0])
+                        cylinder(h = avellanado_hondo() + 0.01,
+                                 d1 = escuadra_agujero_m25, d2 = m25_cabeza_d);
+        for (z = escuadra_m4_z())
+            translate([escuadra_m4_x(), escuadra_y_pie() - 0.1, z])
+                rotate([-90, 0, 0])
+                    cylinder(h = t_escuadra + 0.2, d = pem_cls_m4 + kerf);
+    }
+}
+
+// El Kycon KPJX-PM-4S, con la cara delantera de su brida en el dorso de la
+// placa. Solo la silueta: brida, orejas de los taladros y cuerpo. Las patillas
+// (kycon_patilla) las cuenta guarda_enchufe(), no se dibujan.
+module enchufe_kycon() {
+    ear_d = kycon_brida_z - kycon_tal_sep;
+    multmatrix([[0, 0, -1, escuadra_x_dorso()],
+                [0, 1, 0, ventana_yc()],
+                [1, 0, 0, ventana_zc()],
+                [0, 0, 0, 1]]) {
+        linear_extrude(kycon_brida_t) hull() {
+            for (s = [-1, 1]) translate([s*kycon_tal_sep/2, 0]) circle(d = ear_d);
+            circle(d = kycon_brida_y);
+        }
+        linear_extrude(kycon_fondo) circle(d = kycon_cuerpo_d);
+        for (s = [-1, 1])
+            translate([s*kycon_tal_sep/2, 0, 0]) cylinder(h = kycon_oreja, d = ear_d);
+    }
+}
+
+// Los dos M2.5 x m25_largo de cabeza alomada (o avellanada, en el render C):
+// de la cara de la placa hacia dentro, a la brida del enchufe.
+module enchufe_tornillos() {
+    for (s = [-1, 1])
+        translate([escuadra_x_cara(), ventana_yc(), ventana_zc() + s*kycon_tal_sep/2])
+            rotate([0, 90, 0]) {
+                translate([0, 0, -m25_largo]) cylinder(h = m25_largo, d = 2.5);
+                if (enchufe_avellanado > 0)
+                    translate([0, 0, -avellanado_hondo()])
+                        cylinder(h = avellanado_hondo(), d1 = 2.5, d2 = m25_cabeza_d);
+                else
+                    cylinder(h = m25_cabeza_h, d = m25_cabeza_d);
+            }
 }
 
 module miembros() {
@@ -1515,6 +1712,11 @@ module bandeja_base_2d() {
             translate([wz, nariz_m4_x()]) circle(d = d_M4_paso + kerf);
             translate([wz, talon_m4_x()]) circle(d = d_M4_paso + kerf);
         }
+        // LOS DOS M4 DE LA ESCUADRA DEL ENCHUFE (#130): desde abajo, por la
+        // base y por el pie del talon, a la CLS-M4 de las lenguetas de la
+        // escuadra. Los cruza guarda_bandeja_base() en check_dxf.
+        for (wz = escuadra_m4_z())
+            translate([wz, escuadra_m4_x()]) circle(d = d_M4_paso + kerf);
         // LOS CUATRO M4 DEL CHASIS DEL PSU, desde abajo a la tuerca remachable
         // de su suelo de acero. Los cruza taladros_talon() con chasis_cuerpo_2d,
         // que lleva los mismos cuatro.
@@ -1659,6 +1861,18 @@ module kondor_2d(espejo = false) {
                  spacing = kondor_spacing, halign = "center", valign = "center");
 }
 
+// La ventana de la entrada de red: un rectangulo con las esquinas redondeadas
+// a iec_radio_esq (R3 desde que Samuel eligio la B, #130). Con radio 0 sale un
+// square(); con la mitad del lado menor, una pastilla o un circulo.
+module ventana_red_2d() {
+    w = iec_ancho + kerf;
+    h = iec_alto + kerf;
+    r = min(iec_radio_esq, w/2, h/2);
+    if (r <= 0) square([w, h]);
+    else hull() for (dx = [r, w - r], dy = [r, h - r])
+        translate([dx, dy]) circle(r = r);
+}
+
 module piel_trasera_2d() {
     // CAPTURADA COMO LAS MEJILLAS desde el 2026-08-29 por la noche (2): sus
     // puntas dentro de los bolsillos de los anillos, y NI UN TALADRO. Ni las
@@ -1744,13 +1958,13 @@ module piel_trasera_2d() {
         // en 3D. Ver kondor_2d() arriba. Este fichero de corte YA NO ES la
         // pieza entera, igual que el DXF del chasis no dice de donde doblar.
         // VENTANA de paso de la entrada de red -- no el recorte donde se encaja
-        // el conector. El conector lo sostiene una pieza fija atornillada al
-        // larguero de base trasera (Samuel, 2026-08-23): la trasera se quita con
-        // 10 M3 y la spec §7 dice que las pieles removibles nunca llevan mains.
-        // Las tres cotas son PROVISIONALES y viven en params.scad (#130).
+        // el conector. El enchufe lo sostiene la escuadra del suelo (Samuel,
+        // 2026-10-26, #130): una placa que cierra esta ventana por dentro, a
+        // escuadra_aire_trasera de la cara interior de la trasera. Las cotas
+        // viven en params.scad; el tamano lo eligio Samuel entre tres renders.
         // +kerf como todo hueco interior del fichero.
         translate([x_iec0, lib0 + (lib1 - lib0 - iec_alto)/2])
-            square([iec_ancho + kerf, iec_alto + kerf]);
+            ventana_red_2d();
     }
 }
 
@@ -2290,6 +2504,8 @@ else if (PART == "costilla_dorso_2d") costilla_dorso_2d();
 else if (PART == "cupon_anillo_2d") seccion_anillo_2d();
 else if (PART == "marco_ventana_2d")     marco_ventana_2d();
 else if (PART == "talon_2d")             talon_2d();
+else if (PART == "escuadra_enchufe_2d")  escuadra_enchufe_2d();
+else if (PART == "escuadra_enchufe")     escuadra_enchufe();
 else if (PART == "nariz_2d")             nariz_2d();
 else if (PART == "assembly")           assembly();
 else if (PART == "assembly_acrilico")  assembly_acrilico();
@@ -2325,7 +2541,12 @@ else if (PART == "costilla_bolsillos_2d") costilla_bolsillos_2d();
 // Para render_persiana.py: lo que se pinta de cada color. Plateado solo los
 // Z-Rails (comprados); negro todo lo demas del aluminio; los paneles, grafito.
 else if (PART == "render_rieles")   rails();
-else if (PART == "render_negro")    { costillas(); marcos_ventana(); nariz(); miembros(); tapa_valle(); tira_valle(); bandeja_base(); }
+else if (PART == "render_negro")    { costillas(); marcos_ventana(); nariz(); miembros(); escuadra_enchufe(); tapa_valle(); tira_valle(); bandeja_base(); }
+// El enchufe Kycon (PBT negro) y sus dos M2.5 aparte, para pintarlos de su color (render_enchufe.py).
+else if (PART == "render_enchufe")  enchufe_kycon();
+// El talon solo, para el primer plano de render_enchufe.py: render_negro es el case entero.
+else if (PART == "render_talon")    talon();
+else if (PART == "render_tornillos_enchufe") enchufe_tornillos();
 else if (PART == "render_paneles")  paneles();
 else assert(false, str("PART desconocido: ", PART));
 
@@ -2651,6 +2872,9 @@ module assembly() {
     tapa_valle();
     tira_anti_ruido_valle();
     chasis();
+    escuadra_enchufe();
+    enchufe_kycon();
+    enchufe_tornillos();
     paticas();
     %paneles();                        // paneles de modulo: solo referencia
 }
@@ -2690,6 +2914,7 @@ module assembly_esqueleto() {          // aluminio, SIN paneles ni tapa
     rails();
     costillas();
     miembros();
+    escuadra_enchufe();
 }
 
 module assembly_acero() {              // el chasis del PSU, cerrado
@@ -2723,6 +2948,8 @@ module assembly_aluminio() {           // idem, Z-Rails + miembros + paneles sol
     // ensenando un aparato sostenido por su propia piel.
     costillas();
     miembros();
+    // LA ESCUADRA DEL ENCHUFE (#130): se ve por la ventana de la trasera.
+    escuadra_enchufe();
     // La tapa del valle. Entra aqui el 2026-08-25 al dejar de ser acrilico de 5
     // y pasar a aluminio de 3, y su sitio es este por la misma razon por la que
     // el cambio no rompe el lenguaje visual: queda entre los paneles de las dos
@@ -2879,6 +3106,30 @@ module bom() {
     echo(str("BOM: tornillo M4 x 8 ISO 7380 de boton x", len(nariz_m4_z()),
              " -- el pie del talon a la BASE, desde ABAJO (D-T2), a tuercas",
              " CLS-M4 prensadas en el pie. Ninguno en la cara vista."));
+    echo(str("BOM: ESCUADRA DEL ENCHUFE x1 (#130, Samuel 2026-10-26) -- chapa",
+             " 6082-T6 de ", t_escuadra, ", anodizada NEGRO (su cara se ve por la",
+             " ventana de la trasera), doblada UNA vez a 90 con radio interior ",
+             radio_doblez_escuadra, " (1 t: HUECO, el 6082-T6 puede fisurar). Una",
+             " placa de ", escuadra_z1() - escuadra_z0(), " x ", escuadra_placa_alto(),
+             " a ", escuadra_aire_trasera, " de la cara interior de la trasera, que cierra la ventana",
+             " de red por dentro, y un pie en DOS lenguetas sobre el del talon,",
+             " porque la pestana del talon se alza ahi. Desarrollo ",
+             escuadra_desarrollo_ancho(), " x ", escuadra_desarrollo_largo(),
+             ", del DXF escuadra_enchufe_2d: taladro de la nariz de la clavija de ",
+             escuadra_agujero_nariz, ", dos de ", escuadra_agujero_m25,
+             " para el M2.5 y dos de ", pem_cls_m4, " para las tuercas."));
+    echo(str("BOM: tuerca CLS-M4 x", len(escuadra_m4_z()), " -- una por lengueta de la escuadra del",
+             " enchufe, a ", m4_pie_borde(), " del canto libre del pie, prensadas DESPUES de anodizar."));
+    echo(str("BOM: tornillo M4 x 10 ISO 7380 de boton x", len(escuadra_m4_z()),
+             " -- la escuadra a la BASE, desde ABAJO, por la base (", t_base, ") y el pie",
+             " del talon (", t_costilla, "): ", t_base + t_costilla, " de pila y 5.5 de rosca",
+             " en la CLS (la misma penetracion que el M4 x 8 del talon, 8 - ", t_base,
+             " = 5, subida al largo normalizado: 9.5 -> 10)."));
+    echo(str("BOM: tornillo M2.5 x ", m25_largo, " de cabeza alomada x2 -- el Kycon KPJX-PM-4S",
+             " a la placa, de la cara de la ventana hacia dentro. La hoja pide 6.60 + el",
+             " espesor del panel (", t_escuadra, ") = ", kycon_tornillo + t_escuadra,
+             ": con ", m25_largo, " quedan ", m25_largo - t_escuadra, " de rosca en el",
+             " enchufe, por debajo de los ", kycon_tornillo, " de la hoja, asi que no toca fondo."));
     echo(str("BOM: Z-Rail de Tiptop x", len(centros_rail()) + len(centros_rail_1u()),
              ", largo ", largo_riel,
              " (104 HP) -- seccion ", rail_er_fondo, " x ", rail_er_alto,
@@ -2981,17 +3232,18 @@ module bom() {
     // nariz + 3 M4 del talon + 4 M4 del chasis + 2 M3 de pestana + 6 M5 de
     // la base = 58; eran 68 con los 10 M3 de la trasera hasta que se capturo
     // la noche del 2026-08-29. Desde el papel del suelo los 6 M4 de nariz y
-    // talon entran desde abajo, a tuercas CLS de sus pies).
+    // talon entran desde abajo, a tuercas CLS de sus pies). Desde #130 son
+    // 60: dos M4 mas, de la escuadra del enchufe a la base.
     echo("BOM: x12 M4 FIJOS para los seis Z-Rails, atornillados por ambas");
     echo("     puntas al MARCO DE LA VENTANA. No son ejes, hombros, cierres ni");
     echo("     palomillas; no llevan Belleville ni se dimensionan por friccion.");
     echo("     Estos 12 son los M4 DE RIEL. El case lleva mas M4 en otras");
     echo("     lineas de este BOM: marco al anillo x24, brida x4, nariz x3,");
-    echo("     talon x3, chasis x4.");
+    echo("     talon x3, escuadra del enchufe x2, chasis x4.");
     echo("     Los M5 del case son SOLO los de la BASE (6, x 12 ISO 7380, a rosca");
     echo("     ciega en el canto inferior del anillo): los 2 del chasis murieron");
     echo("     con el miembro bajo la noche del 2026-08-29.");
-    echo("BOM: PEM CLS-M4 x6 (pies de nariz y talon) y PEM FH-M4 x4 (base, patas);");
+    echo("BOM: PEM CLS-M4 x8 (pies de nariz y talon, y las dos lenguetas de la escuadra del enchufe) y PEM FH-M4 x4 (base, patas);");
     echo("     de acero o inoxidable, nunca de la serie de aluminio, prensadas");
     echo("     DESPUES de anodizar (papel del suelo, sec.3.4).");
     echo("BOM: paneles ciegos en TODO hueco de las tres filas; atornillados,");
@@ -3038,7 +3290,8 @@ module bom() {
              " mm (papel del suelo, 2026-10-12): campo de ", len(campo_base()),
              " agujeros de ", base_agujero, " cada ", base_paso, ", 6 M5 de paso ",
              d_M5_base, " (anillos), 6 M4 de paso (nariz y talon, desde abajo),",
-             " 4 FH-M4 (patas) y 4 M4 del chasis."));
+             " 2 M4 de paso (escuadra del enchufe, #130), 4 FH-M4 (patas) y 4 M4",
+             " del chasis."));
     echo(str("     Ocupa y = -", t_base, " a 0, bajo los anillos y a ras de su huella:"));
     echo("     su cara de arriba es el suelo interior. Al taller de CHAPA: laser");
     echo("     (agujeros salteados), desbarbado por las dos caras, planitud <= 1 mm");

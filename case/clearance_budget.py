@@ -1645,6 +1645,9 @@ def _cajas_solidas(p: dict[str, float]) -> tuple[list[Caja], list[Caja],
     railes.extend(c for c in caras
                   if c[0] in ("trasero alto meseta", "talon pie")
                   or c[0].startswith("talon pestana"))
+    # LA ESCUADRA DEL ENCHUFE Y EL ENCHUFE (#130): sobre el pie del talon, delante
+    # de sus pestanas y pegada a la cara interior de la trasera.
+    railes.extend(_cajas_escuadra(p))
     # EL MARCO DE LA VENTANA Y LA BRIDA SON CUERPOS y van en `railes`, que es
     # la lista que solapes() cruza contra todo. El marco vive en la rebanada
     # t_anillo .. t_anillo + t_placa por los dos costados, donde hasta hoy
@@ -2065,6 +2068,9 @@ def _misma_chapa(na: str, nb: str) -> bool:
     """
     # las ocho patas del marco son UNA pletina: se tocan en las esquinas
     if na.startswith("marco ") and nb.startswith("marco ")             and na.rsplit(" ", 1)[1] == nb.rsplit(" ", 1)[1]:
+        return True
+    # la placa y el pie de la escuadra del enchufe: una L, que se cruza en su doblez
+    if na.startswith("escuadra enchufe") and nb.startswith("escuadra enchufe"):
         return True
     # la banda y la meseta del miembro alto, la banda y el pie del talon: la
     # misma chapa, que se cruza en su propio doblez
@@ -3328,16 +3334,17 @@ def guarda_red(p: dict[str, float]) -> None:
     canto. El puente contra la ranura mas cercana se calcula y se imprime pero
     NO se asevera, porque seria un verde vacio -- ver la nota del punto 2.
 
-    Y IMPRIME de que pieza NO se derivan las cotas. La Schurter KM00.1105.11 SI
-    esta elegida (bom-chasis.csv de la fuente v3, hoja typ_KM.pdf) y su snap-in
-    agarra chapa de 1 a 2.5 mm: en una plancha de 8 no se monta, y nunca pudo.
-    Los 48 x 27.5 de hoy son su recorte girado 90 grados y redondeado a ojo. No
-    se "arreglan" a 47 x 28 aqui: esta ventana ya no es un recorte de encaje
-    sino un paso, y su cota la decide la pieza fija que aun no existe (#130).
+    Y DESDE EL 2026-10-26 (#130) LA PIEZA FIJA EXISTE: la escuadra del suelo, con
+    el Kycon KPJX-PM-4S atornillado a su dorso (guarda_enchufe()). La Schurter
+    KM00.1105.11 que mencionaba este parrafo era la de la fuente v3, y su snap-in
+    agarra chapa de 1 a 2.5 mm: en una plancha de 8 nunca pudo montarse. Sus
+    48 x 27.5 eran el recorte de esa hoja girado y redondeado a ojo; la ventana
+    la eligio Samuel entre tres renders (render_enchufe.py) y es la B, 30 x 18 a
+    R3. Lo unico duro es que deje sitio al cuerpo de la clavija, y eso lo
+    asevera guarda_enchufe().
 
     Su mutacion vive en canario_red(), como manda el Principio VIII."""
     au = _trasera_au(p)
-    f_base = _trasera_campo(p)[0]          # la coronacion del labio del talon
     lib0, lib1 = _banda_libre_trasera(p)   # la misma que centra la rejilla
     puente = p["vent_puente_min"]
 
@@ -3390,12 +3397,12 @@ def guarda_red(p: dict[str, float]) -> None:
           f"y={lib0 + holgura_v:.2f}..{lib1 - holgura_v:.2f}")
     print(f"  {holgura_v:.2f} mm de puente arriba y abajo, {borde:.2f} contra la "
           f"ranura mas cercana, {p['iec_margen_der']:.1f} al canto derecho")
-    print(f"  SIN DERIVAR de la Schurter KM00.1105.11 (hoja typ_KM.pdf p.3: "
-          f"recorte 28 x 47, brida 30.5 x 50). Su snap-in agarra chapa de 1 a "
-          f"2.5 mm y esta plancha tiene {p['t_piel']:.0f}: aqui NO se encaja")
-    print(f"  la sostiene una pieza fija atornillada al pie del talon (#130), "
-          f"{lib0 + holgura_v - (f_base + p['rail'] / 2):.2f} mm mas "
-          f"abajo -- sin dibujar todavia (#130)")
+    print(f"  es una ventana de PASO para la clavija Kycon KPPX-4P (cuerpo de "
+          f"{p['kppx_cuerpo_d']:g}): aqui NO se encaja nada en una plancha de "
+          f"{p['t_piel']:.0f}; su tamano lo eligio Samuel entre tres renders (#130)")
+    print("  la cierra por dentro la placa de la escuadra del enchufe (#130, "
+          "Samuel 2026-10-26: una L atornillada al pie del talon, con el Kycon "
+          "KPJX-PM-4S atornillado a su dorso); la mide guarda_enchufe()")
 
 
 def canario_trasera(p: dict[str, float]) -> None:
@@ -3720,6 +3727,443 @@ def canario_red(p: dict[str, float]) -> None:
 
     with contextlib.redirect_stdout(sordo):
         guarda_red(dict(p))          # y con la geometria buena, verde
+
+
+def _escuadra(p: dict[str, float]) -> dict:
+    """La escuadra del enchufe (#130, Samuel 2026-10-26: "an L bracket on the
+    floor"): una L de 6082-T6 con un pie en dos lenguetas sobre el pie del
+    talon y una placa que cierra la ventana de red por dentro. GEMELA de
+    escuadra_*() y ventana_*() en el .scad.
+
+    Todo sale de params.scad y de la trasera / el talon, nada va escrito aqui:
+    la placa rebasa la ventana escuadra_solape; las lenguetas dejan libre la
+    pestana del talon con su corte en U y escuadra_aire_talon por cada lado
+    (A hacia la izquierda, B hacia la derecha), y miden al menos el doble de
+    m4_pie_borde() para llevar su CLS-M4 a esa distancia de los dos cantos."""
+    t, r = p["t_escuadra"], p["radio_doblez_escuadra"]
+    tr, tl = _trasera(p), _talon(p)
+    lib0, lib1 = _banda_libre_trasera(p)
+    # la ventana, en mundo: la misma cuenta de piel_trasera_2d()
+    vz0 = tr["z0"] + tr["au"] - p["iec_margen_der"] - p["iec_ancho"]
+    vy0 = lib0 + (lib1 - lib0 - p["iec_alto"]) / 2
+    vzc, vyc = vz0 + p["iec_ancho"] / 2, vy0 + p["iec_alto"] / 2
+    zp = min(tl["pestana_z"], key=lambda z: abs(z - vzc))
+    hueco = (p["talon_pestana_ancho"] / 2 + p["corte_pestana"]
+             + p["escuadra_aire_talon"])
+    mp = _m4_pie_borde(p)
+    a1, b0 = zp - hueco, zp + hueco
+    z0 = min(vz0 - p["escuadra_solape"], a1 - 2 * mp)
+    z1 = max(vz0 + p["iec_ancho"] + p["escuadra_solape"], b0 + 2 * mp)
+    x_cara = tr["x0"] - p["escuadra_aire_trasera"]
+    x_pie = tl["x_pie"] + p["escuadra_pie_dentro"]
+    y_pie = p["t_costilla"]
+    y_arriba = vy0 + p["iec_alto"] + p["escuadra_solape"]
+    bd = 2 * (r + t) - math.pi / 2 * (r + p["k_factor"] * t)
+    pie_largo = x_cara - x_pie
+    placa_alto = y_arriba - y_pie
+    y_alivio = p["t_costilla"] + p["talon_pestana_alto"] + p["escuadra_aire_talon"]
+
+    def v(y: float) -> float:      # de un punto de la placa a su sitio en el desarrollo
+        return pie_largo - bd + (y - y_pie)
+
+    return {"z0": z0, "z1": z1, "a1": a1, "b0": b0, "zp": zp,
+            "vz0": vz0, "vy0": vy0, "vzc": vzc, "vyc": vyc,
+            "x_cara": x_cara, "x_dorso": x_cara - t, "x_pie": x_pie,
+            "y_pie": y_pie, "y_arriba": y_arriba, "y_alivio": y_alivio,
+            "m4_x": x_pie + mp, "m4_z": [(z0 + a1) / 2, (b0 + z1) / 2],
+            "bd": bd, "pie_largo": pie_largo, "placa_alto": placa_alto,
+            "ancho": z1 - z0, "largo": pie_largo + placa_alto - bd,
+            "v_alivio": v(y_alivio), "v_nariz": v(vyc)}
+
+
+def bbox_desarrollo_escuadra(p: dict[str, float]) -> tuple[float, float]:
+    """Envolvente del blank de la escuadra del enchufe, como la ve el laser:
+    ancho en z y largo del desarrollo. GEMELA de escuadra_desarrollo_*()."""
+    e = _escuadra(p)
+    return e["ancho"], e["largo"]
+
+
+def _cajas_escuadra(p: dict[str, float], e: dict | None = None) -> list[Caja]:
+    """Las cajas de la escuadra y del enchufe para solapes(): la placa en tres
+    trozos (la de entre las lenguetas empieza en el alivio), los dos pies y el
+    cuerpo del Kycon. El doblez cae dentro de las cajas de la placa. `e` deja
+    que el canario le pase una geometria rota."""
+    e = e or _escuadra(p)
+    t = p["t_escuadra"]
+    out = [("escuadra enchufe placa 0", e["x_dorso"], e["x_cara"], e["y_pie"],
+            e["y_arriba"], e["z0"], e["a1"]),
+           ("escuadra enchufe placa 1", e["x_dorso"], e["x_cara"], e["y_alivio"],
+            e["y_arriba"], e["a1"], e["b0"]),
+           ("escuadra enchufe placa 2", e["x_dorso"], e["x_cara"], e["y_pie"],
+            e["y_arriba"], e["b0"], e["z1"]),
+           ("escuadra enchufe pie A", e["x_pie"], e["x_dorso"], e["y_pie"],
+            e["y_pie"] + t, e["z0"], e["a1"]),
+           ("escuadra enchufe pie B", e["x_pie"], e["x_dorso"], e["y_pie"],
+            e["y_pie"] + t, e["b0"], e["z1"])]
+    out.append(("enchufe Kycon", e["x_dorso"] - p["kycon_fondo"], e["x_dorso"],
+                e["vyc"] - p["kycon_brida_y"] / 2, e["vyc"] + p["kycon_brida_y"] / 2,
+                e["vzc"] - p["kycon_brida_z"] / 2, e["vzc"] + p["kycon_brida_z"] / 2))
+    return out
+
+
+# El modulo de Young que fija el encargo para la flecha de la placa (70 GPa).
+# El repo usa E_ALUMINIO = 69 GPa en el resto de las cuentas: la diferencia es
+# un 1.4 % y aqui manda el numero del encargo.
+E_ESCUADRA = 70000.0
+
+
+def _dist_a_rect(px: float, pz: float, x0: float, x1: float,
+                 z0: float, z1: float) -> float:
+    """Distancia de un punto (x, z) a un rectangulo; 0 si esta dentro."""
+    return math.hypot(max(x0 - px, 0.0, px - x1), max(z0 - pz, 0.0, pz - z1))
+
+
+def _enchufe_medir(p: dict[str, float], e: dict) -> dict:
+    """Los asertos de la escuadra del enchufe, sobre la geometria `e` que da
+    _escuadra(): separada de guarda_enchufe() para que canario_enchufe() le
+    pueda dar una geometria ROTA -- hay cotas que ningun parametro mueve sin
+    arrastrar a las demas, porque se derivan juntas --. Devuelve lo que
+    guarda_enchufe() imprime. El orden de los asertos importa a los canarios:
+    cada mutacion tiene que saltar por SU aserto y no por uno anterior."""
+    tl, tr = _talon(p), _trasera(p)
+    t = p["t_escuadra"]
+    b = p["pem_borde"]
+    cuerpo = p["kppx_cuerpo_d"] + 2 * p["ventana_holgura_kppx"]
+    k, w = p["corte_pestana"], p["talon_pestana_ancho"]
+    r_al = (p["alivio_pestana"] + p["kerf"]) / 2
+    tongues = ((e["z0"], e["a1"]), (e["b0"], e["z1"]))
+
+    # 1. LA VENTANA DA SITIO AL CUERPO DE LA CLAVIJA. Es la unica cota de la
+    #    ventana que es dura: su tamano lo eligio Samuel entre tres renders,
+    #    pero ninguno podia ser menor que el cuerpo de la clavija mas su holgura
+    #    por cada lado.
+    assert p["iec_ancho"] >= cuerpo - 1e-9 and p["iec_alto"] >= cuerpo - 1e-9, (
+        f"la ventana de red mide {p['iec_ancho']:g} x {p['iec_alto']:g} y el cuerpo "
+        f"de la clavija KPPX-4P ({p['kppx_cuerpo_d']:g}) pide {cuerpo:g} en los dos "
+        f"sentidos con {p['ventana_holgura_kppx']:g} de holgura por lado: no cabe "
+        f"el cuerpo de la clavija")
+
+    # 2. EL CANTO DE ABAJO DE LA PLACA ENTRE LAS LENGUETAS (el alivio): por
+    #    encima de donde acaba el doblez, y por encima del canto de arriba de la
+    #    pestana del talon -- que se lee de su caja, no de la formula.
+    fin_doblez = e["y_pie"] + t + p["radio_doblez_escuadra"]
+    assert e["y_alivio"] >= fin_doblez - 1e-9, (
+        f"el alivio sube hasta y={e['y_alivio']:.2f} y el doblez de la escuadra acaba en "
+        f"y={fin_doblez:.2f}: el canto cortado come el doblez (alivio contra el doblez)")
+    railes, _, _ = _cajas_solidas(p)
+    techo_pestana = max(c[4] for c in railes if c[0].startswith("talon pestana "))
+    alivio_sobre = e["y_alivio"] - techo_pestana
+    assert alivio_sobre > 1e-9, (
+        f"el canto de abajo de la placa entre las lenguetas (y={e['y_alivio']:.2f}) no "
+        f"queda por encima del canto de la pestana del talon (y={techo_pestana:.2f}): "
+        f"alivio sobre la pestana")
+
+    # 3. LOS DOS PASOS M4 EN EL PIE DEL TALON (y en la base, en la misma x, z):
+    #    a pem_borde del borde de la ventana de cada pestana (el rectangulo, con
+    #    su corte, y los dos alivios), de las CLS del propio talon y sin pisar
+    #    el cuerpo de sus tuercas, que asoma sobre el pie. El canto libre del
+    #    pie del talon lo cuida el aserto 7: el paso cae a la misma x que la CLS.
+    peor_ventana = float("inf")
+    for zc in e["m4_z"]:
+        for zq in tl["pestana_z"]:
+            d_rect = _dist_a_rect(e["m4_x"], zc,
+                                  tl["pestana_x"] - tl["pestana_dev"] - k, tl["pestana_x"],
+                                  zq - w / 2 - k, zq + w / 2 + k)
+            d_al = min(math.hypot(e["m4_x"] - tl["pestana_x"], zc - (zq + s * (w / 2 + k / 2)))
+                       - r_al for s in (-1, 1))
+            peor_ventana = min(peor_ventana, d_rect, d_al)
+    assert peor_ventana >= b - 1e-9, (
+        f"un paso M4 de la escuadra cae a {peor_ventana:.2f} del borde de la ventana de "
+        f"una pestana del talon y el inserto pide {b:g}: ventana de la pestana")
+    peor_m4 = min(math.hypot(e["m4_x"] - tl["m4_x"], zc - zm)
+                  for zc in e["m4_z"] for zm in tl["m4_z"])
+    assert peor_m4 >= b + p["pem_cls_m4"] / 2 - 1e-9, (
+        f"un paso M4 de la escuadra cae a {peor_m4:.2f} de una CLS-M4 del talon y se "
+        f"piden {b + p['pem_cls_m4'] / 2:.2f} (pem_borde al borde de su agujero): "
+        f"M4 del talon")
+    peor_tuerca = min(_dist_a_rect(tl["m4_x"], zm, e["x_pie"], e["x_dorso"], za, zb)
+                      for zm in tl["m4_z"] for za, zb in tongues)
+    assert peor_tuerca >= p["pem_cls_m4_cuerpo"] / 2 - 1e-9, (
+        f"el cuerpo de una tuerca del talon queda a {peor_tuerca:.2f} de una lengueta y "
+        f"su radio es {p['pem_cls_m4_cuerpo'] / 2:.2f}: tuerca del talon")
+
+    # 4. LAS LENGUETAS NO ENTRAN EN LA VENTANA DE LA PESTANA (rectangulo con su corte).
+    for zq in tl["pestana_z"]:
+        lo, hi = zq - w / 2 - k, zq + w / 2 + k
+        for za, zb in tongues:
+            assert zb <= lo + 1e-9 or za >= hi - 1e-9, (
+                f"una lengueta (z {za:.2f}..{zb:.2f}) pisa la ventana de la pestana del "
+                f"talon (z {lo:.2f}..{hi:.2f}): lengueta sobre la ventana")
+
+    # 4b. LA ESCUADRA NO TOCA EL MARCO DE LA VENTANA DEL ANILLO. Sus patas (suelo y
+    #     trasera) viven en la rebanada t_placa de cada anillo, y la lengueta B es la
+    #     que llega mas cerca. solapes() cuenta el solape; esto pide AIRE: como
+    #     minimo hol_piel, la holgura con que las chapas entran entre los anillos.
+    cajas_e = [c for c in _cajas_escuadra(p, e) if c[0].startswith("escuadra enchufe")]
+    aire_marco = min(
+        math.sqrt(sum(max(a0 - b1, b0 - a1, 0.0) ** 2
+                      for a0, a1, b0, b1 in ((c[1], c[2], m[1], m[2]),
+                                             (c[3], c[4], m[3], m[4]),
+                                             (c[5], c[6], m[5], m[6]))))
+        for c in cajas_e for m in railes if m[0].startswith("marco "))
+    assert aire_marco >= p["hol_piel"] - 1e-9, (
+        f"la escuadra deja {aire_marco:.2f} hasta la pata del marco de la ventana del anillo y "
+        f"se piden {p['hol_piel']:g} (hol_piel): pata del marco")
+
+    # 5. LA PLACA NO TAPA UNA RANURA. El solape de 6 tiene que quedarse por debajo
+    #    del puente minimo (6.5) y, de verdad, la placa entera -- con la lengueta
+    #    B, que la lleva mas lejos por ese lado -- no puede cubrir ninguna
+    #    columna que se corta. Se mide contra la lista de columnas del DXF.
+    assert p["escuadra_solape"] < p["vent_puente_min"] - 1e-9, (
+        f"la placa rebasa la ventana {p['escuadra_solape']:g} y el puente minimo "
+        f"entre la ventana y la ranura mas cercana es {p['vent_puente_min']:g}: "
+        f"el solape tiene que quedarse por debajo del puente")
+    xs, _, _ = _columnas_rejilla_entrada(p)
+    sj = p["vent_ancho_ranura"] / 2
+    huecos = [(tr["z0"] + x - sj, tr["z0"] + x + sj) for x in xs]
+    tapadas = [h for h in huecos if h[1] > e["z0"] and h[0] < e["z1"]]
+    assert not tapadas, (
+        f"la placa de la escuadra ({e['z0']:.2f}..{e['z1']:.2f}) cubre {len(tapadas)} "
+        f"ranura(s) de la rejilla, la primera en z={tapadas[0][0]:.2f}..{tapadas[0][1]:.2f}: "
+        f"cubre una ranura de la rejilla")
+    gap_ranura = min(min((e["z0"] - h[1] for h in huecos if h[1] <= e["z0"]),
+                         default=float("inf")),
+                     min((h[0] - e["z1"] for h in huecos if h[0] >= e["z1"]),
+                         default=float("inf")))
+    assert (e["z0"] >= tr["z0"] - 1e-9 and e["z1"] <= tr["z1"] + 1e-9
+            and e["y_arriba"] <= tr["y1"] + 1e-9), (
+        f"la placa se sale de la huella de la trasera (z {tr['z0']:.2f}..{tr['z1']:.2f}, "
+        f"y hasta {tr['y1']:.2f}): sale de la huella de la trasera")
+
+    # 6. LA NARIZ DE LA CLAVIJA PASA, y los dos M2.5 no tocan fondo ni se
+    #    arriman al canto de la placa.
+    assert p["escuadra_agujero_nariz"] >= p["kppx_nariz_d"] + 0.4 - 1e-9, (
+        f"el taladro de la placa mide {p['escuadra_agujero_nariz']:g} y la nariz de "
+        f"la clavija {p['kppx_nariz_d']:g}: se piden 0.4 de juego (nariz pasa)")
+    rosca = p["m25_largo"] - t
+    assert rosca < p["kycon_tornillo"] - 1e-9, (
+        f"el M2.5 x {p['m25_largo']:g} deja {rosca:g} de rosca en el enchufe y la hoja "
+        f"da {p['kycon_tornillo']:g} (6.60 + X, X = espesor del panel): toca fondo")
+    d25 = p["escuadra_agujero_m25"]
+    borde_m25 = min(e["vzc"] - p["kycon_tal_sep"] / 2 - e["z0"],
+                    e["z1"] - (e["vzc"] + p["kycon_tal_sep"] / 2),
+                    e["y_arriba"] - e["vyc"], e["vyc"] - e["y_alivio"])
+    assert borde_m25 >= 1.5 * d25 - 1e-9, (
+        f"un M2.5 queda a {borde_m25:.2f} de un canto de la placa y se piden "
+        f"{1.5 * d25:.2f} (1.5 D): canto del M2.5")
+
+    # 7. LAS CLS-M4 de las lenguetas: a pem_borde de los cantos libres.
+    #    z: de los dos cantos de su lengueta; x: del canto libre del pie, que no
+    #    puede pasar del canto libre del pie del talon.
+    bordes = [min(zc - za, zb - zc) for zc, (za, zb) in zip(e["m4_z"], tongues)]
+    assert min(bordes) >= b - 1e-9, (
+        f"la CLS-M4 de una lengueta cae a {min(bordes):.2f} del canto de su lengueta y "
+        f"el inserto pide {b:g} (pem_borde): canto de la lengueta")
+    assert e["m4_x"] - e["x_pie"] >= b - 1e-9, (
+        f"la CLS-M4 cae a {e['m4_x'] - e['x_pie']:.2f} del canto libre del pie de la "
+        f"escuadra y el inserto pide {b:g}: canto libre del pie")
+    assert e["x_pie"] >= tl["x_pie"] - 1e-9, (
+        f"el canto libre de la escuadra (x={e['x_pie']:.2f}) pasa del canto libre del "
+        f"pie del talon (x={tl['x_pie']:.2f}): vuela fuera del pie")
+
+    # 8. LA PROFUNDIDAD. Brida del enchufe en el dorso de la placa; de ahi
+    #    kycon_fondo hasta el fondo del cuerpo, contra la envolvente de la tapa
+    #    del chasis. Las copas de soldar (kycon_patilla mas) y el giro del arnes
+    #    no caben delante de la caja de hoy: guarda_enchufe() lo publica como
+    #    requisito a la caja de #424.
+    x_lid = _x_chasis_frente(p) + _chasis(p)["tapa_y"]
+    x_fondo = e["x_dorso"] - p["kycon_fondo"]
+    x_punta = x_fondo - p["kycon_patilla"]
+    aire_cuerpo = x_fondo - x_lid
+    aire_patillas = x_punta - x_lid
+    assert aire_cuerpo > 1e-9, (
+        f"el cuerpo del enchufe llega a x={x_fondo:.2f} y la envolvente de la tapa del "
+        f"chasis esta en x={x_lid:.2f}: cuerpo contra la tapa del chasis")
+
+    # 9. LA PLACA COMO VOLADIZO: la flecha de la punta con una fuerza ESTIMADA
+    #    (kppx_fuerza_est), el ancho de la lengueta A y la altura del centro del
+    #    enchufe sobre el pie. No hay criterio de flecha admisible: se imprime.
+    ba = e["a1"] - e["z0"]
+    h = e["vyc"] - e["y_pie"]
+    inercia = ba * t ** 3 / 12
+    F = p["kppx_fuerza_est"]
+    flecha = F * h ** 3 / (3 * E_ESCUADRA * inercia)
+    sigma = F * h * (t / 2) / inercia
+    return {"aire_cuerpo": aire_cuerpo, "aire_patillas": aire_patillas,
+            "x_fondo": x_fondo, "x_punta": x_punta, "x_lid": x_lid,
+            "gap_ranura": gap_ranura, "peor_ventana": peor_ventana,
+            "aire_marco": aire_marco,
+            "peor_m4": peor_m4, "alivio_sobre": alivio_sobre,
+            "borde_lengueta": min(bordes), "borde_m25": borde_m25,
+            "flecha": flecha, "sigma": sigma, "h": h, "ba": ba, "rosca": rosca}
+
+
+def guarda_enchufe(p: dict[str, float]) -> None:
+    """La escuadra que sostiene el enchufe de 24 V (#130; Samuel, 2026-10-26:
+    "an L bracket on the floor") y la ventana que la enmarca.
+
+    Mide, con el numero de cada cosa (los asertos viven en _enchufe_medir):
+      1. la ventana de red da sitio al cuerpo de la clavija (13.0 + 2 x 1.0);
+      2. el canto de abajo de la placa entre las lenguetas libra el doblez y la
+         pestana del talon;
+      3. los dos pasos M4 del pie del talon y de la base, a pem_borde de la
+         ventana de las pestanas y de las tuercas del talon;
+      4. las lenguetas no pisan la ventana de la pestana;
+      5. la placa rebasa la ventana 6 < 6.5 de puente y no cubre una ranura;
+      6. la nariz de la clavija (9.6 + 0.4) pasa y el M2.5 x 8 no toca fondo;
+      7. las dos CLS-M4 a pem_borde de los cantos libres de su lengueta;
+      8. la profundidad: el cuerpo del enchufe contra la tapa del chasis (las
+         patillas y el arnes, requisito a la caja de #424);
+      9. la flecha de la placa, que SE IMPRIME (no hay criterio).
+
+    Y publica lo que no sabe: ver los HUECO de abajo. Sus mutaciones viven en
+    canario_enchufe(), como manda el Principio VIII."""
+    e = _escuadra(p)
+    m = _enchufe_medir(p, e)
+    tl = _talon(p)
+    t = p["t_escuadra"]
+    print(f"enchufe: escuadra de {e['ancho']:.2f} x {e['placa_alto']:.2f} (placa) en "
+          f"z={e['z0']:.2f}..{e['z1']:.2f}, y={e['y_pie']:.2f}..{e['y_arriba']:.2f}; "
+          f"blank {e['ancho']:.2f} x {e['largo']:.2f} (BD {e['bd']:.3f}, radio interior "
+          f"{p['radio_doblez_escuadra']:g})")
+    print(f"  lenguetas A z={e['z0']:.2f}..{e['a1']:.2f} y B z={e['b0']:.2f}..{e['z1']:.2f}, "
+          f"CLS-M4 en x={e['m4_x']:.2f}, z={e['m4_z'][0]:.2f} y {e['m4_z'][1]:.2f}; "
+          f"alivio de la placa en y={e['y_alivio']:.2f} ({m['alivio_sobre']:.2f} sobre la pestana)")
+    print(f"  distancias de centro a canto: CLS a su lengueta {m['borde_lengueta']:.2f} y al "
+          f"canto del pie {e['m4_x'] - e['x_pie']:.2f} (piden {p['pem_borde']:g}); paso M4 al "
+          f"canto del pie del talon {e['m4_x'] - tl['x_pie']:.2f}, a la ventana de la "
+          f"pestana {m['peor_ventana']:.2f}, a la CLS del talon {m['peor_m4']:.2f}; M2.5 a "
+          f"un canto de la placa {m['borde_m25']:.2f}")
+    print(f"  la placa deja {m['gap_ranura']:.2f} hasta la ranura mas cercana (solape "
+          f"{p['escuadra_solape']:g} contra puente {p['vent_puente_min']:g}) y la lengueta B "
+          f"{m['aire_marco']:.2f} hasta la pata del marco del anillo; ventana de "
+          f"{p['iec_ancho']:g} x {p['iec_alto']:g} contra clavija de "
+          f"{p['kppx_cuerpo_d'] + 2 * p['ventana_holgura_kppx']:g}")
+    print(f"  profundidad: brida del enchufe en x={e['x_dorso']:.2f}, fondo del cuerpo en "
+          f"x={m['x_fondo']:.2f}, punta de las patillas en x={m['x_punta']:.2f}; la tapa del "
+          f"chasis en x={m['x_lid']:.2f}: {m['aire_cuerpo']:.2f} de aire al cuerpo y "
+          f"{m['aire_patillas']:.2f} a las copas de soldar (requisito a la caja de #424)")
+    print(f"  M2.5 x {p['m25_largo']:g}: {m['rosca']:g} de rosca en el enchufe contra los "
+          f"{p['kycon_tornillo']:g} de la hoja (6.60 + {t:g} = {p['kycon_tornillo'] + t:g}); "
+          f"M4 x 10 por la base ({p['t_base']:g}) y el pie del talon ({p['t_costilla']:g}) a la CLS")
+    print(f"  placa como voladizo, ESTIMADO con {p['kppx_fuerza_est']:g} N supuestos, ancho "
+          f"{m['ba']:.2f} (la lengueta A) y h = {m['h']:.2f} sobre el pie: flecha "
+          f"{m['flecha']:.2f} mm, tension {m['sigma']:.0f} MPa (E = {E_ESCUADRA / 1000:g} GPa)")
+    # lo que NO se sabe: publicado, no escondido (Principio V)
+    sep = 1.5 * p["d_M4_paso"] + tl["pestana_ventana"] + p["d_M4_paso"] / 2
+    corto = max(sep - abs(zc - zq) for zc in e["m4_z"] for zq in tl["pestana_z"])
+    if corto > 0:
+        _HUECOS.append(
+            f"el paso M4 de la lengueta B cae a {m['peor_ventana']:.2f} del borde de la ventana de la "
+            f"pestana del talon (cumple los {p['pem_borde']:g} del inserto) pero guarda_talon() "
+            f"pide a sus propios M4 {sep:.2f} de centro a centro con esa pestana, y a este le "
+            f"faltan {corto:.2f}: el puente de pie entre la ventana y el agujero queda mas "
+            f"fino que el de los suyos. No hay sitio para ensanchar la lengueta B (la pata del "
+            f"marco del anillo derecho arranca {m['aire_marco']:.2f} mas alla): se decide con Samuel")
+    _HUECOS.append(
+        f"la fuerza de insercion y la retencion del bloqueo de la KPPX-4P sin cifrar: la hoja "
+        f"de la clavija no las publica. La placa es un voladizo de {m['h']:.1f} sobre el pie, y "
+        f"con {p['kppx_fuerza_est']:g} N SUPUESTOS flecta {m['flecha']:.2f} mm a {m['sigma']:.0f} "
+        f"MPa (ESTIMADO): no hay criterio de flecha admisible. Se mide con la clavija puesta")
+    _HUECOS.append(
+        f"la nariz de la clavija ({p['kppx_nariz_largo']:g}) cruza la placa de {t:g} y entra "
+        f"{p['kppx_nariz_largo'] - t:g} en el enchufe: ni la hoja del KPJX ni la del KPPX dan la "
+        f"profundidad de acople que el bloqueo necesita")
+    _HUECOS.append(
+        f"el doblez de la escuadra es a radio {p['radio_doblez_escuadra']:g} = 1 t en 6082-T6, "
+        f"y a ese radio puede fisurar (ESTIMADO, sin tabla en el repo). Se pregunta al taller (RFQ, B)")
+    _HUECOS.append(
+        f"las copas de soldar del enchufe llegan a x={m['x_punta']:.2f} y la envolvente de la "
+        f"tapa del chasis esta en x={m['x_lid']:.2f} ({m['aire_patillas']:.2f}): delante de la "
+        f"caja de hoy no caben ni las copas ni el giro del arnes. Es un requisito a la caja de "
+        f"#424, que encoge sin el toroide: su huella deja libre la sombra del enchufe "
+        f"(z={e['vzc'] - p['kycon_brida_z'] / 2:.2f}..{e['vzc'] + p['kycon_brida_z'] / 2:.2f}) "
+        f"con sitio para que el arnes gire")
+    _HUECOS.append(
+        f"el M4 x 10 de la escuadra ({p['t_base'] + p['t_costilla']:g} de pila + 5.5 de rosca) y la "
+        f"altura del cuerpo de su CLS-M4 sobre la lengueta salen de la misma penetracion del "
+        f"M4 x 8 del talon: la hoja de PEM sigue sin estar en el repo (papel del suelo, H4)")
+
+
+def canario_enchufe(p: dict[str, float]) -> None:
+    """Autocomprobacion ROJA de guarda_enchufe(): cada aserto tiene que saltar,
+    y por SU texto, con la mutacion que lo rompe; y con los parametros de verdad
+    la puerta tiene que callar.
+
+    Dos clases de mutacion. Las de PARAMETRO se buscan con borde_rojo() (el
+    valor frontera, bisecado, y 5 % mas adentro): la ventana de red, el
+    solape, la holgura de la nariz, el largo del M2.5, el fondo del enchufe y
+    el aire a la pestana. Las de GEOMETRIA rompen la salida de _escuadra() a
+    mano, porque esas cotas se derivan juntas y ningun parametro mueve una
+    sin la otra: una lengueta mas corta, una CLS-M4 fuera de centro, el
+    alivio por debajo de la pestana, el canto del pie pasado del talon."""
+    sordo = io.StringIO()
+    n_huecos = len(_HUECOS)
+    for clave, lo, hi, texto in (
+            ("iec_alto", 5.0, p["iec_alto"], "no cabe el cuerpo de la clavija"),
+            ("iec_ancho", 5.0, p["iec_ancho"], "no cabe el cuerpo de la clavija"),
+            ("escuadra_solape", 1.0, 9.0, "el solape tiene que quedarse por debajo del puente"),
+            ("escuadra_agujero_nariz", 9.0, p["escuadra_agujero_nariz"], "nariz pasa"),
+            ("m25_largo", p["m25_largo"], 14.0, "toca fondo"),
+            ("kycon_fondo", p["kycon_fondo"], 30.0, "cuerpo contra la tapa del chasis"),
+            ("escuadra_aire_trasera", p["escuadra_aire_trasera"], 30.0,
+             "cuerpo contra la tapa del chasis"),
+            ("escuadra_aire_talon", 0.05, p["escuadra_aire_talon"], "ventana de la pestana"),
+            ("escuadra_aire_talon", p["escuadra_aire_talon"], 3.0, "pata del marco")):
+        _borde_rojo(guarda_enchufe, p, clave, lo, hi, texto)
+        del _HUECOS[n_huecos:]
+    # el aire a la trasera, por abajo: lo vigila la regla de la trasera
+    _borde_rojo(guarda_trasera_capturada, p, "escuadra_aire_trasera", 0.0,
+                p["escuadra_aire_trasera"], "Nada fijo detras del acrilico")
+    del _HUECOS[n_huecos:]
+    e = _escuadra(p)
+    tl = _talon(p)
+    tm = tl["m4_z"][2]
+    casos = (
+        ({"y_alivio": 4.0}, "alivio contra el doblez",
+         "el alivio en y=4, dentro del doblez"),
+        ({"y_alivio": 9.0}, "alivio sobre la pestana",
+         "la placa baja entre lenguetas a 9, por debajo del canto de la pestana (9.5)"),
+        ({"m4_z": [e["m4_z"][0], e["zp"] + 15.0]},
+         "ventana de la pestana", "el paso M4 de B a 2 del borde de la ventana de la pestana"),
+        ({"m4_z": [tm + 3.0, e["m4_z"][1]]}, "M4 del talon",
+         "un paso M4 a 3 de una CLS del talon"),
+        ({"z0": tm - 5.0}, "tuerca del talon",
+         "una lengueta que pasa sobre el cuerpo de una tuerca del talon"),
+        ({"a1": e["zp"] - 5.0}, "lengueta sobre la ventana",
+         "una lengueta que pisa la ventana de la pestana del talon"),
+        ({"z0": e["z0"] - 10.0}, "cubre una ranura de la rejilla",
+         "una placa 10 mas ancha por la izquierda, que cubre una ranura"),
+        ({"y_arriba": _trasera(p)["y1"] + 1.0}, "sale de la huella de la trasera",
+         "una placa mas alta que la trasera"),
+        ({"vzc": e["z0"] + 3.0}, "canto del M2.5",
+         "el enchufe a 3 del canto de la placa"),
+        ({"a1": e["z0"] + 8.0, "m4_z": [e["z0"] + 4.0, e["m4_z"][1]]},
+         "canto de la lengueta", "una lengueta A de 8 deja la CLS a 4 de su canto"),
+        ({"m4_z": [e["m4_z"][0] - 5.0, e["m4_z"][1]]},
+         "canto de la lengueta", "una CLS-M4 fuera de centro, a menos de 7 de un canto"),
+        ({"x_pie": e["x_pie"] + 3.0}, "canto libre del pie",
+         "el canto libre del pie adelantado 3 deja la CLS a 4 de el"),
+        ({"x_pie": tl["x_pie"] - 1.0, "m4_x": tl["x_pie"] + 6.0}, "vuela fuera del pie",
+         "el canto de la escuadra por fuera del canto del pie del talon"),
+    )
+    for cambios, clave, que in casos:
+        roto = dict(e)
+        roto.update(cambios)
+        try:
+            with contextlib.redirect_stdout(sordo):
+                _enchufe_medir(p, roto)
+        except AssertionError as ex:
+            assert clave in str(ex), (
+                f"canario del enchufe: con {cambios} salto, pero por otra razon "
+                f"('{str(ex)[:90]}...') y no por '{clave}'")
+            continue
+        raise AssertionError(
+            f"canario del enchufe NO disparo: {que} y _enchufe_medir() lo deja pasar "
+            f"-- no confiar en su VERDE")
+    with contextlib.redirect_stdout(sordo):
+        guarda_enchufe(dict(p))                    # y con la geometria buena, verde
+    del _HUECOS[n_huecos:]                         # lo que publique aqui lo publica la corrida real
 
 
 def guarda_fresado(p: dict[str, float]) -> None:
@@ -5015,13 +5459,18 @@ def _campo_base(p: dict[str, float]) -> list[tuple[float, float]]:
 def _taladros_base(p: dict[str, float]) -> list[tuple[float, float, float, str]]:
     """Todo taladro de fijacion de la base, en mundo: (x, z, d, tipo). Los 6 M5
     de los anillos, los 3 + 3 M4 de nariz y talon (de paso: D-T2 los mete desde
-    abajo a la tuerca de su pie), las 4 FH de las patas y los 4 M4 del chasis.
+    abajo a la tuerca de su pie), los 2 M4 de la escuadra del enchufe (#130), las
+    4 FH de las patas y los 4 M4 del chasis.
     Lo leen guarda_campo_base() y guarda_bandeja_base() en check_dxf."""
     nz, tl = _nariz(p), _talon(p)
     out = [(x, z, p["d_M5_base"], "M5") for x in _m5_tabla_x(p)
            for z in (p["t_anillo"] / 2, p["ancho_total"] - p["t_anillo"] / 2)]
     out += [(nz["m4_x"], z, p["d_M4_paso"], "M4 nariz") for z in nz["m4_z"]]
     out += [(tl["m4_x"], z, p["d_M4_paso"], "M4 talon") for z in tl["m4_z"]]
+    # los dos M4 de la escuadra del enchufe (#130): suben desde abajo por la base
+    # y por el pie del talon hasta la CLS de sus lenguetas.
+    esc = _escuadra(p)
+    out += [(esc["m4_x"], z, p["d_M4_paso"], "M4 escuadra") for z in esc["m4_z"]]
     out += [(x, z, p["pem_fh_m4"], "FH pata")
             for x in (p["alto_frontal"] / 2 + p["d_pie"] / 2,
                       tl["x_chaflan"] - p["talon_pie"] / 2)
@@ -7037,12 +7486,14 @@ def main() -> int:
 
     guarda_paticas(p)
     canario_red(p)
+    canario_enchufe(p)
     canario_trasera(p)
     canario_techo(p)
     canario_campo_base(p)
     canario_base_fina(p)
     canario_m4_desde_abajo(p)
     guarda_red(p)
+    guarda_enchufe(p)
     guarda_fresado(p)
     guarda_puentes_ventilacion(p)
     guarda_parametros_vivos(p)

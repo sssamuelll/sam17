@@ -808,6 +808,9 @@ Salida real de `openscad -D 'PART=\"bom\"' cad/sam17_case.scad` — los 4
 | **MIEMBRO ALTO** — chapa 6082-T6 t=1.5 | **1** | el **techo macizo**, sin ranuras: meseta de 50, retorno de 9 (ficha 6, 2026-10-11), chaflán de 6 y **labio de 20**. Con 200 N en el centro del vano de 540.62 cede 1.62 mm y trabaja a 95 MPa, por debajo de Rp0.2 = 130. Blank **593.02 × 78.85**. Las dos bridas de 27 × 14.5 llevan esquinas R2 y entran en los cajeados de 28 × 15.5 × 3; quedan 11 de pletina bajo sus M4 ciegos. **Sin canal** y sin fila de tornillos para la trasera |
 | **TALÓN** — chapa 6082-T6 t=1.5 | **1** | **la nariz de atrás**: pie de **22.5** sobre la base, chaflán de 6 y labio vertical de 13. Blank **545.62 × 42.23**. En cada punta, una muesca de **2.65** va desde el canto libre del pie hasta la línea de doblez, a **22.06** (`largo − BD45/2`), con alivio de Ø2 a caballo de la esquina interior. Sus ocho pestañas siguen sujetando la trasera hacia dentro. Tres M4 de botón desde abajo, a tuercas CLS-M4 prensadas en el pie, a 7.0 del canto libre (papel del suelo, D-T2). El chasis del PSU se adelanta 2.5 con este pie |
 | Tornillo M4 × 8 ISO 7380 de botón (talón) | **3** | el pie del talón a la **base**, desde **abajo**, a la tuerca CLS de su pie |
+| **ESCUADRA DEL ENCHUFE** — chapa 6082-T6 t=2, anodizada negra | **1** | la L que sostiene el enchufe de 24 V (#130, Samuel 2026-10-26: «an L bracket on the floor»): una **placa** a 2.0 de la cara interior de la trasera, que cierra su ventana por dentro, y un **pie en dos lenguetas** sobre el pie del talón. **Un doblez a 90° a radio 2 (1 t)**, HUECO: el 6082-T6 puede fisurar. Blank **55.00 × 67.84**. Dos CLS-M4, un taladro de 10.0 para la nariz de la clavija y dos de 2.9 para los M2.5. Pliego §6, `guarda_enchufe()` |
+| Tornillo M4 × 10 ISO 7380 de botón (escuadra) | **2** | la escuadra a la **base**, desde **abajo**, por la base y por el pie del talón, a la CLS de su lengueta |
+| Tornillo M2.5 × 8 de cabeza alomada | **2** | el enchufe Kycon KPJX-PM-4S al dorso de la placa, desde la cara de la ventana: 6.60 + 2 = 8.6 pide la hoja, con 8 quedan 6.0 de rosca |
 | **NARIZ** — chapa 6082-T6 t=1.5 | **1** | la banda del frente: pie de **20.5** sobre la base, chaflán a 45° y frente vertical. El pie crece para no separarse más de 2 del talón: mismo estilo. Blank **545.62 × 53.10**. En cada punta, una muesca de **2.65** llega desde el canto libre del pie hasta la línea de doblez, a **20.06** (`largo − BD45/2`), con alivio de Ø2 a caballo de la esquina interior. Conserva sus tres dobleces |
 | Tornillo M4 × 8 ISO 7380 de botón (nariz) | **3** | el pie de la nariz a la **base**, desde **abajo**, a la tuerca CLS de su pie. Ninguno en la cara vista |
 | Z-Rail de Tiptop | **6** | 104 HP (528.32 mm), sección 23.8 × 10. Cuatro forman las dos filas 3U y dos la fila auxiliar **KONDOR de 55 mm**. Atornillan al **marco de la ventana**, no directo al anillo. **Plateados**: son los 6 comprados el 18-08. La ficha 14 del acta del 09-10 los pedía negros, y Samuel los dejó así el 10-10 (*«yo ya compré los rieles plateados, así que serán plateados»*) |
@@ -823,9 +826,9 @@ Salida real de `openscad -D 'PART=\"bom\"' cad/sam17_case.scad` — los 4
 | **Tira negra del valle** — chapa de aluminio t=1 mm, anodizada en negro | **1** | lisa, sin taladros ni plegados; corte y anodizado. Tapa por dentro la rendija de la esquina de P3, entre el canto de atrás del panel KONDOR y el panel alto (ficha 6, 10-10). Se apoya en el ala libre del riel de atrás de la fila KONDOR y se recuesta en la arista de abajo del riel bajo de la fila alta, y la sujetan **dos tacos de VHB negro** en las puntas. Las cotas de corte las imprime `guarda_tira_valle()`, que también vigila que no roce el módulo KONDOR al salir |
 | **PERSIANA** — aluminio 6082-T651, pletina de 12 frenteada a 9.5, anodizada en negro | **2** | una por costado, **espejadas** (dos programas): placa de 6 por fuera del anillo, con **44 varillas de 2**, borde de 4, dos atados por dentro y **diez tacos de Ø8 × 3.5** en el dorso, del mismo bloque. Sustituye a las mejillas de acrílico (2026-10-11). Pliego §6.3 |
 | **IMÁN de neodimio N42, Ø6** | **40** | 20 pares: 16 de Ø6 × 3 (anillo) con Ø6 × 2 (taco), y 4 de finos Ø6 × 1 + Ø6 × 1 en los tacos del tramo de atrás. Polaridad fija y marcada. Pliego §6.5 |
-| **BASE de chapa 6082-T6 t=3 mm**, anodizada negra | **1** | el suelo del case desde el papel del suelo (2026-10-12), bajo los anillos y a ras de su huella: **307.76 × 568.62**. Campo de **1118 agujeros de Ø5 cada 8** en L, fuera de la huella del chasis (21 952 mm² abiertos: la entrada de aire de abajo). 6 M5 de paso Ø6 a la rosca ciega del canto inferior de los anillos; 6 M4 de paso de nariz y talón, desde abajo; 4 FH-M4 de las patas; 4 M4 del chasis. Al taller de chapa (PLIEGO §6.2). Fue la tabla de nogal de 30 desde el 2026-08-27 |
+| **BASE de chapa 6082-T6 t=3 mm**, anodizada negra | **1** | el suelo del case desde el papel del suelo (2026-10-12), bajo los anillos y a ras de su huella: **307.76 × 568.62**. Campo de **1118 agujeros de Ø5 cada 8** en L, fuera de la huella del chasis (21 952 mm² abiertos: la entrada de aire de abajo). 6 M5 de paso Ø6 a la rosca ciega del canto inferior de los anillos; 6 M4 de paso de nariz y talón, desde abajo; 2 M4 de paso de la escuadra del enchufe; 4 FH-M4 de las patas; 4 M4 del chasis. Al taller de chapa (PLIEGO §6.2). Fue la tabla de nogal de 30 desde el 2026-08-27 |
 | Tornillo M5 × 12 ISO 7380 de botón | 6 | los anillos a la base, desde abajo, a la rosca ciega del canto inferior (9 de rosca en 10) |
-| Tuerca de presión PEM CLS-M4 | 6 | en los pies de nariz y talón, prensadas después de anodizar; de acero o inoxidable |
+| Tuerca de presión PEM CLS-M4 | 8 | en los pies de nariz y talón y en las dos lenguetas de la escuadra del enchufe, prensadas después de anodizar; de acero o inoxidable |
 | Espárrago de presión PEM FH-M4 | 4 | en la base, para las patas, a ras de la cara de arriba |
 | Plancha acrílico t=8 mm | **1** | la **trasera de 552.32 × 237.18**, con ondas, rejilla y KONDOR, **sin un taladro**. Las dos mejillas las sustituyó la persiana el 2026-10-11. La trasera queda con su cara vista a **6.5** del plano trasero, dentro del bolsillo u = 5.5..16.5, y sus puntas entran 5.85. El labio del techo tapa 8.5 de su canto y los tacos conservan la rendija. Entra con el anillo B; no sale sin quitar un anillo |
 | Patica de goma **firme** con casquillo roscado | 4 | Shore 60–70 A, **d20 × 10 ± 0.2**. Se rosca a una FH-M4 de la **base**, **no se pega**. **Se exige la hoja: ≤ 0.3 mm con 50 N**, compuesto que no manche y la profundidad del casquillo: la pata es el alto de la rendija del aire (`flecha_pie`, HUECO hasta la hoja). La goma blanda de antes aislaba los 100 Hz de un toroide que ya no está |
@@ -862,7 +865,7 @@ depende de la cuenta final de módulos, no de la geometría del cajón):
 
 | Pieza | Cantidad | Nota |
 |-------|----------|------|
-| IEC C14 con fusible | 1 | entrada de red, aparato Clase I |
+| Enchufe Kycon KPJX-PM-4S | 1 | entrada de 24 V de la fuente v5, en la escuadra del enchufe; sus dos M2.5 × 8 y el arnés, en `hardware/01-power-supply/v5/bom-chasis.csv` (X1) |
 | Espárrago M4 (bonding) | 1 | único — ver «Bonding de tierra» |
 | Cable verde/amarillo + terminal de ojal | 1 por panel | al espárrago único, sin excepción |
 | Tuerca T M3 | 4 por panel | uno por taladro de `panels/build_template.py` |
@@ -1116,6 +1119,12 @@ https://claude.ai/code/artifact/0ff54175-6449-4e14-93dd-7c614251bf17
       consecuencia, y no se ve en ninguna vista del conjunto: los paneles y la
       tapa del valle lo tapan entero. Importa tres ensamblados —madera,
       aluminio y acero— porque pintarlos igual pierde lo que la vista enseña
+- [x] **La entrada de red de 24 V (#130)** (2026-10-26): la escuadra del suelo
+      (`escuadra_enchufe`) y el Kycon KPJX-PM-4S a su dorso, medidos por
+      `guarda_enchufe()`. La ventana la eligió Samuel entre los tres renders de
+      `renders/render_enchufe.py` (A 48 × 27.5, B 30 × 18 a R3, C círculo de
+      Ø16): la B, con las dos cabezas de los M2.5 dentro de la ventana. Las
+      copas de soldar y el giro del arnés quedan como requisito a la caja de #424
 - [x] **Render del conjunto**: desde el 2026-10-12 lo pinta
       `renders/render_persiana.py` (las `sam17-persiana*.png` de arriba), y
       `render.py` se queda como la escena común, sin renders propios. Lo que
