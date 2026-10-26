@@ -46,8 +46,11 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
   3. **D-F6 en los tres rieles de rack (T20, #340, M3):**
      - SCR **NXP BT151-500R** (`nxp-bt151-500r.pdf` p. 2: `I_H <= 40 mA`,
        `I_GT <= 15 mA`, `I^2t = 72 A^2s`, `t_gt <= 2 us`) + referencia
-       **TI TL431BI** (`tl431.pdf` p. 5: `+-0,5 %`, dispersion de disparo
-       `+-0,30 V`) + fusible rapido **Bourns SF-1206F** (`bourns_sf1206f.pdf`).
+       **TI TL431BI** + fusible rapido **Bourns SF-1206F** (`bourns_sf1206f.pdf`).
+     - La banda de disparo sale riel a riel de la hoja del TL431BI (`tl431.pdf`
+       p. 13): `V_ref` a 25 C, su deriva en temperatura, `I_ref` por la rama
+       alta, `dV_ref/dV_KA` y divisores de 0,1 %. La v4 dio `+-0,30 V` para un
+       disparo de 14 V, y la v5 copio esos voltios al de 5,8 V.
      - En `+-12 V` (`THN 30-2422WI`, `traco_thn30wi.pdf` p. 2: limitacion de
        corriente `150..205 %` de `1,25 A`, `170 %` tipica; `1,875 A` es el
        minimo) y `+5 V` (`RPMB5.0-2.0` / `K7805T-1000R3`),
@@ -61,7 +64,7 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
        montar, y la entrada de 5 V del modulo 2 aguanta `8,00 V` como
        REQUISITO, igual que en la v4. Con el URB declarando `+-8 %` de
        desviacion ante un escalon de carga del 25 % (p. 2), el disparo de
-       `5,66 V +- 0,30 V` saltaba dentro del transitorio sano.
+       `5,66 V` nominal saltaba dentro del transitorio sano.
 
   5. **`U18` (`TPS709`, el LDO del supervisor M5):** `R64` y el zener `D2`
      sujetan su entrada cuando `D1` recorta un transitorio a `42,1 V`.
@@ -219,7 +222,6 @@ I2T_BT151_A2S = 72.0                   # nxp-bt151-500r.pdf p. 2: I^2t = 72 A^2s
 I_GT_MAX_BT151_A = 0.015               # nxp-bt151-500r.pdf p. 6
 V_GT_MAX_BT151_V = 1.5                 # nxp-bt151-500r.pdf p. 6
 R_GK_DVDT_OHM = 100.0                  # nxp-bt151-500r.pdf p. 6: 200 V/us con R_GK = 100 ohm
-TOL_DISPARO_TL431BI_V = 0.30           # TL431BI 0,5 % + divisor + V_GK
 # MMBT3906 (onsemi_mmbt3906.pdf p. 2): h_FE >= 60 a 50 mA; V_CE(sat) <= 0,4 V
 # y V_BE(sat) <= 0,95 V a 50 mA.
 HFE_MIN_PNP = 60.0
@@ -244,31 +246,66 @@ I_NOMINAL_FUSIBLE_A = {"SF-1206F300-2": 3.0, "SF-1206F200-2": 2.0, "0466004.NRHF
 # puerta el umbral es 2,495 V * (1 + R_alta/R_baja), sin V_GT (en #474 el anodo
 # del TL431 iba a la puerta y el umbral se corria V_GT*(1+R1/R2), de 3 a 8 V).
 V_REF_TL431_V = 2.495                  # tl431.pdf p. 5
+# TL431BI (tl431.pdf p. 13): V_ref 2483..2507 mV a 25 C; V_I(dev) <= 34 mV en
+# todo el rango de temperatura; I_ref <= 4 uA e I_I(dev) <= 2,5 uA;
+# dV_ref/dV_KA hasta -2,7 mV/V (V_KA de V_ref a 10 V) y -2 mV/V (de 10 a 36 V).
+V_REF_MIN_TL431BI_V = 2.483 - 0.034
+V_REF_MAX_TL431BI_V = 2.507 + 0.034
+I_REF_MAX_TL431BI_A = 4.0e-6 + 2.5e-6
+DVREF_DVKA_TL431BI = (-2.7e-3, -2.0e-3)
+TOL_DIVISOR = 0.001                    # resistencias de 0,1 % (bom.csv)
 
 
 def _disparo(r_alta: str, r_baja: str) -> float:
     return V_REF_TL431_V * (1.0 + valor(r_alta) / valor(r_baja))
 
 
-# (V nominal, fracciones de hoja que suben la salida, tempco por K, rizado Vpp)
+def banda_disparo_v(r_alta: str, r_baja: str) -> tuple[float, float]:
+    """Disparo mas bajo y mas alto garantizados: V = V_ref * (1 + Ra/Rb) + I_ref * Ra.
+
+    Abajo: V_ref en su minimo con la deriva, el divisor torcido hacia abajo,
+    I_ref = 0 y la caida de V_ref con V_KA, acotada con V_KA = disparo (el
+    catodo no pasa del riel). Arriba: V_ref en su maximo, el divisor torcido
+    hacia arriba e I_ref en su maximo con su deriva."""
+    ra, rb = valor(r_alta), valor(r_baja)
+
+    def ganancia(t: float) -> float:
+        return 1.0 + ra * (1.0 + t) / (rb * (1.0 - t))
+
+    v_ka = _disparo(r_alta, r_baja)
+    dv = (DVREF_DVKA_TL431BI[0] * (min(v_ka, 10.0) - V_REF_TL431_V)
+          + DVREF_DVKA_TL431BI[1] * max(0.0, v_ka - 10.0))
+    bajo = (V_REF_MIN_TL431BI_V + dv) * ganancia(-TOL_DIVISOR)
+    alto = (V_REF_MAX_TL431BI_V * ganancia(TOL_DIVISOR)
+            + I_REF_MAX_TL431BI_A * ra * (1.0 + TOL_DIVISOR))
+    return bajo, alto
+
+
+# (V nominal, fracciones de hoja que suben la salida, tempco por K, rizado Vpp,
+# desviacion transitoria ante un escalon de carga; None si la hoja no la da)
 SANO_HOJA = {
     # traco_thn30wi.pdf p. 2 (modelo doble): exactitud 1 %, linea 0,5 %, carga
     # 1 %, regulacion cruzada 5 % con carga asimetrica, 0,02 %/K; rizado 60 mVpp
-    # TIPICO (la hoja no da maximo).
-    "rack+12": (12.0, (0.01, 0.005, 0.01, 0.05), 0.0002, 0.060),
-    "rack-12": (12.0, (0.01, 0.005, 0.01, 0.05), 0.0002, 0.060),
+    # TIPICO (la hoja no da maximo). Del transitorio solo da el tiempo de
+    # respuesta (250 us tipico): la desviacion se pidio a TRACO.
+    "rack+12": (12.0, (0.01, 0.005, 0.01, 0.05), 0.0002, 0.060, None),
+    "rack-12": (12.0, (0.01, 0.005, 0.01, 0.05), 0.0002, 0.060, None),
     # mornsun_k78_t1000r3.pdf p. 1-2: exactitud 3 %, linea 0,4 %, carga 0,6 %,
-    # 0,03 %/C, rizado 75 mVpp max.
-    "rack+5": (5.0, (0.03, 0.004, 0.006), 0.0003, 0.075),
+    # 0,03 %/C; rizado 75 mVpp max, 150 mVpp por debajo del 20 % de carga
+    # (nota 2), que es el riel sin invitados; desviacion transitoria 150 mV max
+    # ante un escalon del 25 % (p. 2).
+    "rack+5": (5.0, (0.03, 0.004, 0.006), 0.0003, 0.150, 0.150),
 }
 
 
 def sano_max_v(riel: str) -> float:
     """Lo mas alto que el riel llega a valer funcionando bien: exactitud,
     regulaciones y deriva de hoja sumadas al maximo (con el salto de
-    temperatura de margen_budget.py), mas medio rizado."""
-    v_nom, fracs, tempco_k, rizado = SANO_HOJA[riel]
-    return v_nom * (1.0 + sum(fracs) + tempco_k * _margen().DELTA_T_K_V5) + rizado / 2.0
+    temperatura de margen_budget.py), mas medio rizado y la desviacion
+    transitoria que declara la hoja."""
+    v_nom, fracs, tempco_k, rizado, transitorio = SANO_HOJA[riel]
+    return (v_nom * (1.0 + sum(fracs) + tempco_k * _margen().DELTA_T_K_V5)
+            + rizado / 2.0 + (transitorio or 0.0))
 
 # (r_alta, r_baja, R_B, R_BE, R_C, R_GK, fusible) de cada crowbar, como los
 # coloca build_schematic.py (_crowbar y rack()).
@@ -280,11 +317,14 @@ PIEZAS_CROWBAR = {
 
 RACK_RIELES = {
     "rack+12": {"ovp_max_v": 16.56, "victima_max_v": 16.00,
-                "disparo_v": _disparo("R45", "R47"), "i_pliegue_min_a": 1.875},
+                "disparo_v": _disparo("R45", "R47"), "banda_v": banda_disparo_v("R45", "R47"),
+                "i_pliegue_min_a": 1.875},
     "rack-12": {"ovp_max_v": 16.56, "victima_max_v": 16.00,
-                "disparo_v": _disparo("R46", "R48"), "i_pliegue_min_a": 1.875},
+                "disparo_v": _disparo("R46", "R48"), "banda_v": banda_disparo_v("R46", "R48"),
+                "i_pliegue_min_a": 1.875},
     "rack+5":  {"ovp_max_v": 6.75, "victima_max_v": 6.30,
-                "disparo_v": _disparo("R49", "R50"), "i_pliegue_min_a": 2.500},
+                "disparo_v": _disparo("R49", "R50"), "banda_v": banda_disparo_v("R49", "R50"),
+                "i_pliegue_min_a": 2.500},
 }
 
 
@@ -295,7 +335,7 @@ def corriente_puerta_a(riel: str, i_gt_a: float = I_GT_MAX_BT151_A) -> dict[str,
     h_FE * I_B alcanza) a traves de R_C. La base la tira el catodo del TL431,
     que no baja de V_ref, a traves de R_B, menos lo que se lleva R_BE."""
     _ra, _rb, r_b, r_be, r_c, r_gk, _f = PIEZAS_CROWBAR[riel]
-    v = RACK_RIELES[riel]["disparo_v"] - TOL_DISPARO_TL431BI_V
+    v = RACK_RIELES[riel]["banda_v"][0]
     pide = i_gt_a + V_GT_MAX_BT151_V / valor(r_gk)
     i_base = (v - V_BE_SAT_PNP_V - V_REF_TL431_V) / valor(r_b) - V_BE_SAT_PNP_V / valor(r_be)
     da = min(HFE_MIN_PNP * i_base, (v - V_CE_SAT_PNP_V - V_GT_MAX_BT151_V) / valor(r_c))
@@ -571,8 +611,7 @@ def demo() -> int:
 
     print("  2. Ventanas de disparo en rack (D-F6: BT151-500R + TL431BI):")
     for riel, d in RACK_RIELES.items():
-        bajo = d["disparo_v"] - TOL_DISPARO_TL431BI_V
-        alto = d["disparo_v"] + TOL_DISPARO_TL431BI_V
+        bajo, alto = d["banda_v"]
         sano = sano_max_v(riel)
         holgura_baja = bajo - sano
         holgura_alta = d["victima_max_v"] - alto
@@ -620,7 +659,7 @@ def demo() -> int:
     }
     for victima, riel in {"Invitados rack +12V": "rack+12", "Invitados rack -12V": "rack-12",
                           "Invitados rack +5V": "rack+5"}.items():
-        esperados[victima] = RACK_RIELES[riel]["disparo_v"] + TOL_DISPARO_TL431BI_V
+        esperados[victima] = RACK_RIELES[riel]["banda_v"][1]
     for f in tabla:
         clave = next((k for k in esperados if f["victima"].startswith(k)), None)
         assert clave is not None, f"absmax.csv: '{f['victima']}' no tiene modelo que la calcule"
@@ -679,6 +718,9 @@ def demo() -> int:
     print("    - OUT de U19 a -V_F de D19 (<= 0,55 V a 3 A) durante el corte; la hoja da "
           "-0,3 V en DC y pide el Schottky")
     print("    - pendiente del riel de rack en enchufe en caliente (el SCR aguanta 200 V/us)")
+    sin_transitorio = [r for r, h in SANO_HOJA.items() if h[4] is None]
+    print(f"    - la desviacion transitoria de {', '.join(sin_transitorio)}: la hoja del "
+          "THN 30-2422WI no la da (pregunta a TRACO); el maximo sano no la cuenta")
     print("    - un crowbar disparado no llega al MSP430: el SCR sigue conduciendo el pliegue; "
           "se mide en el bring-up (paso 8, crowbar_*, #476)")
 

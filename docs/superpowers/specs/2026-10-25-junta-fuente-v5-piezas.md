@@ -251,6 +251,16 @@ en los crudos; `+5V_AUX` detrás de `F4` y `SCR3`, con su propio tope, o con `F4
 incapaz de abrir antes de que `U16` enclave; y las víctimas de `+5V_AUX` en
 `absmax.csv`.
 
+**Hecho el 2026-10-26, la ventana.** La banda de disparo sale riel a riel de la
+hoja del TL431BI (`tl431.pdf` p. 13: `V_ref` y su deriva, `I_ref`,
+`dV_ref/dV_KA`, divisores de 0,1 %), en `banda_disparo_v()` de
+`check_absmax.py`. Los ±0,30 V se habían derivado en la v4 para 14 V y la v5
+los copió al disparo de 5,8 V. Con la hoja, ±12 V dispara entre 13,37 y
+14,37 V (antes 13,50–14,10) y el +5 V de rack entre 5,68 y 6,01 V (antes
+5,51–6,11). El máximo sano del +5 V lleva ya la desviación de 150 mV del K78 y
+sus 150 mVpp a carga ligera: 5,49 V, 0,19 V bajo el disparo. Siguen abiertos el
+puente del K78 y `+5V_AUX`.
+
 ### 3.6 MEDIA — `curvas.py` cita una frase de derating que las hojas de TRACO no tienen (P1, P2, P3) · #492
 
 `curvas.py:36–38` atribuye al THN 30-2422WI, en su p. 2, «Operating

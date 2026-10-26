@@ -144,7 +144,7 @@ def _pico_tope_u1() -> float:
 
 
 def _disparo_alto_rack12() -> float:
-    return check_absmax.RACK_RIELES["rack-12"]["disparo_v"] + check_absmax.TOL_DISPARO_TL431BI_V
+    return check_absmax.RACK_RIELES["rack-12"]["banda_v"][1]
 
 
 # Escenarios del riel tras el nominal, de otros modelos (check_absmax, hojas de
