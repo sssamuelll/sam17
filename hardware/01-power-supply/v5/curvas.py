@@ -83,10 +83,10 @@ DERATING_V5: dict[str, tuple[Punto, ...]] = {
         (75.0,  1.00),
         (100.0, 0.00),
     ),
-    # AE/SL Power TE90A2403F01 (`ae-TE90-datasheet.pdf` p. 3, "Operating
+    # AE/SL Power TE90A2449F01 (`ae-TE90-datasheet.pdf` p. 3, "Operating
     # Temperature: -20C to +70C. Derate linearly above 40C to 50% load at 70C"):
     # 90 W hasta 40 C, 82,5 W (91,67 %) a 45 C, 45 W (50 %) a 70 C.
-    "TE90A2403F01": (
+    "TE90A2449F01": (
         (-20.0, 1.00),
         (40.0,  1.00),
         (45.0,  82.5 / 90.0),
@@ -119,7 +119,7 @@ FUENTES_DERATING_V5: dict[str, tuple[str, int, str]] = {
         "docs/reference/datasheets/recom_rpmb20.pdf", 3,
         "Thermal Derating @ Vin=24 V: 100% <= 75 C, 0% @ 100 C",
     ),
-    "TE90A2403F01": (
+    "TE90A2449F01": (
         "docs/reference/datasheets/ae-TE90-datasheet.pdf", 3,
         "Operating Temperature: 90 W <= 40 C, -1.5 W/C to 45 W @ 70 C (82.5 W @ 45 C)",
     ),
@@ -268,7 +268,7 @@ def _demo() -> int:
               f"({pdf} p.{pag})")
 
     print("\n  2. Derating del ladrillo externo a T_amb = 45 C (sala de diseno):")
-    for pieza, w_nom in (("TE90A2403F01", 90.0),):
+    for pieza, w_nom in (("TE90A2449F01", 90.0),):
         pdf, pag, _ = FUENTES_DERATING_V5[pieza]
         f45 = derating(pieza, 45.0)
         print(f"    {pieza:<20} @ 45 C: {100*f45:5.1f}% ({w_nom*f45:5.1f} W)   "

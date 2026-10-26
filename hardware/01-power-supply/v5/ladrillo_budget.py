@@ -143,7 +143,7 @@ ETA_LADRILLO = 0.88       # DoE Level VI (>= 88 % en 90-120 W)
 
 # Potencia continua garantizada a 45 C de ambiente (curvas de derating en hoja):
 LADRILLOS_45C_W = {
-    "AE/SL Power TE90A2403F01 (ae-TE90-datasheet.pdf p.3)": 82.5,
+    "AE/SL Power TE90A2449F01 (ae-TE90-datasheet.pdf p.3)": 82.5,
 }
 
 # --- la cadena de entrada de 24 V (D-V5, M5) -------------------------------

@@ -6,7 +6,7 @@
 ## Que es la v5 y por que se escribe ahora (T28 / H-CENSO-MEDIDA)
 
 La fuente v5 sustituye los seis modulos IRM de 230 V (v4, liston) por un ladrillo
-externo de 24 VDC (TE90A2403F01) y cinco
+externo de 24 VDC (TE90A2449F01) y cinco
 convertidores DC-DC internos:
   - PS_RACK_PM:  TRACO THN 30-2422WI (+-12 V rack, 30 W)
   - PS_DIG:      Mornsun URB2405YMD-20WR3 (+5 V digital aislado, 20 W)
@@ -368,8 +368,8 @@ def _puntos() -> list[Punto]:
                    "o IR sobre cinta Kapton",
                    hi=tj_budget.subida_max_aleta_k(reg, derating_budget.aire_cajon_c())))
     p.append(P("7", "potencia_derating_ladrillo_45C_w", "W",
-               "curvas.derating('TE90A2403F01', 45) * 90.0: potencia garantizada del ladrillo a 45 C",
-               predicho=curvas.derating("TE90A2403F01", 45.0) * 90.0,
+               "curvas.derating('TE90A2449F01', 45) * 90.0: potencia garantizada del ladrillo a 45 C",
+               predicho=curvas.derating("TE90A2449F01", 45.0) * 90.0,
                tol=2.0))
 
     # --- Paso 8: Protecciones y ruido extremo -----------------------------

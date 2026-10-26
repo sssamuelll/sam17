@@ -51,7 +51,7 @@ Piso de cribado usado: ≥ 80 W continuos a 45 °C. **No es requisito**: el real
 
 > **Nota (junta de piezas §4.3, 2026-10-26): el respaldo Mean Well sale.** Los GST120A y GSM120A se enclavan en sobretensión desde el 105 %, y el TE90 queda como única referencia. Las columnas de Mean Well se quedan como historia de la comparación; los guiones de `v5/` ya no los cuentan.
 
-| | **AE/SL Power TE90A2403F01** | Mean Well GST120A24-R7B | Mean Well GSM120A24-R7B | TDK-Lambda DTM110PW240C8 |
+| | **AE/SL Power TE90A2449F01** | Mean Well GST120A24-R7B | Mean Well GSM120A24-R7B | TDK-Lambda DTM110PW240C8 |
 |---|---|---|---|---|
 | Potencia a 45 °C | **82,5 W** (90 W hasta 40 °C, −1,5 W/°C hasta 45 W a 70 °C) **[comprobado, p. 3]** | **120 W a 230 VAC** / **108 W (90 %) a 100 VAC** **[comprobado, p. 3]** | **108 W (90 %)** (100 % hasta 40 °C, 80 % a 50 °C) **[comprobado, p. 3]** | 96,25 W (regla lineal) |
 | Sobrecarga / corto | hiccup, automático **[comprobado]** | hiccup, automático **[comprobado]** | hiccup **[comprobado]** | hiccup (corto), automático |
