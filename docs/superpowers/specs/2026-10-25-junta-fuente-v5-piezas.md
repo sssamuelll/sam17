@@ -449,6 +449,15 @@ rerutear, y el requisito pasa al módulo 2: su entrada de 5 V aguanta los 8,0 V
 del OVP máximo del URB. Faltan la BOM, `check_absmax.py`, `absmax.csv`, la
 propuesta y #476, que lo cuentan como D-F6 (§3.4).
 
+**Hecho el 2026-10-26.** `SCR4`, `U25`, `Q6`, `R51`, `R52`, `R56`, `R73`, `R77`
+y `R81` van en `bom.csv` como «SIN MONTAR», fuera del BOM y del CPL de JLC.
+`check_absmax.py` deja el digital fuera de D-F6 y lleva su fila de
+`absmax.csv` como requisito: 8,00 V del URB contra los 8,0 V que aguanta el
+módulo 2. El paso 8 de `medidas.csv` pierde los cuatro puntos del crowbar
+digital, y el paso 0 comprueba que el disparo no está soldado. El requisito
+queda en el papel de la alimentación de los N657 (§6), y la propuesta y #476
+cuentan tres crowbars.
+
 ### 4.6 Simplificaciones que la firma puede tomar o dejar
 
 - `D12` sin montar: el LT1963A no la necesita (§2, P7). `D13`, la de `U2`, se
@@ -492,9 +501,9 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
+| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y la propuesta enmendada (§3.9) |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
-| **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y `SCR4` sin montar (§4.5) |
+| **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y ~~`SCR4` sin montar (§4.5)~~ |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
 | **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |
 | **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con el ladrillo antes de conectar `J1` (§3.1); y «los dos o ninguno» en `PS1` (§4.4) |

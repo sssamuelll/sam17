@@ -56,9 +56,12 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
 
   4. **Supervivencia del `+5 V` digital aislado (T19, `H-CENSO-DIGITAL`):**
      - El `Mornsun URB2405YMD-20WR3` (`mornsun_urb_ymd20wr3.pdf` p. 2) declara
-       OVP entre `110 %` y `160 %` (`5,50..8,00 V`). Como `8,00 V` superaria los
-       `6,30 V` de los condensadores de entrada de 5 V del modulo 2, M3 incluye
-       un tope local con `TL431BI` (`5,65 V +- 0,30 V`, pico `<= 5,95 V < 6,30 V`).
+       OVP entre `110 %` y `160 %` (`5,50..8,00 V`). El digital no lleva
+       crowbar (junta de piezas v5 sec. 4.5): `SCR4` y su disparo quedan sin
+       montar, y la entrada de 5 V del modulo 2 aguanta `8,00 V` como
+       REQUISITO, igual que en la v4. Con el URB declarando `+-8 %` de
+       desviacion ante un escalon de carga del 25 % (p. 2), el disparo de
+       `5,66 V +- 0,30 V` saltaba dentro del transitorio sano.
 
   5. **`U18` (`TPS709`, el LDO del supervisor M5):** `R64` y el zener `D2`
      sujetan su entrada cuando `D1` recorta un transitorio a `42,1 V`.
@@ -147,6 +150,8 @@ V_ABSMAX_U1_V = 20.0                   # lt1963a-rev-g-2021-02.pdf p. 2
 V_ABSMAX_U2_V = 33.0                   # lt3015-rev-b.pdf p. 2
 # THN 20-2413WI: OVP entre el 112 % y el 164 % de 15 V (traco_thn20wi.pdf p. 2)
 V_OVP_MAX_THN20_V = 1.64 * 15.0
+# URB2405YMD-20WR3: OVP entre el 110 % y el 160 % de 5 V (mornsun_urb_ymd20wr3.pdf p. 2)
+V_OVP_MAX_URB_V = 1.60 * 5.0
 V_OVPR_NOM_V = 1.200                   # tps2663.pdf p. 6: V(OVPR) 1,176..1,224 V
 V_DISPARO_NOM_U1_V = V_OVPR_NOM_V * (1.0 + valor("R35") / valor("R36"))
 TOL_OVPR_TPS26631_FRAC = 0.020         # tps2663.pdf p. 6: 1,176..1,224 V (+-2,0 %)
@@ -255,9 +260,6 @@ SANO_HOJA = {
     # mornsun_k78_t1000r3.pdf p. 1-2: exactitud 3 %, linea 0,4 %, carga 0,6 %,
     # 0,03 %/C, rizado 75 mVpp max.
     "rack+5": (5.0, (0.03, 0.004, 0.006), 0.0003, 0.075),
-    # mornsun_urb_ymd20wr3.pdf p. 2: exactitud 3 %, linea 0,5 %, carga 1 %,
-    # 0,03 %/C, rizado 100 mVpp max.
-    "digital+5": (5.0, (0.03, 0.005, 0.01), 0.0003, 0.100),
 }
 
 
@@ -274,7 +276,6 @@ PIEZAS_CROWBAR = {
     "rack+12": ("R45", "R47", "R70", "R74", "R78", "R53", "F2"),
     "rack-12": ("R46", "R48", "R71", "R75", "R79", "R54", "F3"),
     "rack+5": ("R49", "R50", "R72", "R76", "R80", "R55", "F4"),
-    "digital+5": ("R51", "R52", "R73", "R77", "R81", "R56", "F5"),
 }
 
 RACK_RIELES = {
@@ -284,8 +285,6 @@ RACK_RIELES = {
                 "disparo_v": _disparo("R46", "R48"), "i_pliegue_min_a": 1.875},
     "rack+5":  {"ovp_max_v": 6.75, "victima_max_v": 6.30,
                 "disparo_v": _disparo("R49", "R50"), "i_pliegue_min_a": 2.500},
-    "digital+5": {"ovp_max_v": 8.00, "victima_max_v": 6.30,
-                  "disparo_v": _disparo("R51", "R52"), "i_pliegue_min_a": 4.400},
 }
 
 
@@ -570,7 +569,7 @@ def demo() -> int:
 
     _guarda_u1_rk4(dict(P_BASE))
 
-    print("  2. Ventanas de disparo en rack (D-F6: BT151-500R + TL431BI) y digital (T19):")
+    print("  2. Ventanas de disparo en rack (D-F6: BT151-500R + TL431BI):")
     for riel, d in RACK_RIELES.items():
         bajo = d["disparo_v"] - TOL_DISPARO_TL431BI_V
         alto = d["disparo_v"] + TOL_DISPARO_TL431BI_V
@@ -617,9 +616,10 @@ def demo() -> int:
         "U4,U5 ": con_tope["v_pico_v"],
         "U6,U7 ": v_max_u2,
         "U18 ": pico_u18["v_in_v"],
+        "Cerebro digital +5V": V_OVP_MAX_URB_V,
     }
     for victima, riel in {"Invitados rack +12V": "rack+12", "Invitados rack -12V": "rack-12",
-                          "Invitados rack +5V": "rack+5", "Cerebro digital +5V": "digital+5"}.items():
+                          "Invitados rack +5V": "rack+5"}.items():
         esperados[victima] = RACK_RIELES[riel]["disparo_v"] + TOL_DISPARO_TL431BI_V
     for f in tabla:
         clave = next((k for k in esperados if f["victima"].startswith(k)), None)
@@ -669,6 +669,9 @@ def demo() -> int:
           f"contra 22 V; se acepta sin TVS ni tope")
     print(f"    - fallo doble THN+ en OVP + U1 en corto: {con_tope['v_pico_v']:.2f} V en la cascada, "
           f"cubierto por M3 (fila U4,U5), no por requisito")
+
+    print("\n  REQUISITO al modulo 2 (T19, junta de piezas v5 sec. 4.5): el +5 V digital no lleva "
+          f"crowbar, y su entrada de 5 V aguanta {V_OVP_MAX_URB_V:.2f} V, el OVP maximo del URB")
 
     print("\n  LO QUE NO CUBRE:")
     print("    - la curva L-I de L2 es tipica (bourns_srp1265a.pdf p. 3): leida, bajada 0,5 uH y "

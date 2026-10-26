@@ -48,7 +48,8 @@ fila Eurorack de invitados (52 HP, D-B2):
 - **+5 V digital aislado (`M1`)** — **2,895 A** de techo de diseño (`Max TJ = 125 °C`
   de los 4 STM32N657 más USB host, `0,965 A` típico) mediante convertidor DC-DC
   aislado (`URB2405YMD-20WR3`, 4 A, 1500 VDC, ≥ 88 % mín.), conservando `GNDD`
-  fuera de la estrella analógica (> 1 MΩ dentro de la fuente).
+  fuera de la estrella analógica (> 1 MΩ dentro de la fuente). Sin crowbar: la
+  entrada de 5 V del módulo 2 aguanta los 8,0 V del OVP máximo del URB.
 
 ## Entrada y vigilancia (`M5` / `D-V1` / `D-V2`)
 

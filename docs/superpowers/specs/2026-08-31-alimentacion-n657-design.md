@@ -296,6 +296,12 @@ que vayan a bypass.
    `RENDIMIENTO_DCDC = 0.85` **ESTIMADO** que este papel vuelve obsoleto — el
    camino real es 5 V → buck → 3,3 V → LDO → 1,8 V → SMPS interno → 0,81 V.
    Se reescribe cuando D-R1 se firme.
+7. **La entrada de 5 V aguanta 8,0 V.** El +5 V digital de la fuente v5 llega
+   sin crowbar (junta de piezas de la fuente v5, §4.5, 2026-10-26), y el OVP
+   del `URB2405YMD-20WR3` actúa entre 5,50 y 8,00 V (`mornsun_urb_ymd20wr3.pdf`
+   p. 2). El buck de 5 V a 3,3 V y todo lo que cuelgue de ese riel,
+   condensadores incluidos, aguanta 8,0 V. `hardware/01-power-supply/v5/absmax.csv`
+   lo lleva como requisito.
 
 ---
 

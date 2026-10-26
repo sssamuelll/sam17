@@ -7,7 +7,8 @@ fichero de posiciones (kicad-cli --smd-only: las huellas con atributo SMD) y
 que se compra en LCSC. Las THT (conectores, modulos, SCR, trimmers) se sueldan
 a mano aunque tengan codigo LCSC, y una SMD que no esta en LCSC (el K78, PS3)
 va a mano y se lista como tal. Una SMD de la placa que no esta en bom.csv es
-un error: JLC dejaria sus pads vacios sin avisar.
+un error: JLC dejaria sus pads vacios sin avisar. Una fila con supplier
+"SIN MONTAR" deja sus pads vacios a proposito y no va ni a JLC ni a mano.
 """
 from __future__ import annotations
 
@@ -37,7 +38,7 @@ def main() -> int:
             refs = [r.strip() for r in fila["refs"].split(",") if r.strip()]
             vistos.update(refs)
             maquina = [r for r in refs if r in smd]
-            if not maquina:
+            if not maquina or fila.get("supplier", "").strip() == "SIN MONTAR":
                 continue
             if fila.get("supplier", "").strip() != "LCSC" or not fila.get("lcsc", "").strip():
                 a_mano += maquina
