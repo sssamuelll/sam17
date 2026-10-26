@@ -38,13 +38,11 @@ def test_derating_monotono_y_anclado() -> None:
             assert y1 <= y0 + 1e-12, f"{nombre}: el derating sube con la temperatura"
         assert abs(cv.derating(nombre, 25.0) - 1.0) < 1e-12
 
-    # Puntos exactos de hoja a 65 C (convertidores) y 45 C (ladrillos):
+    # Puntos exactos de hoja a 65 C (convertidores) y 45 C (ladrillo):
     assert abs(cv.derating("URB2405YMD-20WR3", 65.0) - 1.00) < 1e-12
     assert abs(cv.derating("URB2405YMD-20WR3", 75.0) - 0.75) < 1e-12
     assert abs(cv.derating("K7805T-1000R3", 65.0) - 0.92) < 1e-12
     assert abs(cv.derating("TE90A2403F01", 45.0) * 90.0 - 82.5) < 1e-9
-    assert abs(cv.derating("GST120A24-R7B-230V", 45.0) * 120.0 - 120.0) < 1e-9
-    assert abs(cv.derating("GSM120A24-R7B", 45.0) * 120.0 - 108.0) < 1e-9
 
 
 # Lecturas de las figuras de TRACO en conveccion natural, sin disipador

@@ -144,9 +144,6 @@ ETA_LADRILLO = 0.88       # DoE Level VI (>= 88 % en 90-120 W)
 # Potencia continua garantizada a 45 C de ambiente (curvas de derating en hoja):
 LADRILLOS_45C_W = {
     "AE/SL Power TE90A2403F01 (ae-TE90-datasheet.pdf p.3)": 82.5,
-    "Mean Well GST120A24-R7B 230VAC (meanwell-GST120A-spec.pdf p.3)": 120.0,
-    "Mean Well GST120A24-R7B 100VAC (meanwell-GST120A-spec.pdf p.3)": 108.0,
-    "Mean Well GSM120A24-R7B (meanwell-GSM120A-spec.pdf p.3)": 108.0,
 }
 
 # --- la cadena de entrada de 24 V (D-V5, M5) -------------------------------
@@ -536,7 +533,7 @@ def _autocomprobacion() -> None:
     # 3. El ladrillo le pide a la red MAS de lo que entrega, nunca menos.
     assert pedido_a_la_red_w() > salida_ladrillo_w(), "rendimiento >= 1"
 
-    # 4. Todos los ladrillos candidatos aguantan la demanda continua a 45 C.
+    # 4. El ladrillo candidato aguanta la demanda continua a 45 C.
     for nombre_ladrillo, w_45c in LADRILLOS_45C_W.items():
         assert w_45c >= salida_ladrillo_w(), (
             f"{nombre_ladrillo} da {w_45c:.1f} W a 45 C < {salida_ladrillo_w():.2f} W")

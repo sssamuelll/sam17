@@ -6,7 +6,7 @@
 ## Que es la v5 y por que se escribe ahora (T28 / H-CENSO-MEDIDA)
 
 La fuente v5 sustituye los seis modulos IRM de 230 V (v4, liston) por un ladrillo
-externo de 24 VDC (TE90A2403F01 / GST120A24-R7B / GSM120A24-R7B) y cinco
+externo de 24 VDC (TE90A2403F01) y cinco
 convertidores DC-DC internos:
   - PS_RACK_PM:  TRACO THN 30-2422WI (+-12 V rack, 30 W)
   - PS_DIG:      Mornsun URB2405YMD-20WR3 (+5 V digital aislado, 20 W)

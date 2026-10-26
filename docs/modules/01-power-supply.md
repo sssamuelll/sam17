@@ -52,8 +52,7 @@ fila Eurorack de invitados (52 HP, D-B2):
 
 ## Entrada y vigilancia (`M5` / `D-V1` / `D-V2`)
 
-- **Ladrillo externo de 24 V** (`AE TE90A2403F01` / `Mean Well GST120A24-R7B` /
-  `GSM120A24-R7B`), entrando al chasis por conector de 4 polos **Kycon KPJX-PM-4S**
+- **Ladrillo externo de 24 V** (`AE TE90A2403F01`), entrando al chasis por conector de 4 polos **Kycon KPJX-PM-4S**
   (`KPPX-4P` en el cordón, 2 pines por polo en paralelo).
 - **Bloqueo de inversión de polaridad**: controlador **TI LM74502** + MOSFET
   en la entrada de 24 V (H-V5-INVERSION).

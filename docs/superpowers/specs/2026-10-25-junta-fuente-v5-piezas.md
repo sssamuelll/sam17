@@ -400,7 +400,10 @@ de los dos, el que case con la variante del TE90.
 
 **Decidido el 2026-10-26: el respaldo Mean Well sale**, por su enclavamiento de
 sobretensión desde el 105 % (P5 (d)). El TE90 queda como única referencia.
-Falta retirarlo de la propuesta, de `ladrillo_budget.py` y de `curvas.py`.
+Hecho el 2026-10-26: sale de `ladrillo_budget.py`, `curvas.py`,
+`test_curvas.py`, `check_bringup.py` y `docs/modules/01-power-supply.md`, y la
+propuesta lleva la nota en su §3. Sus hojas se quedan: la propuesta y §3.1 citan
+su pinout `R7B`.
 
 ### 4.4 D-F4 en el par de rack
 
@@ -470,7 +473,7 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | El arnés (§3.1), la referencia del TE90, `TE90A2449F01` (§3.2, §4.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), el retiro del respaldo Mean Well (§4.3), el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
+| **Papel** | El arnés (§3.1), la referencia del TE90, `TE90A2449F01` (§3.2, §4.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
 | **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y `SCR4` sin montar (§4.5) |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
