@@ -96,7 +96,7 @@ SYM = {
     "LM74502": "sam17:LM74502DDF", "MSP430": "sam17:MSP430FR2111IPW16",
     "TPS709": "sam17:TPS70933DBV", "THN1": "sam17:TRACO_THN_Single",
     "THN2": "sam17:TRACO_THN_Dual", "URB": "sam17:Mornsun_URB_YMD-20WR3",
-    "K78": "sam17:Mornsun_K78xxT-1000R3", "SCR": "sam17:BT151-500R",
+    "SCR": "sam17:BT151-500R",
     "FLAG": "power:PWR_FLAG",
 }
 
@@ -195,13 +195,18 @@ def convertidores() -> None:
     P("PS2", "URB", b, {"3": "+24V_SW", "2": "GND24", "1": None,
                         "4": "+5V_RAW_DIG", "5": None, "6": "GNDD"})
     P("C29", "CP", b, {"1": "+5V_RAW_DIG", "2": "GNDD"})   # Cout del URB (p. 4)
-    # K78: NO aislado. Su GND es el de la entrada (GND24) y la union con GNDA
-    # se hace en NT1, pegada a sus pads de masa (decision de #474).
-    P("PS3", "K78", b, {"1": "+24V_SW", "2": "+24V_SW", "10": None,
-                        "3": "GND24", "7": "GND24", "4": "+5V_RAW_RACK",
-                        "5": "+5V_RAW_RACK", "6": None})
-    dos("C15", "C", b, "+24V_SW", "GND24")         # C1 10 uF/50 V (p. 4)
-    dos("C16", "C", b, "+5V_RAW_RACK", "GND24")    # C2 22 uF (p. 4)
+    # +5 V de rack: THN 20-2411WI, aislado (#491). Un buck no aislado con la
+    # entrada puenteada a la salida ponia 24 V en el riel antes que el crowbar.
+    # Trim al aire = 5,0 V. Su filtro de entrada es interno (p. 1): sin Cin.
+    P("PS3", "THN1", b, {"1": "+24V_SW", "2": "GND24", "6": None,
+                         "3": "+5V_RAW_RACK", "4": None, "5": "GNDA"})
+    dos("C16", "C", b, "+5V_RAW_RACK", "GNDA")     # el 10 uF del rizado de la hoja (p. 2)
+    # Frena la fuga de PS3 (#491): con el lazo roto el THN empuja hasta su
+    # limite (7.6 A) y C16 sola subia el riel 0.35 V/us; con 1000 uF son
+    # 0.0076 V/us y SCR3 llega antes de los 6.0 V de +5V_AUX (check_absmax.py).
+    P("C39", "CP", b, {"1": "+5V_RAW_RACK", "2": "GNDA"})
+    # Union de GND24 y GNDA (decision de #474): con los cinco convertidores
+    # aislados no lleva corriente de carga, solo los retornos que cruzan.
     P("NT1", "NT", b, {"1": "GND24", "2": "GNDA"})
     # +-15.5 V crudos: trim HACIA ARRIBA = resistencia de Trim a -Vout.
     P("PS4", "THN1", b, {"1": "+24V_SW", "2": "GND24", "6": None,
@@ -384,12 +389,14 @@ def rack() -> None:
 
 def telemetria() -> None:
     b = "TEL"
-    dos("R20", "R", b, "+5V_RAW_RACK", "+5V_AUX")
+    # +5V_AUX cuelga DESPUES de F4 (#491): si F4 abre, la telemetria se apaga
+    # en vez de quedarse con el OVP de PS3 (hasta 8.2 V contra 6.0 V).
+    dos("R20", "R", b, "+5V_FUSED_RACK", "+5V_AUX")
     # INA226 A1/A0 (ina226.pdf Table 6-2): GND/GND 0x40, GND/VS 0x41,
     # VS/GND 0x44, VS/VS 0x45. Nunca a SDA: con SDA salen 0x48/0x49 y chocan
     # con el ADS1115 y el TMP1075.
     ina = (("U8", "GNDA", "GNDA", "+12V_ULTRA", "OUTS_POS", "C24"),
-           ("U12", "GNDA", "+5V_AUX", "+5V_AUX", "+5V_RAW_RACK", "C25"),
+           ("U12", "GNDA", "+5V_AUX", "+5V_AUX", "+5V_FUSED_RACK", "C25"),
            ("U13", "+5V_AUX", "GNDA", "+12V_RACK", "+12V_FUSED_RACK", "C26"),
            ("U14", "+5V_AUX", "+5V_AUX", "+5V_RACK", "+5V_FUSED_RACK", "C27"))
     for ref, a1, a0, menos, mas, cdec in ina:
@@ -528,7 +535,7 @@ _libs: set = set()
 LARGO_STUB = g(4)
 BLOQUES = (
     ("M5", "Entrada 24 V, polaridad (LM74502 + CSD18534Q5A), eFuse U16 y supervisor M5"),
-    ("DCDC", "Convertidores: THN 30 (+-12 rack), URB (+5 digital M1), K78 (+5 rack), 2 x THN 20 (+-15.5)"),
+    ("DCDC", "Convertidores: THN 30 (+-12 rack), URB (+5 digital M1), 3 x THN 20 (+5 rack, +-15.5)"),
     ("LC", "Tope M3 (#334): TPS26631 + filtro LC 22 uH / 47 uF / 0.68 ohm + 220 uF + SMBJ16A"),
     ("DF4", "Detector D-F4: LM393 + TL431, umbral 14.5 V con histeresis"),
     ("PRE", "Pre-reguladores LT1963A (+13.1 V) y LT3015 (-12.9 V)"),
@@ -667,7 +674,7 @@ def escribir(bom: dict[str, dict], titulos: list[tuple]) -> None:
            '\t\t(company "SAM17 - Sintetizador analogico modular")',
            '\t\t(comment 1 "Generado por build_schematic.py: no editar a mano")',
            '\t\t(comment 2 "Pinouts de simbolos propios en build_simbolos.py, con su pagina de hoja")',
-           '\t\t(comment 3 "GND24 y GNDA se unen SOLO en NT1, en los pads de masa de PS3 (K78 no aislado)")',
+           '\t\t(comment 3 "GND24 y GNDA se unen SOLO en NT1, entre PS5 y PS3")',
            '\t\t(comment 4 "GNDD no toca GNDA en esta placa (M1): ISO1541 y URB aislados")',
            "\t)", "\t(lib_symbols"]
     for lib in sorted(_libs):

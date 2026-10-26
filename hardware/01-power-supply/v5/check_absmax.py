@@ -53,9 +53,9 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
        disparo de 14 V, y la v5 copio esos voltios al de 5,8 V.
      - En `+-12 V` (`THN 30-2422WI`, `traco_thn30wi.pdf` p. 2: limitacion de
        corriente `150..205 %` de `1,25 A`, `170 %` tipica; `1,875 A` es el
-       minimo) y `+5 V` (`RPMB5.0-2.0` / `K7805T-1000R3`),
-       la corriente de pliegue supera en mas de 35 veces los `40 mA` de
-       mantenimiento del `BT151-500R`.
+       minimo) y `+5 V` (`THN 20-2411WI`, `traco_thn20wi.pdf` p. 2: `125..190 %`
+       de `4 A`, `5 A` el minimo), la corriente de pliegue supera en mas de 35
+       veces los `40 mA` de mantenimiento del `BT151-500R`.
 
   4. **Supervivencia del `+5 V` digital aislado (T19, `H-CENSO-DIGITAL`):**
      - El `Mornsun URB2405YMD-20WR3` (`mornsun_urb_ymd20wr3.pdf` p. 2) declara
@@ -71,6 +71,28 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
 
   6. **D-F6 por dentro:** la corriente de puerta que el PNP puede dar con
      `R_GK` en el disparo mas bajo, y el `I^2t` de los fusibles contra el del SCR.
+
+  7. **El `+5 V` de rack y `+5V_AUX` (#491):**
+     - `PS3` es un `THN 20-2411WI`, flyback aislado (`traco_thn20wi.pdf` p. 3).
+       El buck no aislado que montaba (`K7805T-1000R3`) con la entrada puenteada
+       a la salida ponia el riel en `6,15..7,23 V` (segun una bobina que su hoja
+       no publica) o en `21,8 V` (sin ella) antes del disparo, contra los `6,0 V`
+       de los INA226 y del ISO1541. En el flyback la entrada y la salida solo se
+       tocan por la barrera de `1600 VDC`: ese corto es el camino menos probable
+       de la propuesta de piezas sec. 9.1, fuera del contrato. La guarda exige
+       que `PS3` sea un modulo aislado (`AISLADOS`).
+     - Lo que si entra en el contrato es su FUGA: con el lazo roto el THN empuja
+       hasta su limite (`190 %` de `4 A`, p. 2) y el riel sube a `I / C`. Con
+       `C16` sola eran `0,35 V/us`, y los `2 us` tipicos de `t_gt`
+       (`nxp-bt151-500r.pdf` p. 6, sin maximo) llevaban `+5V_AUX` a `6,55 V`.
+       `C39` (`1000 uF` en su `-20 %`) lo deja en `0,0095 V/us`. El pico sale en
+       demo() desde el borde alto de la banda de `SCR3`, y el canario dice
+       cuanto retardo aguanta.
+     - Disparado `SCR3`, el THN da su limite (`>= 5 A`) y `F4` (`2 A`) abre.
+       `+5V_AUX` cuelga de `+5V_FUSED_RACK`, despues de `F4` (`check_netlist.py`):
+       se apaga con el en vez de quedarse con el OVP del THN (`112..164 %`, hasta
+       `8,20 V`, p. 2). Con ella se apagan la telemetria, el `+5 V` auxiliar del
+       modulo 2 (`J6`) y el pull-up de `SHDN_CASCADE`, que para la cascada.
 
 Cada fila de `absmax.csv` sale de un modelo o de la BOM y se comprueba contra
 el: ninguna se cree.
@@ -91,6 +113,12 @@ LO QUE ESTE CALCULO NO CUBRE (se imprime al final):
     sin cifra de transitorio.
   * La pendiente del riel de rack en un enchufe en caliente no esta modelada:
     el SCR aguanta `200 V/us` con `R_GK = 100 ohm` (`nxp-bt151-500r.pdf` p. 6).
+  * La fuga de `PS3` como fuente de corriente a su limite maximo es una cota:
+    la hoja no dice como se desboca. Y `t_gt` solo tiene tipico (`2 us`): el
+    canario imprime cuanto retardo aguanta `+5V_AUX`.
+  * La descarga de `C39` por `SCR3` al disparar: la hoja del BT151 pide
+    `dI_T/dt <= 50 A/us` (p. 3), y la pendiente la pone la inductancia del lazo
+    `C39 - F4 - R30 - SCR3`, que no esta medida.
   * Un crowbar disparado no llega al MSP430: el SCR se queda conduciendo la
     corriente de pliegue del convertidor (los fusibles de `+-12 V` son de
     `3 A` y el THN 30 pliega a `1,875 A`) (#476). Si el convertidor lo suelta
@@ -155,6 +183,15 @@ V_ABSMAX_U2_V = 33.0                   # lt3015-rev-b.pdf p. 2
 V_OVP_MAX_THN20_V = 1.64 * 15.0
 # URB2405YMD-20WR3: OVP entre el 110 % y el 160 % de 5 V (mornsun_urb_ymd20wr3.pdf p. 2)
 V_OVP_MAX_URB_V = 1.60 * 5.0
+# THN 20-2411WI (PS3, +5 V de rack): OVP 112..164 % de 5 V y limitacion de
+# corriente 125..190 % de 4 A (traco_thn20wi.pdf p. 2).
+V_OVP_MAX_PS3_V = 1.64 * 5.0
+I_LIMITE_MIN_PS3_A = 1.25 * 4.0
+I_LIMITE_MAX_PS3_A = 1.90 * 4.0
+# Los convertidores aislados de la v5 (hojas p. 1). PS3 tiene que ser uno (#491).
+AISLADOS = {"THN 20-2411WI", "THN 20-2413WI", "THN 30-2422WI", "URB2405YMD-20WR3"}
+# +5V_AUX: VS del INA226 (ina226.pdf p. 4) y VCC1 del ISO1541 (iso1541.pdf p. 6).
+V_ABSMAX_AUX_V = 6.0
 V_OVPR_NOM_V = 1.200                   # tps2663.pdf p. 6: V(OVPR) 1,176..1,224 V
 V_DISPARO_NOM_U1_V = V_OVPR_NOM_V * (1.0 + valor("R35") / valor("R36"))
 TOL_OVPR_TPS26631_FRAC = 0.020         # tps2663.pdf p. 6: 1,176..1,224 V (+-2,0 %)
@@ -221,6 +258,7 @@ I_MANTENIMIENTO_BT151_A = 0.040        # nxp-bt151-500r.pdf p. 2: I_H max 40 mA
 I2T_BT151_A2S = 72.0                   # nxp-bt151-500r.pdf p. 2: I^2t = 72 A^2s
 I_GT_MAX_BT151_A = 0.015               # nxp-bt151-500r.pdf p. 6
 V_GT_MAX_BT151_V = 1.5                 # nxp-bt151-500r.pdf p. 6
+T_GT_TIP_BT151_S = 2.0e-6              # nxp-bt151-500r.pdf p. 6: t_gt 2 us tipico, sin maximo
 R_GK_DVDT_OHM = 100.0                  # nxp-bt151-500r.pdf p. 6: 200 V/us con R_GK = 100 ohm
 # MMBT3906 (onsemi_mmbt3906.pdf p. 2): h_FE >= 60 a 50 mA; V_CE(sat) <= 0,4 V
 # y V_BE(sat) <= 0,95 V a 50 mA.
@@ -290,11 +328,10 @@ SANO_HOJA = {
     # respuesta (250 us tipico): la desviacion se pidio a TRACO.
     "rack+12": (12.0, (0.01, 0.005, 0.01, 0.05), 0.0002, 0.060, None),
     "rack-12": (12.0, (0.01, 0.005, 0.01, 0.05), 0.0002, 0.060, None),
-    # mornsun_k78_t1000r3.pdf p. 1-2: exactitud 3 %, linea 0,4 %, carga 0,6 %,
-    # 0,03 %/C; rizado 75 mVpp max, 150 mVpp por debajo del 20 % de carga
-    # (nota 2), que es el riel sin invitados; desviacion transitoria 150 mV max
-    # ante un escalon del 25 % (p. 2).
-    "rack+5": (5.0, (0.03, 0.004, 0.006), 0.0003, 0.150, 0.150),
+    # traco_thn20wi.pdf p. 2 (THN 20-2411WI, salida simple): exactitud 1 %,
+    # linea 0,2 %, carga 0,2 %, 0,02 %/K; rizado 75 mVpp TIPICO. Del transitorio
+    # solo da el tiempo de respuesta, como el THN 30.
+    "rack+5": (5.0, (0.01, 0.002, 0.002), 0.0002, 0.075, None),
 }
 
 
@@ -322,10 +359,21 @@ RACK_RIELES = {
     "rack-12": {"ovp_max_v": 16.56, "victima_max_v": 16.00,
                 "disparo_v": _disparo("R46", "R48"), "banda_v": banda_disparo_v("R46", "R48"),
                 "i_pliegue_min_a": 1.875},
-    "rack+5":  {"ovp_max_v": 6.75, "victima_max_v": 6.30,
+    # La victima mas baja del +5 V de rack es +5V_AUX (6,0 V), no los invitados.
+    "rack+5":  {"ovp_max_v": V_OVP_MAX_PS3_V, "victima_max_v": V_ABSMAX_AUX_V,
                 "disparo_v": _disparo("R49", "R50"), "banda_v": banda_disparo_v("R49", "R50"),
-                "i_pliegue_min_a": 2.500},
+                "i_pliegue_min_a": I_LIMITE_MIN_PS3_A},
 }
+
+
+def fuga_ps3(c_f: float | None = None, t_s: float = T_GT_TIP_BT151_S) -> float:
+    """Pico del +5 V de rack, y de +5V_AUX que cuelga detras, si PS3 se
+    desboca: desde el borde alto de la banda de SCR3, el limite maximo del THN
+    cargando C39 en su -20 % durante el retardo del disparo. C16 y los
+    invitados no se cuentan, y las caidas en F4, R30 y R20 tampoco: cota
+    pesimista."""
+    c = valor("C39") * (1.0 - TOL_ELECTROLITICO_FRAC) if c_f is None else c_f
+    return RACK_RIELES["rack+5"]["banda_v"][1] + I_LIMITE_MAX_PS3_A * t_s / c
 
 
 def corriente_puerta_a(riel: str, i_gt_a: float = I_GT_MAX_BT151_A) -> dict[str, float]:
@@ -505,6 +553,8 @@ P_BASE: dict[str, float] = {
     "r64_ohm": valor("R64"),
     "i_gt_max_a": I_GT_MAX_BT151_A,
     "factor_despeje_i2t": FACTOR_DESPEJE_I2T,
+    "c39_uf": valor("C39") * (1.0 - TOL_ELECTROLITICO_FRAC) * 1e6,
+    "t_disparo_scr_us": T_GT_TIP_BT151_S * 1e6,
 }
 
 
@@ -554,6 +604,16 @@ def _guarda_u1_rk4(p: dict[str, float]) -> None:
     assert res["i_max_a"] <= CURVA_L2_A_UH[-1][0], (
         f"#334: L2 llega a {res['i_max_a']:.1f} A, fuera de la curva L-I publicada "
         f"(hasta {CURVA_L2_A_UH[-1][0]:.0f} A): el pico no vale")
+
+
+def _guarda_fuga_ps3(p: dict[str, float]) -> None:
+    mpn = filas()["PS3"]["mpn"]
+    assert mpn in AISLADOS, (
+        f"#491: PS3 es {mpn}; el +5 V de rack pide un modulo aislado: un buck con la "
+        "entrada puenteada a la salida pone 24 V en +5V_AUX antes que SCR3")
+    v = fuga_ps3(p["c39_uf"] * 1e-6, p["t_disparo_scr_us"] * 1e-6)
+    assert v <= V_ABSMAX_AUX_V, (
+        f"#491: PS3 desbocado lleva +5V_AUX a {v:.2f} V > {V_ABSMAX_AUX_V:.1f} V")
 
 
 def _guarda_enganche_scr(p: dict[str, float]) -> None:
@@ -622,6 +682,17 @@ def demo() -> int:
               f"victima<={d['victima_max_v']:.2f}V | "
               f"I_pliegue={d['i_pliegue_min_a']:.2f}A >> I_H={I_MANTENIMIENTO_BT151_A*1000:.0f}mA")
 
+    _guarda_fuga_ps3(dict(P_BASE))
+    c39 = P_BASE["c39_uf"] * 1e-6
+    print(f"    [verde] PS3 ({filas_bom['PS3']['mpn']}) aislado; desbocado a "
+          f"{I_LIMITE_MAX_PS3_A:.1f} A sobre C39 ({c39 * 1e6:.0f} uF en su -20 %): "
+          f"{I_LIMITE_MAX_PS3_A / c39 * 1e-6:.4f} V/us, pico {fuga_ps3():.2f} V con "
+          f"t_gt {T_GT_TIP_BT151_S * 1e6:.0f} us <= {V_ABSMAX_AUX_V:.1f} V de +5V_AUX")
+    sin_c39 = fuga_ps3(valor("C16") * (1.0 - TOL_ELECTROLITICO_FRAC))
+    assert sin_c39 > V_ABSMAX_AUX_V, "sin C39 la fuga de PS3 sale verde: el modelo no mira C39"
+    print(f"    [rojo ] MUTANTE sin C39 (C16 sola, -20 %): pico {sin_c39:.2f} V "
+          f"> {V_ABSMAX_AUX_V:.1f} V")
+
     print("\n  3. U19 abre: la corriente de L2 vuelve por D19 (SS34):")
     assert "D19" in filas_bom, "el modelo descarga L2 por D19 y D19 no esta en bom.csv"
     i_rueda = con_tope["i_rueda_libre_a"]
@@ -657,9 +728,10 @@ def demo() -> int:
         "U18 ": pico_u18["v_in_v"],
         "Cerebro digital +5V": V_OVP_MAX_URB_V,
     }
-    for victima, riel in {"Invitados rack +12V": "rack+12", "Invitados rack -12V": "rack-12",
-                          "Invitados rack +5V": "rack+5"}.items():
+    for victima, riel in {"Invitados rack +12V": "rack+12", "Invitados rack -12V": "rack-12"}.items():
         esperados[victima] = RACK_RIELES[riel]["banda_v"][1]
+    esperados["Invitados rack +5V"] = fuga_ps3()
+    esperados["+5V_AUX"] = fuga_ps3()
     for f in tabla:
         clave = next((k for k in esperados if f["victima"].startswith(k)), None)
         assert clave is not None, f"absmax.csv: '{f['victima']}' no tiene modelo que la calcule"
@@ -693,6 +765,10 @@ def demo() -> int:
                      "puerta corta")
     despeje = borde_rojo(_guarda_i2t, dict(P_BASE), "factor_despeje_i2t", FACTOR_DESPEJE_I2T,
                          1000.0, "deja pasar")
+    t_fuga = borde_rojo(_guarda_fuga_ps3, dict(P_BASE), "t_disparo_scr_us",
+                        P_BASE["t_disparo_scr_us"], 1000.0, "PS3 desbocado")
+    c_fuga = borde_rojo(_guarda_fuga_ps3, dict(P_BASE), "c39_uf", P_BASE["c39_uf"], 1.0,
+                        "PS3 desbocado")
     print(f"\n  canario #334: si el disparo rapido de U19 tarda > {t_rapido_us:.1f} us "
           f"(la hoja garantiza <= {T_FASTTRIP_MAX_S * 1e6:.1f}), o salta por encima de "
           f"{i_rapido_a:.1f} A (hoy {i_fasttrip_max_u19_a():.2f}), U1 o L2 salen de su limite")
@@ -702,6 +778,9 @@ def demo() -> int:
           f"R64 < {r64_p:.0f} ohm quema D2")
     print(f"  canario D-F6: con I_GT > {igt * 1e3:.0f} mA algun PNP no llega a la puerta")
     print(f"  canario D-F6: un despeje > {despeje:.0f} x la fusion pasaria el I2t del SCR")
+    print(f"  canario #491: +5V_AUX aguanta la fuga de PS3 hasta {t_fuga:.1f} us de retardo "
+          f"del disparo (la hoja da {T_GT_TIP_BT151_S * 1e6:.0f} us tipico, sin maximo), y "
+          f"pide C39 >= {c_fuga:.0f} uF")
 
     print("\n  FUERA DE CONTRATO (fallo simple, #475):")
     print(f"    - fallo doble THN- en OVP + U2 en corto: U6/U7 verian {V_OVP_MAX_THN20_V:.1f} V "
@@ -719,8 +798,12 @@ def demo() -> int:
           "-0,3 V en DC y pide el Schottky")
     print("    - pendiente del riel de rack en enchufe en caliente (el SCR aguanta 200 V/us)")
     sin_transitorio = [r for r, h in SANO_HOJA.items() if h[4] is None]
-    print(f"    - la desviacion transitoria de {', '.join(sin_transitorio)}: la hoja del "
-          "THN 30-2422WI no la da (pregunta a TRACO); el maximo sano no la cuenta")
+    print(f"    - la desviacion transitoria de {', '.join(sin_transitorio)}: las hojas del "
+          "THN 30-2422WI y del THN 20-2411WI no la dan (pregunta a TRACO); el maximo sano "
+          "no la cuenta")
+    print("    - la fuga de PS3 a su limite maximo es una cota: la hoja no dice como se desboca")
+    print("    - la descarga de C39 por SCR3: el BT151 pide dI_T/dt <= 50 A/us (p. 3) y la "
+          "inductancia del lazo C39-F4-R30-SCR3 no esta medida")
     print("    - un crowbar disparado no llega al MSP430: el SCR sigue conduciendo el pliegue; "
           "se mide en el bring-up (paso 8, crowbar_*, #476)")
 

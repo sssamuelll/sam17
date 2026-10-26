@@ -1,8 +1,8 @@
 (export
 	(version "E")
 	(design
-		(source "D:\\Desktop\\projects\\sam17\\.claude\\worktrees\\v5-334\\hardware\\01-power-supply\\v5\\kicad\\sam17-power-v5.kicad_sch")
-		(date "2026-10-25T12:25:59")
+		(source "D:\\Desktop\\projects\\sam17-491b\\hardware\\01-power-supply\\v5\\kicad\\sam17-power-v5.kicad_sch")
+		(date "2026-10-26T14:54:54")
 		(tool "Eeschema 10.0.3")
 		(sheet
 			(number "1")
@@ -24,7 +24,7 @@
 				)
 				(comment
 					(number "3")
-					(value "GND24 y GNDA se unen SOLO en NT1, en los pads de masa de PS3 (K78 no aislado)")
+					(value "GND24 y GNDA se unen SOLO en NT1, entre PS5 y PS3")
 				)
 				(comment
 					(number "4")
@@ -964,72 +964,6 @@
 				(tstamps "/")
 			)
 			(tstamps "92c8363b-7d03-56f4-a9e9-b9d5157c1c99")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "C15")
-			(value "10uF 50V X7R")
-			(footprint "Capacitor_SMD:C_1210_3225Metric")
-			(fields
-				(field
-					(name "LCSC") "C77102")
-				(field
-					(name "MPN") "GRM32ER71H106KA12L")
-				(field
-					(name "Footprint") "Capacitor_SMD:C_1210_3225Metric")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description")
-				)
-			)
-			(libsource
-				(lib "Device")
-				(part "C")
-				(description "Unpolarized capacitor")
-			)
-			(property
-				(name "LCSC")
-				(value "C77102")
-			)
-			(property
-				(name "MPN")
-				(value "GRM32ER71H106KA12L")
-			)
-			(property
-				(name "Sheetname")
-				(value "")
-			)
-			(property
-				(name "Sheetfile")
-				(value "sam17-power-v5.kicad_sch")
-			)
-			(property
-				(name "ki_keywords")
-				(value "cap capacitor")
-			)
-			(property
-				(name "ki_fp_filters")
-				(value "C_*")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b0e1ea85-b3f1-536a-a6ac-2489a506491f")
 			(units
 				(unit
 					(name "A")
@@ -2548,6 +2482,72 @@
 				(tstamps "/")
 			)
 			(tstamps "71d4836f-d554-5685-8a72-129633dcba2e")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "C39")
+			(value "1000uF 16V")
+			(footprint "Capacitor_SMD:CP_Elec_10x10")
+			(fields
+				(field
+					(name "LCSC") "C249844")
+				(field
+					(name "MPN") "VZH102M1CTR-1010")
+				(field
+					(name "Footprint") "Capacitor_SMD:CP_Elec_10x10")
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "Device")
+				(part "C_Polarized")
+				(description "Polarized capacitor")
+			)
+			(property
+				(name "LCSC")
+				(value "C249844")
+			)
+			(property
+				(name "MPN")
+				(value "VZH102M1CTR-1010")
+			)
+			(property
+				(name "Sheetname")
+				(value "")
+			)
+			(property
+				(name "Sheetfile")
+				(value "sam17-power-v5.kicad_sch")
+			)
+			(property
+				(name "ki_keywords")
+				(value "cap capacitor")
+			)
+			(property
+				(name "ki_fp_filters")
+				(value "CP_*")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "a1a50d87-f50b-5ae2-973f-e7f6a1902811")
 			(units
 				(unit
 					(name "A")
@@ -4963,13 +4963,13 @@
 		)
 		(comp
 			(ref "PS3")
-			(value "K7805T-1000R3")
-			(footprint "sam17:Converter_DCDC_Mornsun_K78_T-1000R3_SMD")
+			(value "THN 20-2411WI")
+			(footprint "Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT")
 			(fields
 				(field
-					(name "MPN") "K7805T-1000R3")
+					(name "MPN") "THN 20-2411WI")
 				(field
-					(name "Footprint") "sam17:Converter_DCDC_Mornsun_K78_T-1000R3_SMD")
+					(name "Footprint") "Converter_DCDC:Converter_DCDC_TRACO_THL30-xxxxWI_THT")
 				(field
 					(name "Datasheet")
 				)
@@ -4979,12 +4979,12 @@
 			)
 			(libsource
 				(lib "sam17")
-				(part "Mornsun_K78xxT-1000R3")
-				(description "Mornsun K78_T-1000R3, regulador conmutado NO aislado 1 A, SMD")
+				(part "TRACO_THN_Single")
+				(description "TRACO THN 20WI salida simple, 1x1 pulgada")
 			)
 			(property
 				(name "MPN")
-				(value "K7805T-1000R3")
+				(value "THN 20-2411WI")
 			)
 			(property
 				(name "Sheetname")
@@ -5010,22 +5010,16 @@
 							(num "2")
 						)
 						(pin
-							(num "10")
+							(num "6")
 						)
 						(pin
 							(num "3")
-						)
-						(pin
-							(num "7")
 						)
 						(pin
 							(num "4")
 						)
 						(pin
 							(num "5")
-						)
-						(pin
-							(num "6")
 						)
 					)
 				)
@@ -8680,13 +8674,13 @@
 		)
 		(comp
 			(ref "R49")
-			(value "13.3k 0.1%")
+			(value "12.7k 0.1%")
 			(footprint "Resistor_SMD:R_0805_2012Metric")
 			(fields
 				(field
-					(name "LCSC") "C865182")
+					(name "LCSC") "C50670219")
 				(field
-					(name "MPN") "RT0805BRD0713K3L")
+					(name "MPN") "TC0525B1272T5G")
 				(field
 					(name "Footprint") "Resistor_SMD:R_0805_2012Metric")
 				(field
@@ -8703,11 +8697,11 @@
 			)
 			(property
 				(name "LCSC")
-				(value "C865182")
+				(value "C50670219")
 			)
 			(property
 				(name "MPN")
-				(value "RT0805BRD0713K3L")
+				(value "TC0525B1272T5G")
 			)
 			(property
 				(name "Sheetname")
@@ -15950,66 +15944,6 @@
 		)
 		(libpart
 			(lib "sam17")
-			(part "Mornsun_K78xxT-1000R3")
-			(description "Mornsun K78_T-1000R3, regulador conmutado NO aislado 1 A, SMD")
-			(docs "docs/reference/datasheets/mornsun_k78_t1000r3.pdf p. 5 (Pin-Out y PCB Layout)")
-			(fields
-				(field
-					(name "Reference") "PS")
-				(field
-					(name "Value") "Mornsun_K78xxT-1000R3")
-				(field
-					(name "Footprint") "sam17:Converter_DCDC_Mornsun_K78_T-1000R3_SMD")
-				(field
-					(name "Datasheet") "docs/reference/datasheets/mornsun_k78_t1000r3.pdf p. 5 (Pin-Out y PCB Layout)")
-				(field
-					(name "Description") "Mornsun K78_T-1000R3, regulador conmutado NO aislado 1 A, SMD")
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "+Vin")
-					(type "power_in")
-				)
-				(pin
-					(num "2")
-					(name "+Vin")
-					(type "power_in")
-				)
-				(pin
-					(num "3")
-					(name "GND")
-					(type "power_in")
-				)
-				(pin
-					(num "4")
-					(name "+Vout")
-					(type "passive")
-				)
-				(pin
-					(num "5")
-					(name "+Vout")
-					(type "passive")
-				)
-				(pin
-					(num "6")
-					(name "Vadj")
-					(type "passive")
-				)
-				(pin
-					(num "7")
-					(name "GND")
-					(type "power_in")
-				)
-				(pin
-					(num "10")
-					(name "Remote")
-					(type "input")
-				)
-			)
-		)
-		(libpart
-			(lib "sam17")
 			(part "Mornsun_URB_YMD-20WR3")
 			(description "Mornsun URB_YMD-20WR3, DC-DC aislado 20 W, 1500 VDC")
 			(docs "docs/reference/datasheets/mornsun_urb_ymd20wr3.pdf p. 6 (Pin-Out, encapsulado horizontal)")
@@ -16605,9 +16539,20 @@
 				(pintype "passive")
 			)
 			(node
+				(ref "R20")
+				(pin "1")
+				(pintype "passive")
+			)
+			(node
 				(ref "R30")
 				(pin "1")
 				(pintype "passive")
+			)
+			(node
+				(ref "U12")
+				(pin "10")
+				(pinfunction "Vin+_10")
+				(pintype "input")
 			)
 			(node
 				(ref "U14")
@@ -16708,32 +16653,20 @@
 				(pintype "passive")
 			)
 			(node
+				(ref "C39")
+				(pin "1")
+				(pintype "passive")
+			)
+			(node
 				(ref "F4")
 				(pin "1")
 				(pintype "passive")
 			)
 			(node
 				(ref "PS3")
-				(pin "4")
-				(pinfunction "+Vout_4")
+				(pin "3")
+				(pinfunction "+Vout_3")
 				(pintype "passive")
-			)
-			(node
-				(ref "PS3")
-				(pin "5")
-				(pinfunction "+Vout_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "R20")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
-				(ref "U12")
-				(pin "10")
-				(pinfunction "Vin+_10")
-				(pintype "input")
 			)
 		)
 		(net
@@ -17265,11 +17198,6 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C15")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
 				(ref "PS1")
 				(pin "1")
 				(pinfunction "+Vin_1")
@@ -17285,12 +17213,6 @@
 				(ref "PS3")
 				(pin "1")
 				(pinfunction "+Vin_1")
-				(pintype "power_in")
-			)
-			(node
-				(ref "PS3")
-				(pin "2")
-				(pinfunction "+Vin_2")
 				(pintype "power_in")
 			)
 			(node
@@ -18034,16 +17956,6 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "C15")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "C16")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
 				(ref "C23")
 				(pin "2")
 				(pintype "passive")
@@ -18108,14 +18020,8 @@
 			)
 			(node
 				(ref "PS3")
-				(pin "3")
-				(pinfunction "GND_3")
-				(pintype "power_in")
-			)
-			(node
-				(ref "PS3")
-				(pin "7")
-				(pinfunction "GND_7")
+				(pin "2")
+				(pinfunction "-Vin_2")
 				(pintype "power_in")
 			)
 			(node
@@ -18206,6 +18112,11 @@
 			(class "Masa")
 			(node
 				(ref "C13")
+				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "C16")
 				(pin "2")
 				(pintype "passive")
 			)
@@ -18311,6 +18222,11 @@
 			)
 			(node
 				(ref "C38")
+				(pin "2")
+				(pintype "passive")
+			)
+			(node
+				(ref "C39")
 				(pin "2")
 				(pintype "passive")
 			)
@@ -18441,6 +18357,12 @@
 				(ref "PS1")
 				(pin "4")
 				(pinfunction "Common_4")
+				(pintype "passive")
+			)
+			(node
+				(ref "PS3")
+				(pin "5")
+				(pinfunction "-Vout_5")
 				(pintype "passive")
 			)
 			(node
@@ -20053,23 +19975,23 @@
 		)
 		(net
 			(code "105")
-			(name "unconnected-(PS3-Remote-Pad10)")
+			(name "unconnected-(PS3-Remote-Pad6)")
 			(class "Default")
 			(node
 				(ref "PS3")
-				(pin "10")
-				(pinfunction "Remote_10")
+				(pin "6")
+				(pinfunction "Remote_6")
 				(pintype "input+no_connect")
 			)
 		)
 		(net
 			(code "106")
-			(name "unconnected-(PS3-Vadj-Pad6)")
+			(name "unconnected-(PS3-Trim-Pad4)")
 			(class "Default")
 			(node
 				(ref "PS3")
-				(pin "6")
-				(pinfunction "Vadj_6")
+				(pin "4")
+				(pinfunction "Trim_4")
 				(pintype "passive+no_connect")
 			)
 		)

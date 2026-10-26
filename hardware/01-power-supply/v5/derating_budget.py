@@ -23,7 +23,7 @@ corriente nominal de su hoja: la curva no autoriza a cargar una salida mas alla.
 Nominales (todas en la p. 1 de su hoja, `docs/reference/datasheets/`):
   PS1 THN 30-2422WI   +-12 V, +-1250 mA, 30 W    traco_thn30wi.pdf
   PS2 URB2405YMD-20WR3   5 V,  4000 mA, 20 W     mornsun_urb_ymd20wr3.pdf
-  PS3 K7805T-1000R3      5 V,  1000 mA           mornsun_k78_t1000r3.pdf
+  PS3 THN 20-2411WI      5 V,  4000 mA, 20 W     traco_thn20wi.pdf
   PS4, PS5 THN 20-2413WI 15 V, 1330 mA, 20 W     traco_thn20wi.pdf
 
 LO QUE ESTE CALCULO NO CUBRE (se imprime al final):
@@ -58,7 +58,7 @@ CONVERTIDORES = {
     "PS1": ("THN-30-2422WI", 1.25, 30.0,
             ("+12 rack (bus fila B + pantalla)", "-12 rack (bus fila B)")),
     "PS2": ("URB2405YMD-20WR3", 4.0, 20.0, ("+5 digital (4 x N657 + host USB)",)),
-    "PS3": ("K7805T-1000R3", 1.0, 5.0, ("+5 rack (bus fila B + +5V_AUX)",)),
+    "PS3": ("THN-20-2411WI", 4.0, 20.0, ("+5 rack (bus fila B + +5V_AUX)",)),
     "PS4": ("THN-20-2413WI", 1.33, 20.0, ("crudo +cascada (a U1)",)),
     "PS5": ("THN-20-2413WI", 1.33, 20.0, ("crudo -cascada (a U2)",)),
 }
@@ -123,13 +123,14 @@ def _guarda_de(ref: str):
 
 
 def _autocomprobacion() -> None:
-    # A mano, PS3: la curva del K78 baja del 92 % en 65 C al 60 % en 85 C
-    # (mornsun_k78_t1000r3.pdf p. 3), 1,6 puntos por grado. Con 0,80 A de 1 A
-    # se queda sin derating en 65 + (0,92 - 0,80) / 0,016 = 72,5 C.
-    assert abs(carga("PS3") - 0.80) < 1e-9, f"PS3 pide {carga('PS3'):.3f}, no 0,80"
+    # A mano, PS3: 0,80 A a 5 V son 4 W, el 20 % de sus 20 W. La curva del
+    # THN 20-2411WI baja del 50 % en 79,9 C al 10 % en 91,5 C
+    # (traco_thn20wi_characteristic_curves.pdf p. 3, curvas.py): el 20 % llega
+    # en 79,9 + (0,50 - 0,20) / 0,40 * 11,6 = 88,6 C.
+    assert abs(carga("PS3") - 0.20) < 1e-9, f"PS3 pide {carga('PS3'):.3f}, no 0,20"
     borde = borde_rojo(_guarda_de("PS3"), {"t_aire_c": 20.0, "x_carga": 1.0},
                        "t_aire_c", 20.0, _fin("PS3"), "se sale de su derating")
-    assert abs(borde - 72.5) < 0.2, f"el borde de PS3 sale en {borde:.2f} C, no 72,5"
+    assert abs(borde - 88.6) < 0.2, f"el borde de PS3 sale en {borde:.2f} C, no 88,6"
     # A mano, PS1: +12 V a 1,05 A y -12 V a 0,50 A son 18,6 W, el 62 % de sus
     # 30 W, aunque el +12 V lleve el 84 % de su corriente. La curva del THN 30
     # baja del 100 % en 54 C al 50 % en 75,5 C (curvas.py): el 62 % llega en

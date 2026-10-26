@@ -7,7 +7,7 @@
 > la conversión AC-DC sale de la caja de madera a un **ladrillo externo de 24 V**
 > (D-V1), dentro quedan convertidores DC-DC (`THN 30-2422WI` para ±12 V de rack,
 > `URB2405YMD-20WR3` aislado para +5 V digital bajo `M1`, `2 × THN 20-2413WI`
-> recortados a ±15,5 V crudos bajo D-V3, y `K7805T-1000R3` para +5 V de rack),
+> recortados a ±15,5 V crudos bajo D-V3, y `THN 20-2411WI` aislado para +5 V de rack),
 > y **la cascada lineal se queda intacta**. La `v4/` conserva las curvas y
 > presupuestos de los módulos Mean Well IRM; la `v3/` conserva la placa del
 > toroide y no se pide.
@@ -39,8 +39,10 @@ fila Eurorack de invitados (52 HP, D-B2):
   filtro, VCA, bahía), **650 mA/riel** declarados (D-F1), **334 mA/riel** de
   censo (`consumo_total_budget.py`), rizado y ruido **≤ 0,8 µVrms (10 Hz–100 kHz)**.
 - **+5 V auxiliar (`+5V_AUX`)** — **100 mA** hacia el módulo 2 por `J6`. En la v5 sale
-  del +5 V de rack (`PS3`, `K7805T-1000R3`) por el shunt `R20` que mide `U12`; no hay
-  `U3`/LM7805 propio.
+  del +5 V de rack (`PS3`, `THN 20-2411WI`) **después de su fusible `F4`**, por el
+  shunt `R20` que mide `U12`; no hay `U3`/LM7805 propio. Si el crowbar del +5 V de
+  rack dispara y `F4` abre, `+5V_AUX` se apaga con él, y con ella la telemetría y
+  la cascada (#491).
 - **±12 V y +5 V de rack (fila B de invitados)** — **500 mA/riel** de techo duro
   (D-B2; censo comercial de 300 mA/riel), con protección crowbar (`D-F6`,
   `BT151-500R` + `TL431BI`, `R_GK` = 100 Ω para el dV/dt de 200 V/µs de la hoja) y
@@ -83,7 +85,7 @@ recortados +3,3 %, D-V3):
 |------|------------------------|---------------|----------------|
 | +12 V ultra | `TPS26631` (`U19`, sin UVLO y con Schottky de rueda libre `D19`) + `SMBJ16A` + LC 22 µH / 47 µF (`U1` ve 18,11 V ≤ 20 V ante un fallo de 36 V, `check_absmax.py`) | **LT1963A** `LT1963AEQ` (D-F8) | LT3045 ×2 |
 | −12 V ultra | Diodo Schottky de enclavamiento (LT3015 soporta ±33 V) | **LT3015** `LT3015EQ` (D-F9; DD-PAK, la aleta es IN) | LT3094 ×2 |
-| +5 V aux (módulo 2) | — (del +5 V de rack, `PS3` por el shunt `R20`) | — | — |
+| +5 V aux (módulo 2) | — (del +5 V de rack tras `F4`, por el shunt `R20`) | — | — |
 
 Con crudos de **±15,5 V** (D-V3) e incluyendo la resistencia de paso del
 `TPS26631` (`53 mΩ` máx.) y la corriente de tierra máxima del `LT1963A` a 1,5 A

@@ -125,22 +125,6 @@ SIMBOLOS: dict[str, dict] = {
             ("6", "0V", "passive", "R"),
         ],
     },
-    "Mornsun_K78xxT-1000R3": {
-        "ref": "PS",
-        "fp": "sam17:Converter_DCDC_Mornsun_K78_T-1000R3_SMD",
-        "hoja": f"{DS}/mornsun_k78_t1000r3.pdf p. 5 (Pin-Out y PCB Layout)",
-        "desc": "Mornsun K78_T-1000R3, regulador conmutado NO aislado 1 A, SMD",
-        "pines": [
-            ("1", "+Vin", "power_in", "L"),
-            ("2", "+Vin", "power_in", "L"),
-            ("10", "Remote", "input", "L"),
-            ("3", "GND", "power_in", "L"),
-            ("7", "GND", "power_in", "L"),
-            ("4", "+Vout", "passive", "R"),
-            ("5", "+Vout", "passive", "R"),
-            ("6", "Vadj", "passive", "R"),
-        ],
-    },
 }
 
 # El SCR va aparte porque no es una caja: se dibuja como tiristor.

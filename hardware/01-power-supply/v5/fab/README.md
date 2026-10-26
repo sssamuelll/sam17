@@ -38,7 +38,8 @@ La placa de #474 que había aquí antes no tenía ni una pista (161 huellas,
   GND24 (entrada del ladrillo y lado primario de los convertidores), GNDA
   (analógica, rack y telemetría) y GNDD (isla de M1). GNDD queda a ≥ 2 mm de
   las otras dos en las cuatro capas. GND24 y GNDA se unen **solo** en NT1,
-  pegada a los pads de masa de PS3 (el K78 no es aislado).
+  entre PS5 y PS3: con los cinco convertidores aislados no lleva corriente de
+  carga (#491).
 - **Caminos de ~3 A en cobre fijo**, no en pista ruteada: J1 → Q2 → U16 → bus
   de 2,5 mm a las +Vin de los cinco convertidores (24 V, hasta 2,9 A) y PS2 →
   F5 → J9 (+5 V digital, hasta 2,9 A). `check_pcb.py` comprueba que cada pad
@@ -75,8 +76,8 @@ huellas (SOT-23, electrolíticos, DFN) no coincide con el de su biblioteca y
 ## Lo que NO monta JLC
 
 - **Módulos fuera de LCSC** (se compran en Farnell/Mouser y van a mano):
-  PS1 (THN 30-2422WI), PS4/PS5 (THN 20-2413WI), PS2 (URB2405YMD-20WR3) y
-  PS3 (K7805T-1000R3, SMD).
+  PS1 (THN 30-2422WI), PS3 (THN 20-2411WI), PS4/PS5 (THN 20-2413WI) y PS2
+  (URB2405YMD-20WR3).
 - **THT con código LCSC** (se compran en LCSC y van a mano): conectores,
   SCR1–SCR3, RV2/RV3, SW1, puntos de prueba.
 - **Sin montar** (`supplier` «SIN MONTAR» en `bom.csv`): SCR4 y su disparo

@@ -39,11 +39,12 @@ LOS TRES DOMINIOS se deciden por las redes de cada pieza (dominio_de()):
   * GNDD (abajo, isla): la salida del URB2405 (M1), su crowbar, J8/J9 y el
     lado 2 del ISO1541. Hueco de 2 mm a las otras dos masas.
 
-GND24 y GNDA se tocan SOLO en NT1, pegada a los pads de masa de PS3 (el K78 no
-es aislado). Es la decision firmada en la revision de #474.
+GND24 y GNDA se tocan SOLO en NT1, entre PS5 y PS3 (decision firmada en la
+revision de #474). Con los cinco convertidores aislados (#491) no lleva
+corriente de carga: solo los retornos de lo que cruza entre dominios.
 
 EL COBRE DE POTENCIA NO LO RUTEA FREEROUTING. Por la entrada de 24 V pasan
-~2.9 A (ladrillo_budget.py: 64.6 W de cajon a 22.4 V) y por +5V_DIG hasta
+~2.9 A (ladrillo_budget.py: 65.3 W de cajon, cordon a 2.88 A en su peor caso) y por +5V_DIG hasta
 2.9 A (DIGITAL_A, el maximo a TJ = 125 C). Una pista de 0.5 mm en 1 oz se
 calienta 10 C con ~1.4 A; y si se deja al ruteador, el camino de 3 A puede
 acabar pasando por el pad de 0.5 mm de un divisor. Esos caminos van como
@@ -121,16 +122,17 @@ ANCLAS = {
     # Columna de convertidores: ENTRADAS a la izquierda (GND24), SALIDAS a la
     # derecha. Rot 90 en los TRACO pone su fila 1-2-6 a la izquierda.
     "PS1": (61.0, 18.5, 90), "PS4": (61.0, 46.5, 90), "PS5": (61.0, 74.5, 90),
-    "PS3": (61.0, 96.5, 0), "PS2": (61.0, 121.0, 0),
-    "NT1": (65.0, 105.0, 0),
+    # PS3 es un THN como los de arriba (#491): misma rotacion, y NT1 en el
+    # hueco de 4 mm que le queda encima, sobre la frontera GND24 | GNDA.
+    "PS3": (61.0, 105.5, 90), "PS2": (61.0, 133.2, 0),
+    "NT1": (64.0, 90.0, 0),
+    # C39 (1000 uF) frena la fuga de PS3 (#491): pegado a su +Vout (PS3.3).
+    "C39": (82.0, 112.0, 0),
     # Entrada y M5 (GND24). J1 -> Q2 -> U16 en linea recta a la altura de
     # PS5, con D1 colgando del cobre de +24V_RAW y U15 debajo de la puerta de Q2.
     "J1": (7.5, 75.0, 90), "D1": (14.5, 81.0, 270), "Q2": (21.0, 75.0, 0),
     "U15": (19.5, 81.0, 0), "U16": (34.0, 75.0, 0), "C14": (41.0, 121.0, 90),
     "U18": (20.0, 103.0, 0), "U17": (24.0, 120.0, 0), "SW1": (12.0, 134.0, 0),
-    # C15 (10 uF/50 V, la Cin que pide el K78) con su pad 1 SOBRE el ramal de
-    # PS3: suelta, Freerouting no llegaba a unirla al bus (ronda 1).
-    "C15": (49.5, 100.08, 90),
     "J10": (34.0, 137.0, 90),
     # Rack (franja de arriba)
     "J3": (112.0, 7.0, 180), "SCR1": (86.0, 27.0, 0), "SCR2": (98.0, 27.0, 0),
@@ -154,8 +156,9 @@ ANCLAS = {
 # caer ENTERO dentro de su dominio.
 REGIONES = {
     "P": [(0.0, 0.0, 61.0, H), (61.0, 88.0, 64.0, 106.0), (61.0, 106.0, 63.5, H)],
-    "D": [(66.0, 107.5, 160.0, H)],
-    "A": [(61.0, 0.0, W, 88.0), (64.0, 88.0, W, 105.5), (162.0, 105.5, W, H)],
+    "D": [(90.5, 107.5, 160.0, H), (67.0, 120.5, 90.5, H)],
+    "A": [(61.0, 0.0, W, 88.0), (64.0, 88.0, W, 105.5), (64.0, 105.5, 88.5, 118.5),
+          (162.0, 105.5, W, H)],
 }
 
 REDES_P = {"GND24", "+24V_RAW", "+24V_PROT", "+24V_SW", "+24V_LDO", "VCAP_U15", "GATE_Q2",
@@ -182,7 +185,7 @@ COBRE = [
     # +24V_SW: U16 pads 18-20 (OUT) -> bus vertical -> +Vin de los cinco modulos y C14
     ("+24V_SW", "F.Cu", (36.05, 71.4, 46.0, 73.5)),
     ("+24V_SW", "F.Cu", (38.5, 69.5, 46.0, 75.5)),
-    ("+24V_SW", "F.Cu", (44.5, 19.7, 47.0, 125.6)),
+    ("+24V_SW", "F.Cu", (44.5, 19.7, 47.0, 137.0)),
     # Los ramales y el tronco se meten DENTRO del bus: dos rectangulos que
     # solo se tocan por el canto NO estan conectados para KiCad (la ronda 1
     # dejo el tronco de U16 sin llegar al bus por eso). revisar_cobre() exige
@@ -190,11 +193,15 @@ COBRE = [
     ("+24V_SW", "F.Cu", (44.5, 19.75, 52.2, 22.25)),     # PS1.1
     ("+24V_SW", "F.Cu", (44.5, 47.75, 52.2, 50.25)),     # PS4.1
     ("+24V_SW", "F.Cu", (44.5, 75.75, 52.2, 78.25)),     # PS5.1
-    ("+24V_SW", "F.Cu", (44.5, 100.3, 59.0, 102.8)),     # PS3.1-2
-    ("+24V_SW", "F.Cu", (44.5, 122.3, 52.3, 124.8)),     # PS2.3
+    ("+24V_SW", "F.Cu", (44.5, 106.75, 52.2, 109.25)),   # PS3.1
+    ("+24V_SW", "F.Cu", (44.5, 134.5, 52.3, 137.0)),     # PS2.3
     ("+24V_SW", "F.Cu", (39.0, 122.8, 46.0, 125.6)),     # C14.1
-    # +5V digital: PS2.4 -> F5 -> J9.1, pasando por C29.1 y SCR4.2
-    ("+5V_RAW_DIG", "F.Cu", (69.7, 129.7, 79.25, 132.6)),
+    # +5V digital: PS2.4 -> F5 -> J9.1, pasando por C29.1 y SCR4.2. Con PS2
+    # abajo (#491) el pad 4 queda a la altura de J9: sube por fuera de su
+    # cuerpo, lejos del pad 5 (Trim, al aire), hasta la fila de F5.
+    ("+5V_RAW_DIG", "F.Cu", (69.9, 142.1, 77.5, 144.6)),
+    ("+5V_RAW_DIG", "F.Cu", (75.0, 129.7, 77.5, 144.6)),
+    ("+5V_RAW_DIG", "F.Cu", (75.0, 129.7, 79.25, 132.6)),
     ("+5V_RAW_DIG", "F.Cu", (74.9, 124.5, 78.6, 132.6)),
     ("+5V_DIG", "F.Cu", (80.75, 130.3, 97.6, 132.6)),
     ("+5V_DIG", "F.Cu", (89.0, 128.0, 91.0, 131.6)),
@@ -543,9 +550,11 @@ def contorno(board) -> None:
 # vierten al final en F.Cu y B.Cu (tras_el_ruteo()).
 PLANOS_IN1 = {
     "GND24": [(0.5, 0.5), (60.5, 0.5), (60.5, 88.0), (63.5, 88.0), (63.5, 149.5), (0.5, 149.5)],
+    # GNDA baja por la derecha de PS3 hasta pasar su +Vout y C39 (#491).
     "GNDA": [(61.5, 0.5), (199.5, 0.5), (199.5, 149.5), (163.0, 149.5), (163.0, 105.5),
-             (64.5, 105.5), (64.5, 87.0), (61.5, 87.0)],
-    "GNDD": [(67.0, 107.5), (161.0, 107.5), (161.0, 149.0), (67.0, 149.0)],
+             (88.5, 105.5), (88.5, 118.5), (64.5, 118.5), (64.5, 87.0), (61.5, 87.0)],
+    "GNDD": [(67.0, 120.5), (90.5, 120.5), (90.5, 107.5), (161.0, 107.5), (161.0, 149.0),
+             (67.0, 149.0)],
 }
 
 
