@@ -179,6 +179,10 @@ la salida unida a la tierra de red, «insert a “B” in the part number where 
 sitios, y el acople KPP-4P ↔ KPJX-PM-4S confirmado por AE (pregunta 19 del
 pliego).
 
+**Hecho el 2026-10-26:** `TE90A2449F01` en los guiones, en `medidas.csv` y en
+los tres papeles. `TE90A2403F01` queda en `docs/references.md` como el modelo
+estándar del que sale la opción. Falta la confirmación de AE.
+
 ### 3.3 ALTA — D-F4 en rack: la placa no tiene los interruptores que los papeles conservan (P1) · #489
 
 v5 §7, fila D-F4 (l. 622): «`D-F4` gobierna los pines `SHDN` de `U1`/`U2` …
@@ -404,7 +408,7 @@ otros equipos con tierra por el audio. Es H-V5-PE, y lo decide su mapa. La
 variante no cambia el caso de §2 P7 (d): ese viene de una fuente ajena.
 
 **Decidido el 2026-10-26: «A», la salida flotante.** La referencia es
-`TE90A2449F01`, que falta llevar a los nueve archivos de §3.2.
+`TE90A2449F01`, ya en los nueve archivos de §3.2.
 
 ### 4.3 El respaldo del ladrillo
 
@@ -488,7 +492,7 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | ~~El arnés (§3.1)~~, la referencia del TE90, `TE90A2449F01` (§3.2, §4.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
+| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
 | **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y `SCR4` sin montar (§4.5) |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |

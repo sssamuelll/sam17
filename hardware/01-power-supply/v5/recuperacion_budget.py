@@ -14,7 +14,7 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
        segunda ecuacion de diseno `I_OL = 18,1 / R_ILIM(kohm) = 4,50 A` nominal
        (`tps2663.pdf` p. 22 ec. 5), con banda de exactitud de `+-7 %`
        (`tps2663.pdf` p. 7: `4,185 A .. 4,815 A`). La banda cabe entre dos
-       cotas. Por arriba, el disparo minimo del ladrillo TE90A2403F01: su
+       cotas. Por arriba, el disparo minimo del ladrillo TE90A2449F01: su
        sobrecarga va del 130 al 180 % de `3,75 A` (`ae-TE90-datasheet.pdf`
        p. 2 y p. 5), asi que `U16` corta antes de que el ladrillo entre en
        hiccup si su maximo queda bajo `4,875 A`. Por abajo, `1,50 x` la
@@ -117,7 +117,7 @@ TOL_ILIM_TPS26631_FRAC = 0.07             # +-7 % en tps2663.pdf p. 7
 TOL_ILIM_U19_FRAC = 0.10                  # p. 7: +-10 % a 30 kohm, +-8 % a 9 kohm
 MARGEN_ILIM_NOMINAL = 1.50                # sobre el cordon a 24 V nominales
 MARGEN_ILIM_PEOR = 1.30                   # sobre el cordon en su peor caso
-I_OCP_LADRILLO_MIN_A = 1.30 * 3.75        # TE90A2403F01: 3,75 A (p. 5), OCP 130..180 % (p. 2)
+I_OCP_LADRILLO_MIN_A = 1.30 * 3.75        # TE90A2449F01: 3,75 A (p. 5), OCP 130..180 % (p. 2)
 I_CORDON_CONTINUA_A = LADRILLO.corriente_del_cordon_a()
 I_CORDON_NOMINAL_A = LADRILLO.entrada_dcdc_w() / LADRILLO.V_LADRILLO
 I_RIEL_U19_A = LADRILLO.corriente_thn_a("U1")
