@@ -148,9 +148,10 @@ def _puntos() -> list[Punto]:
         p.append(P("0", f"aislamiento_tab_{ref}_a_chasis", "Mohm",
                    "T17 / M2: verificacion de aislamiento del tab a chasis PE",
                    lo=10.0))
-    p.append(P("0", "continuidad_PE_a_chasis", "mohm",
-               "M2 / T17: continuidad de tierra PE desde conector Kycon pin shell a chasis",
-               hi=50.0))
+    p.append(P("0", "X1_contacto_masa_sin_conectar", "si/no",
+               "#487 / junta sec. 4.2: el contacto de masa de X1 no va al chasis; M2 "
+               "une el chasis al retorno de continua, no a un PE del cordon",
+               literal="si"))
     p.append(P("0", "continuidad_estrella_GNDA_a_chasis", "mohm",
                "T17 / M2: estrella analogica de masa J5 atornillada al chasis",
                hi=20.0))
@@ -165,6 +166,13 @@ def _puntos() -> list[Punto]:
                literal="si"))
 
     # --- Paso 1: Alimentacion 24V y convertidores DC-DC ------------------
+    # Lo primero, antes de enchufar el arnes en J1 (#487).
+    p.append(P("1", "polaridad_X1_arnes_suelto_J1_1_a_J1_2", "V",
+               "#487 / junta sec. 3.1: con el ladrillo en X1 y el arnes suelto de J1, del hilo "
+               "de J1.1 al de J1.2; negativo = arnes invertido, ~0 V = polos en corto "
+               "(ladrillo en hiccup)",
+               lo=ladrillo_budget.V_LADRILLO_MIN,
+               hi=ladrillo_budget.V_LADRILLO * (1.0 + ladrillo_budget.TOL_LADRILLO)))
     p.append(P("1", "tension_ladrillo_vacio", "V",
                "T09 / L04: salida continua nominal del ladrillo 24 V en vacio",
                predicho=24.0, tol=0.48))

@@ -121,7 +121,7 @@ I_OCP_LADRILLO_MIN_A = 1.30 * 3.75        # TE90A2403F01: 3,75 A (p. 5), OCP 130
 I_CORDON_CONTINUA_A = LADRILLO.corriente_del_cordon_a()
 I_CORDON_NOMINAL_A = LADRILLO.entrada_dcdc_w() / LADRILLO.V_LADRILLO
 I_RIEL_U19_A = LADRILLO.corriente_thn_a("U1")
-I_MAX_CONECTOR_POR_POLO_A = 15.0          # Kycon KPJX-PM-4S / KPPX-4P: 2 x 7,5 A
+I_MAX_CONECTOR_POR_POLO_A = LADRILLO.N_PINES_PARALELO * LADRILLO.I_MAX_PIN_A  # Kycon KPJX-PM-4S / KPPX-4P
 
 # Umbrales del TPS26631 (tps2663.pdf p. 6), nominales y su +-2 %.
 V_UVLOR_V, V_UVLOF_V = 1.200, 1.122
@@ -525,7 +525,7 @@ def demo() -> int:
     print(f"    U19: R34 = {valor('R34') / 1e3:.1f} kohm -> I_OL = {u19_nom:.3f} A nom "
           f"(banda +-10 %: {u19_min:.3f} .. {u19_max:.3f} A) contra la rama U1 en su techo "
           f"{I_RIEL_U19_A:.3f} A ({u19_min / I_RIEL_U19_A:.2f} x)")
-    print(f"    corriente maxima del conector Kycon (2 pines/polo): {I_MAX_CONECTOR_POR_POLO_A:.1f} A")
+    print(f"    corriente maxima del conector Kycon ({LADRILLO.N_PINES_PARALELO} pines/polo): {I_MAX_CONECTOR_POR_POLO_A:.1f} A")
     print(f"    ventana de R12/R13/R14: arranca {v['arranca']:.2f} V, apaga {v['apaga']:.2f} V, "
           f"sobretension {v['sobretension']:.2f} V (vuelve a {v['vuelve']:.2f} V)")
     print(f"    SHDN con R83 = {valor('R83') / 1e3:.0f}k: {valor('R83') * I_SHDN_MAX_A:.2f} V "
