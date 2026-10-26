@@ -402,6 +402,12 @@ El case conserva el recorte IEC de 48 × 27,5 mm (`case/cad/params.scad`,
 que va en la trasera es el KPJX-PM-4S con sus dos M2,5. Va como comentario al
 #130, que es donde vive ese recorte.
 
+**Cerrado en el #130 (2026-10-26):** el KPJX-PM-4S va atornillado al dorso de
+una escuadra del suelo, a 2,0 de la cara interior de la trasera, y la ventana
+de la trasera pasa a 30 × 18 con esquinas R3 (`iec_*` en `params.scad`;
+`guarda_enchufe()` y `guarda_red()` en `clearance_budget.py`). Lo que queda de
+la profundidad tras el enchufe es un requisito a la caja de #424.
+
 ---
 
 ## 4. Lo que decide Samuel

@@ -1,5 +1,17 @@
 # Pliego de fabricación — cuerpo del SAM17
 
+> **rev. 30 (2026-10-26). La escuadra del enchufe de 24 V (#130).** Samuel,
+> el 2026-10-26: una L sobre el suelo. **Entra `escuadra_enchufe_2d`** (§6,
+> tabla de abajo): chapa 6082-T6 de 2 mm anodizada en negro, **un doblez**, que
+> sostiene el enchufe Kycon KPJX-PM-4S de la entrada de red. **A la chapa**:
+> dos agujeros de paso Ø4.5 más en el pie del talón y dos M4 de paso más en la
+> base, que pasa de **20 a 22** taladros de fijación y de **10 a 12** M4 de paso.
+> **A la prensa de insertos**: **dos CLS-M4 más**, ocho en total. **Al
+> acrílico**: la ventana de la trasera pasa de 48 × 27.5 a **30 × 18 con las
+> esquinas a R3**, con el mismo centro (la eligió Samuel entre tres renders), y
+> la rejilla de entrada gana la columna de ranuras que la ventana vieja tapaba
+> a su izquierda: 47 ranuras en vez de 46.
+>
 > **rev. 29 (2026-10-12). La tabla de nogal se cambia por una base de chapa**
 > (papel `docs/superpowers/specs/2026-10-12-case-suelo-design.md`, firmado en
 > el acta 4). **`bandeja_base_2d` vuelve a este pliego**: chapa 6082-T6 de 3 mm
@@ -244,7 +256,7 @@ no se compra.
 
 ### Lo que NO va a este taller
 
-Dieciséis DXF de `case/plans/` **no son de acrílico** y no entran aquí. Se
+Diecisiete DXF de `case/plans/` **no son de acrílico** y no entran aquí. Se
 reparten entre dos talleres — chapa (§6.2) y mecanizado (§6.1 y §6.3) —, y
 chapa y mecanizado **no son el mismo** desde el 2026-08-28. Todo el
 aluminio que se ve pasa después por un solo anodizador (§6.4):
@@ -253,13 +265,14 @@ aluminio que se ve pasa después por un solo anodizador (§6.4):
 |---|---|---|---|
 | `chasis_cuerpo_2d`, `chasis_tapa_2d`, `chasis_refuerzo_2d` | acero | chapa | corte + **plegado** |
 | `miembro_alto_2d` | aluminio 6082-T6, 1.5 mm | chapa | corte + **plegado**: techo **sin ranuras**, blank **593.02 × 78.85**, meseta de 50, retorno de **9** (ficha 6), chaflán de 6 y labio de 20. Dos bridas de 27 × 14.5 con esquinas R2. Entran en los cajeados del anillo; no se dejan sobre la cara — **1 ud** |
-| `talon_2d` | aluminio 6082-T6, 1.5 mm | chapa | corte + **plegado**: blank **545.62 × 42.23**, labio de 13, chaflán y pie de **22.5**. En el pie, tres agujeros de **5.4** a 7.0 del canto libre para las tuercas CLS-M4, que se prensan después de anodizar (el M4 entra desde abajo, rev. 29). En cada punta del pie, muesca de 2.65 hasta la línea de doblez a 22.06, con alivio de Ø2 a caballo de la esquina interior. Conserva sus ocho pestañas lanzadas; el 6082-T6 sigue siendo obligatorio — **1 ud** |
+| `talon_2d` | aluminio 6082-T6, 1.5 mm | chapa | corte + **plegado**: blank **545.62 × 42.23**, labio de 13, chaflán y pie de **22.5**. En el pie, tres agujeros de **5.4** a 7.0 del canto libre para las tuercas CLS-M4, que se prensan después de anodizar (el M4 entra desde abajo, rev. 29), y **dos agujeros de paso Ø4.5** a 7.5 del canto libre, para los M4 de la escuadra del enchufe (rev. 30). En cada punta del pie, muesca de 2.65 hasta la línea de doblez a 22.06, con alivio de Ø2 a caballo de la esquina interior. Conserva sus ocho pestañas lanzadas; el 6082-T6 sigue siendo obligatorio — **1 ud** |
+| `escuadra_enchufe_2d` | aluminio 6082-T6, **2 mm**, anodizado negro (§6.4) | chapa | corte + **plegado, UN doblez a 90°**: blank **55.00 × 67.84**, radio interior **2 (1 t)**. Es la L que sostiene el enchufe de 24 V: la **placa** cierra por dentro la ventana de la trasera y el **pie**, en **dos lenguetas**, se apoya sobre el pie del talón. El DXF se ve **por la cara de dentro del doblez** (la del enchufe) y el doblez sube hacia el observador; los dos cantos de abajo de las lenguetas son el canto libre del pie. Trae: dos agujeros de **5.4** a 7.0 del canto libre para las tuercas CLS-M4, que se prensan **después de anodizar**; un taladro de **10.0** para la nariz de la clavija y dos de **2.9** para los M2.5 del enchufe, en la placa; y el alivio entre las lenguetas, que sube hasta 18.46 del canto libre. Las cotas están en la nota de abajo — **1 ud** |
 | `nariz_2d` | aluminio 6082-T6, 1.5 mm | chapa | corte + **plegado**: blank **545.62 × 53.10** (el frente baja hasta el riel, ficha 6), pie de **20.5** y tres dobleces. En el pie, tres agujeros de **5.4** a 7.0 del canto libre para las tuercas CLS-M4, como el talón. En cada punta del pie, muesca de 2.65 hasta la línea de doblez a 20.06, con alivio de Ø2 a caballo de la esquina interior — **1 ud** |
 | `tapa_valle_2d` | aluminio 6082-T6/T651, 3 mm (§6.4) | chapa | corte + **plegado**: blank **560.00 × 20.00**, dos pestañas de 21 mm y labio trasero de apoyo de 2.0 mm; sin taladros visibles en la banda |
 | `costilla_2d`, `costilla_dorso_2d` | **aluminio, pletina de 14 mm** | **mecanizado** (§6.1) | **fresado CNC**, sin plegar, sin soldar |
 | `costilla_bolsillos_2d` | la cara de FUERA del anillo | **mecanizado** (§6.1) | diez bolsillos ciegos por anillo para los tacos de la persiana, con el asiento del imán dibujado dentro; las profundidades, en §6.1 |
 | `persiana_2d`, `persiana_pasante_2d`, `persiana_dorso_2d` | **aluminio 6082-T651, pletina de 12** frenteada a 9.5 | **mecanizado** (§6.3) | **fresado CNC** por las dos caras: ranuras a 4 de fondo por delante, el pasante solo donde detrás hay ventana, y los tacos por detrás — **2 uds, PAR ESPEJADO** |
-| `bandeja_base_2d` | **aluminio 6082-T6, 3 mm**, anodizado negro (§6.4) | chapa (§6.2) | **láser**, con los 1118 agujeros de Ø5 cortados **salteados**; desbarbado a máquina por las dos caras, con la arista de arriba matada; **planitud ≤ 1 mm** en la chapa suelta, medida antes de anodizar; el canto de abajo, **R0.5**. Después del anodizado, la prensa: 4 FH-M4 (agujero 4.0). Los 6 M5 (Ø6) y los 10 M4 (Ø4.5) son de paso — **1 ud** |
+| `bandeja_base_2d` | **aluminio 6082-T6, 3 mm**, anodizado negro (§6.4) | chapa (§6.2) | **láser**, con los 1118 agujeros de Ø5 cortados **salteados**; desbarbado a máquina por las dos caras, con la arista de arriba matada; **planitud ≤ 1 mm** en la chapa suelta, medida antes de anodizar; el canto de abajo, **R0.5**. Después del anodizado, la prensa: 4 FH-M4 (agujero 4.0). Los 6 M5 (Ø6) y los 12 M4 (Ø4.5) son de paso — **1 ud** |
 | `marco_ventana_2d` | aluminio 6082-T651, `t_placa` = 6 mm, **láser** (§6.4) | chapa | corte + **6 cajeados** Ø8 × `prof_cajeado_riel` = 2.5 **por el lado del anillo** (bolsillos ciegos en UNA cara: dejan 3.5 mm bajo la cabeza del M4 del riel). Nota de mecanizado, no va en el DXF — ver abajo — **2 uds, PAR ESPEJADO**: mismo contorno, cajeado por caras opuestas. **Planitud ≤ 0.5 mm en 300** en el blank cortado: apoya en la cara mecanizada del anillo y doce M4 lo conforman contra ella (una pletina de 6 × 24 se aplana 0.5 con 200 N) |
 | `cupon_anillo_2d` | **aluminio, pletina de 14 mm** | **mecanizado** (§6.1) | **NO ES UNA PIEZA DEL CASE**: es la SECCIÓN del perfil del anillo, y de ella sale el **cupón de 100 mm** que hay que aprobar antes de cortar los dos anillos — ver el punto de parada en §6.1 |
 
@@ -302,10 +315,29 @@ ninguna transformación**, así que si alguien «arregla» el fichero espejándo
 las roscas se van al otro extremo del anillo y la puerta lo canta. Quien se
 voltea es **la PIEZA en la máquina**, no el dibujo.
 
-**`talon_2d`, `miembro_alto_2d`, `nariz_2d` y `tapa_valle_2d` SÍ son
-DESARROLLOS PLANOS, no contornos** — igual que las tres
+**`talon_2d`, `miembro_alto_2d`, `nariz_2d`, `tapa_valle_2d` y
+`escuadra_enchufe_2d` SÍ son DESARROLLOS PLANOS, no contornos** — igual que las tres
 del chasis: el DXF trae el recorte, y la pieza doblada mide menos. Cortar el
 contorno de la pieza montada da un fichero válido e inservible.
+
+**La escuadra del enchufe (`escuadra_enchufe_2d`, rev. 30).** Una L con un
+solo doblez a 90°, de **radio interior 2 = 1 t**, en 6082-T6 de 2 mm. El
+desarrollo mide **55.00 × 67.84**: 55.00 en z (la placa y las dos lenguetas) y
+67.84 del canto libre del pie al canto de arriba de la placa. Cotas de montaje
+(las del modelo, que `guarda_enchufe()` imprime): el pie va **plano sobre el
+pie del talón**, desde 0.5 más adentro que su canto libre hasta la placa; la
+placa, **a 2.0 de la cara interior nominal de la trasera** (la regla de la trasera pide tol + 0.5 = 1.70), sube 59.88 sobre la cara
+de abajo del pie (de y = 1.5 a 61.38) y rebasa la ventana al menos 6 por cada
+lado. Las dos lenguetas (14.00 de ancho cada una) dejan libre la pestaña del talón
+con su corte en U y 0.5 de aire; entre ellas el canto de abajo de la placa sube
+a 10.0, 0.5 sobre el canto de arriba de la pestaña. Cada lengueta lleva su
+CLS-M4 (**Ø5.4**) a 7.0 del canto libre y a la mitad de su ancho de los dos
+cantos de la lengueta (7.00 en las dos); el M4 × 10 de botón sube **desde abajo** por la base (Ø4.5) y por el
+pie del talón (Ø4.5, en la misma x y z). El enchufe va **atornillado al dorso
+de la placa** con dos M2.5 × 8 de cabeza alomada, desde la cara de la ventana.
+Anodizado negro, **y la prensa de las CLS después del anodizado**. El M4 × 10 y
+la altura del cuerpo de la CLS salen de la misma penetración que el M4 × 8 del
+talón: la hoja de PEM sigue sin estar en el repo.
 
 **LOS DOS ANILLOS SON PIEZAS ESPEJADAS, no dos iguales.** Mismo contorno y
 misma ventana, pero **el rebaje, el chaflán de la ventana, las 14 roscas
@@ -411,8 +443,8 @@ DXF y el cajeado como nota.)
 
 Las tres del chasis llevan su propio plano de plegado
 ([`renders/chasis-plano-plegado.png`](renders/chasis-plano-plegado.png)),
-porque un DXF de corte no dice de dónde doblar. Los cuatro desarrollos de
-aluminio (miembro alto, talón, nariz, tapa del valle) no tienen plano de
+porque un DXF de corte no dice de dónde doblar. Los cinco desarrollos de
+aluminio (miembro alto, talón, nariz, tapa del valle, escuadra del enchufe) no tienen plano de
 plegado dedicado — `renders/plano_chasis.py` cubre solo el acero — y siguen
 sin necesitarlo si el taller ya trabaja de los mismos DXF que el chasis. Los
 que no son a 90° (la nariz, el retorno de la meseta) llevan sus líneas escritas
@@ -613,8 +645,8 @@ del suelo, sec.3 y 5).
   por los agujeros del campo pasan las bridas de los cables.
 - **El canto de abajo, R0.5**: el aparato se levanta con los dedos bajo él.
 - **El orden**: láser, desbarbado, anodizado (§6.4) y **después la prensa** de
-  los insertos (4 FH-M4 en la base; las 6 CLS-M4 de los pies de nariz y talón
-  van en esas piezas). Los insertos, de **acero o inoxidable** (CLS/FH o
+  los insertos (4 FH-M4 en la base; las 8 CLS-M4 de los pies de nariz y talón y
+  de las dos lenguetas de la escuadra del enchufe van en esas piezas). Los insertos, de **acero o inoxidable** (CLS/FH o
   CLSS/FHS), **nunca de la serie de aluminio**: pide chapa de dureza ≤ HB 89 y
   el 6082-T6 ronda 95. Sus agujeros se cortan a la cota del catálogo sobre la
   pieza **anodizada** (el anodizado los cierra unos 0.02). La hoja de PEM no
@@ -781,6 +813,7 @@ contradicen, el equivocado es este documento.**
 | base: chapa 3, campo Ø5 cada 8 en L, puente 3 ≥ t, 7.0 de un inserto | `t_base`, `base_agujero`, `base_paso`, `base_orilla`, `pem_borde` | `guarda_campo_base()`, `guarda_bandeja_base()` |
 | base: mano de 200 N en el campo, ≤ 9 mm de flecha y ≤ 160 MPa en el puente | `t_base`, `carga_mano` | `guarda_piso()` |
 | tuercas CLS-M4 en los pies, a 7.0 del canto libre (Ø5.4, cuerpo 7.9) | `pem_cls_m4`, `pem_cls_m4_cuerpo`, `pem_borde` | `guarda_talon()`, `taladros_nariz()`, `taladros_talon()` |
+| escuadra del enchufe: 6082-T6 de 2, radio 2, placa de solape 6 sobre la ventana, aire de 0.5 a la pestaña del talón, blank 55.00 × 67.84; Kycon KPJX-PM-4S (brida 25.2 × 14.2, fondo 9.9, patillas 4.1) y clavija KPPX-4P (cuerpo 13.0, nariz Ø9.6 × 6.5) | `t_escuadra`, `radio_doblez_escuadra`, `escuadra_solape`, `escuadra_aire_talon`, `escuadra_pie_dentro`, `kycon_*`, `kppx_*`, `m25_largo` | `guarda_enchufe()`, `canario_enchufe()`, `taladros_escuadra()`, `taladros_talon()`, `guarda_bandeja_base()` |
 | fresa ⌀3 mm | `fresa_d` | `guarda_fresado()` |
 | tapa del valle, aluminio 3 mm; apoyo 2.0; tira 0.20 comprimida a 0.10 | `t_valle`, `apoyo_valle`, `tira_valle_nominal`, `compresion_tira_valle` | `guarda_valle()` |
 | fila auxiliar KONDOR 55 mm / centros 49 mm; paneles y rieles rehundidos 1.50 | `alto_panel_1u`, `inset_er`, `rehundido_panel` | `guarda_fila_1u()`, `guarda_rehundido_panel()` |

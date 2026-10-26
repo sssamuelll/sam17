@@ -195,6 +195,9 @@ def _sobres() -> dict[str, tuple[float, float, float, float]]:
     # la banda de cada miembro hace de marco.
     dims["miembro_alto_2d"] = cb.bbox_desarrollo_miembro(p, "trasero alto")
     dims["talon_2d"] = cb.bbox_desarrollo_miembro(p, "talon")
+    # LA ESCUADRA DEL ENCHUFE (#130, 2026-10-26): otra chapa plegada, con UN
+    # doblez. Su DXF es el desarrollo: ancho en z y largo del pie mas la placa.
+    dims["escuadra_enchufe_2d"] = cb.bbox_desarrollo_escuadra(p)
     # LA NARIZ (2026-08-29): la banda del frente. Otro desarrollo de la misma
     # chapa, con TRES dobleces (dos a 45 en el chaflan y uno de angulo_inferior
     # en P1), y otra vez la cuenta vive en Python y el dibujo en el .scad.
@@ -1348,8 +1351,8 @@ def ranuras_rejilla_entrada() -> list[str]:
 
     La firma con que se reconoce una ranura es su caja: ancho estrecho y
     fijo, alto de decenas de mm. En este DXF no la comparte nada -- los M3
-    son 3.4 x 3.4, las dos ondas pasan de 140 de ancho, la ventana del IEC es
-    48 x 27.5 y el contorno mide 540 x 255 --, asi que el filtro no puede
+    son 3.4 x 3.4, las dos ondas pasan de 140 de ancho, la ventana de red es
+    30 x 18 y el contorno mide 540 x 255 --, asi que el filtro no puede
     confundirse de pieza. Si algun dia se le pareciera algo, el assert de
     cantidad lo cantaria por exceso antes que por defecto."""
     import clearance_budget as cb
@@ -1557,9 +1560,27 @@ def taladros_talon() -> list[str]:
             if arco < 6:
                 f.append(f"{dxf}: falta el alivio de {2 * r_al:g} de la pestana en "
                          f"({ex:.2f}, {ey:.2f}): {arco} aristas sobre su circunferencia")
-        if len(leidos) != len(esperados):
+        # y los dos pasos M4 de la escuadra del enchufe (#130): de paso, Ø4.5, a
+        # escuadra_pie_dentro mas adentro que las tuercas del propio pie
+        esc = cb._escuadra(p)
+        d_paso = p["d_M4_paso"] + p["kerf"]
+        pasos = [(_x_blank(p, z), tl["desarrollo"] - (esc["m4_x"] - tl["x_pie"]))
+                 for z in esc["m4_z"]]
+        for ex, ey in pasos:
+            if not any(math.hypot(q[0] - ex, q[1] - ey) <= DESVIO_DXF_MAX
+                       and abs(q[2] - d_paso) < 0.1 for q in leidos):
+                f.append(f"{dxf}: falta el paso M4 de la escuadra del enchufe en "
+                         f"({ex:.2f}, {ey:.2f}), d={d_paso:.2f}")
+                continue
+            dist = _dist_al_contorno(cantos, (ex, ey))
+            if dist < BORDE_MIN_D * p["d_M4_paso"] - DESVIO_DXF_MAX:
+                f.append(f"{dxf}: el paso M4 de la escuadra de ({ex:.2f}, {ey:.2f}) cae a "
+                         f"{dist:.2f} mm de un canto (o del corte de una pestana) y se "
+                         f"exigen {BORDE_MIN_D * p['d_M4_paso']:.2f}")
+        if len(leidos) != len(esperados) + len(pasos):
             f.append(f"{dxf}: {len(leidos)} agujeros redondos en el DXF y el modelo "
-                     f"pone {len(esperados)} (los tres M4; los alivios de las pestanas "
+                     f"pone {len(esperados) + len(pasos)} (los tres M4 con su tuerca y los "
+                     f"dos pasos de la escuadra del enchufe; los alivios de las pestanas "
                      f"van fundidos con el corte en U, y la fila de M3 murio con la "
                      f"trasera capturada)")
     tabla = _redondos("bandeja_base_2d")
@@ -1570,6 +1591,12 @@ def taladros_talon() -> list[str]:
                    and abs(q[2] - d_t) < 0.1 for q in tabla):
             f.append(f"bandeja_base_2d: falta el taladro del talon en "
                      f"({ex:.2f}, {ey:.2f}), d={d_t:.2f}")
+    for z in cb._escuadra(p)["m4_z"]:
+        ex, ey = z, cb._escuadra(p)["m4_x"]
+        if not any(math.hypot(q[0] - ex, q[1] - ey) <= DESVIO_DXF_MAX
+                   and abs(q[2] - d_t) < 0.1 for q in tabla):
+            f.append(f"bandeja_base_2d: falta el paso de la escuadra del enchufe en "
+                     f"({ex:.2f}, {ey:.2f}), d={d_t:.2f}")
     d4t = p["d_M4_paso"] + p["kerf"]
     for ex, ey in cb._chasis_tornillos_tabla(p):
         if not any(math.hypot(q[0] - ex, q[1] - ey) <= DESVIO_DXF_MAX
@@ -1578,8 +1605,76 @@ def taladros_talon() -> list[str]:
                      f"({ex:.2f}, {ey:.2f}), d={d4t:.2f}")
     if not f:
         print(f"  talon_2d: 3 tuercas CLS en el pie a {cb._m4_pie_borde(p):.2f} del canto "
-              f"libre; la base lleva los 3 del talon (d={d_t:.2f}) y los 4 del "
-              f"chasis (d={d4t:.2f})")
+              f"libre y 2 pasos M4 de la escuadra del enchufe; la base lleva los 3 del "
+              f"talon (d={d_t:.2f}), los 2 de la escuadra y los 4 del chasis (d={d4t:.2f})")
+    return f
+
+
+def taladros_escuadra() -> list[str]:
+    """La escuadra del enchufe (#130) trae lo que el modelo le pone, LEIDO del DXF.
+
+    El desarrollo de la L, con UN doblez: el pie en dos lenguetas y la placa
+    con su canto de abajo subido entre ellas. Lo que se comprueba, fichero en
+    mano:
+      1. los cinco agujeros redondos y ningun otro: las dos CLS-M4 (Ø5.4) en el
+         pie, a m4_pie_borde del canto libre; el taladro de la nariz de la
+         clavija (Ø10.0) y los dos del M2.5 (Ø2.9) en la placa, donde cae el
+         enchufe tras el doblez;
+      2. el alivio entre las lenguetas: sus dos lados en x = a1 y x = b0 del
+         blank, de y = 0 a y = el desarrollo del canto de la placa, y el fondo
+         en esa y;
+      3. cada agujero a 1.5 D de un canto, y las CLS a pem_borde de los
+         cantos de su lengueta.
+    El blank (ancho x largo) lo mira el sobre de revisar() y los papeles lo
+    mira papel_trae_los_desarrollos()."""
+    import clearance_budget as cb
+
+    p = cb.leer_params()
+    dxf = "escuadra_enchufe_2d"
+    if not (PLANS / f"{dxf}.dxf").exists():
+        return []
+    e = cb._escuadra(p)
+    k = p["kerf"]
+    cantos = _cantos(dxf)
+    leidos = _redondos(dxf)
+    f: list[str] = []
+    # (x en el blank, y en el blank, diametro, que es)
+    esperados = [(zc - e["z0"], cb._m4_pie_borde(p), p["pem_cls_m4"] + k, "CLS-M4")
+                 for zc in e["m4_z"]]
+    esperados.append((e["vzc"] - e["z0"], e["v_nariz"],
+                      p["escuadra_agujero_nariz"] + k, "nariz de la clavija"))
+    esperados += [(e["vzc"] + s * p["kycon_tal_sep"] / 2 - e["z0"], e["v_nariz"],
+                   p["escuadra_agujero_m25"] + k, "M2.5") for s in (-1, 1)]
+    for ex, ey, d, que in esperados:
+        if not any(math.hypot(q[0] - ex, q[1] - ey) <= DESVIO_DXF_MAX
+                   and abs(q[2] - d) < 0.1 for q in leidos):
+            f.append(f"{dxf}: falta el agujero de {que} en ({ex:.2f}, {ey:.2f}), d={d:.2f}")
+            continue
+        dist = _dist_al_contorno(cantos, (ex, ey))
+        minimo = p["pem_borde"] if que == "CLS-M4" else BORDE_MIN_D * d
+        if dist < minimo - DESVIO_DXF_MAX:
+            f.append(f"{dxf}: el agujero de {que} en ({ex:.2f}, {ey:.2f}) cae a {dist:.2f} mm "
+                     f"de un canto y se exigen {minimo:.2f}")
+    if len(leidos) != len(esperados):
+        f.append(f"{dxf}: {len(leidos)} agujeros redondos en el DXF y el modelo pone "
+                 f"{len(esperados)} (dos CLS-M4, la nariz y dos M2.5)")
+    aristas, _ = _componentes(dxf)
+    tol = 0.05
+    a1, b0, vr = e["a1"] - e["z0"], e["b0"] - e["z0"], e["v_alivio"]
+    for x in (a1, b0):
+        if not any(abs(a[0][0] - x) <= tol and abs(a[1][0] - x) <= tol
+                   and min(a[0][1], a[1][1]) <= tol and max(a[0][1], a[1][1]) >= vr - tol
+                   for a in aristas):
+            f.append(f"{dxf}: falta el lado del alivio en x={x:.2f}, de y=0 a y={vr:.2f}")
+    if not any(abs(a[0][1] - vr) <= tol and abs(a[1][1] - vr) <= tol
+               and min(a[0][0], a[1][0]) <= a1 + tol and max(a[0][0], a[1][0]) >= b0 - tol
+               for a in aristas):
+        f.append(f"{dxf}: falta el fondo del alivio en y={vr:.2f} entre x={a1:.2f} y x={b0:.2f}")
+    if not f:
+        print(f"  {dxf}: 2 CLS-M4 a {cb._m4_pie_borde(p):.2f} del canto libre, nariz de "
+              f"{p['escuadra_agujero_nariz']:g} y 2 M2.5 de {p['escuadra_agujero_m25']:g} en la "
+              f"placa, alivio de {b0 - a1:.2f} entre lenguetas hasta y={vr:.2f}; blank "
+              f"{e['ancho']:.2f} x {e['largo']:.2f}")
     return f
 
 
@@ -2178,7 +2273,8 @@ def persiana_pasante_cuadra(ruta: Path = PLANS / "persiana_pasante_2d.dxf") -> l
 
 # Las chapas que se pliegan. Sus DXF no traen lineas de plegado: el taller
 # dobla con las cotas del papel.
-DESARROLLOS = ("miembro_alto_2d", "nariz_2d", "talon_2d", "tapa_valle_2d")
+DESARROLLOS = ("miembro_alto_2d", "nariz_2d", "talon_2d", "tapa_valle_2d",
+               "escuadra_enchufe_2d")
 # El blank del marco solo lo da el PLIEGO, y se copia a mano igual: el
 # 2026-10-12 seguia en 294.56 x 252.88 con el DXF en 300.11 x 251.88.
 SOLO_PLIEGO = ("marco_ventana_2d",)
@@ -2279,7 +2375,7 @@ def guarda_bandeja_base() -> list[str]:
                            for q in redondos)]
 
     taladros = cb._taladros_base(p)
-    for tipo in ("M5", "M4 nariz", "M4 talon", "FH pata", "M4 chasis"):
+    for tipo in ("M5", "M4 nariz", "M4 talon", "M4 escuadra", "FH pata", "M4 chasis"):
         puntos = [(z, x) for x, z, _d, t in taladros if t == tipo]
         d = next(dd for _x, _z, dd, t in taladros if t == tipo)
         mal = faltan(puntos, d)
@@ -2448,6 +2544,7 @@ def main() -> int:
     fallos += taladros_marco_ventana()
     fallos += taladros_nariz()
     fallos += taladros_talon()
+    fallos += taladros_escuadra()
     fallos += pestanas_talon()
     fallos += bridas_techo()
     fallos += techo_macizo()

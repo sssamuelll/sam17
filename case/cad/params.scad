@@ -1535,58 +1535,116 @@ kondor_size     = 34;
 kondor_spacing  = 1.3;
 
 // --- la entrada de red ---
-// La VENTANA de la trasera por donde asoma la entrada de red. Ojo con la
-// palabra: es una ventana de PASO, no el recorte donde se encaja el conector.
+// La VENTANA de la trasera por donde asoma la entrada de red de 24 V. Ojo con
+// la palabra: es una ventana de PASO, no el recorte donde se encaja el
+// conector -- la trasera es un PMMA de 8 +-1.2 que se quita sacando un anillo,
+// y nada que cargue con el cordon vive en ella.
 //
-// Hasta el 2026-08-23 el conector se encajaba a presion en el propio acrilico,
-// y eso rompia la regla que la spec del case escribe en su §7 -- "las pieles
-// removibles nunca llevan mains" -- porque la trasera se quita con 10 M3. Se
-// decidio (Samuel, 2026-08-23) montarlo en una PIEZA FIJA, y el acrilico se
-// queda solo con el hueco por donde pasa.
+// LA PIEZA YA NO ES UNA IEC. La fuente v5 entra por un Kycon KPJX-PM-4S
+// (mini-DIN de 4 polos, 24 V; hardware/01-power-supply/v5/bom-chasis.csv X1)
+// y su clavija es la KPPX-4P, de bloqueo "Snap and Lock". Las dos hojas estan
+// en docs/reference/datasheets. La Schurter KM00.1105.11 que decia este bloque
+// era la de la fuente v3 y ya no entra en el case.
 //
-// El #107 pedia montarlo en el chasis de acero, y NO LLEGA: su pared trasera
-// esta a 23.00 mm de la cara interior del acrilico y 20 de esos 23 son el
-// larguero de base trasera, que va en medio. La pieza fija se atornilla al
-// larguero, que es la unica estructura que hay detras de esta ventana y que se
-// queda puesta cuando la plancha sale.
+// QUIEN SOSTIENE EL ENCHUFE (Samuel, 2026-10-26, #130): "an L bracket on the
+// floor". Una escuadra de chapa 6082-T6 de t_escuadra (escuadra_enchufe en
+// sam17_case.scad): un pie atornillado al suelo y una placa que cierra esta
+// ventana POR DENTRO, a escuadra_aire_trasera de la cara interior de la
+// trasera, con el enchufe atornillado a su dorso. La clavija se queda en la ventana, a t_piel
+// de hondo, y su nariz pasa por la placa hasta el enchufe. Esta ventana
+// enmarca esa placa y la nariz de la clavija; ya no tiene que dejar pasar un
+// bloque.
 //
-// LA PIEZA SI ESTA ELEGIDA, y este fichero era el ultimo en enterarse. Es la
-// Schurter KM00.1105.11 (clase I, portafusibles bipolar, interruptor bipolar,
-// sin filtro EMC), listada en hardware/01-power-supply/v3/bom-chasis.csv, y
-// hardware/01-power-supply/v3/check_red_chasis.py lleva tiempo diciendo HUECO
-// porque su recorte "no esta en case/cad/params.scad". De su hoja typ_KM.pdf:
-//
-//   p.1  Panel Thickness / Snap-in: 1 / 1.5 / 2 / 2.5 mm
-//   p.3  recorte  28 (+0.10/-0.05) x 47 (+0.10/-0.05), esquinas max R 0.3
-//        brida    30.5 x 50, sobresale 2.5 del panel
-//        detras   26.15 de cuerpo + 3.2 de clips = 29.35
-//
-// Lo primero de esa lista CIERRA la discusion de donde va: el snap-in agarra
-// chapa de 1 a 2.5 mm y esta plancha tiene 8. NUNCA pudo montarse aqui. Va en
-// chapa, que es lo que dice el #107 y lo que exige check_red_chasis.py.
-//
-// LOS DOS NUMEROS DE ABAJO SIGUEN SIN DERIVARSE DE ELLA, y por eso se dejan
-// como estan en vez de "corregirse" a 47 x 28. Tres razones:
-//
-//   1. 48 x 27.5 es el recorte de la hoja GIRADO 90 grados y redondeado a ojo
-//      (47 -> 48, 28 -> 27.5). Nadie escribio que fuera girado.
-//   2. Esta ventana ya no es un recorte de encaje, asi que su cota no es la del
-//      recorte: tiene que dejar pasar el enchufe del cable, y eso depende de
-//      donde quede la brida, que depende de la pieza fija que aun no existe.
-//   3. Y hay un choque sin resolver: con la brida en el plano del acrilico el
-//      cuerpo llega a x=271.59 y la pared trasera del chasis esta en 277.94,
-//      o sea 6.35 mm de interferencia. Se decide con Samuel, no aqui.
-//
-// Ponerles 47 x 28 seria pasar de un numero inventado a un numero PRESTADO de
-// otra pieza del ensamblaje -- que es peor, porque parece derivado. Se quedan
-// visibles y rotos hasta que la pieza fija se dibuje (Principio V).
-iec_ancho      = 48;     // SIN DERIVAR de la KM00.1105.11 -- ver arriba
-iec_alto       = 27.5;   // SIN DERIVAR de la KM00.1105.11 -- ver arriba
-iec_margen_der = 22;     // acrilico entre la ventana y el canto derecho.
+// SU TAMANO LO ELIGIO SAMUEL (2026-10-26, #130) entre tres renders
+// (case/renders/render_enchufe.py): (A) los 48 x 27.5 de la IEC vieja, (B)
+// 30 x 18 con esquinas R3 y (C) un circulo de 16. Fue la B: las dos cabezas de
+// los M2.5 alomados (23.9 de punta a punta) quedan dentro de la ventana, a la
+// vista y con el destornillador desde fuera, y no hay que avellanar la placa de
+// 2 como pedia la C. El minimo que es duro lo vigila guarda_enchufe(): la
+// ventana tiene que dar sitio al cuerpo de la clavija (kppx_cuerpo_d) con
+// ventana_holgura_kppx por cada lado (15; la B da 18 de alto).
+iec_ancho      = 30;
+iec_alto       = 18;
+iec_margen_der = 31;     // acrilico entre la ventana y el canto derecho: deja
+                         // el centro de la ventana donde estaba el de la A
+                         // (au - 22 - 48/2), asi que el enchufe no se movio
+                         // al achicarla. La placa si: su canto izquierdo lo
+                         // fija ahora la lengueta A en su minimo de
+                         // 2*m4_pie_borde (guarda_enchufe imprime la flecha).
                          // Era "au - 70" al reves, o sea el canto IZQUIERDO
                          // contado desde la derecha: un numero que no queria
                          // decir nada. Esto es una distancia al canto, que es
                          // lo que de verdad importa en una plancha de PMMA.
+// Radio de las esquinas de la ventana. 0 es un rectangulo; con un radio de la
+// mitad del lado menor la ventana es una pastilla, y con los dos lados iguales,
+// un circulo.
+iec_radio_esq  = 3;
+
+// --- el enchufe y su clavija (#130) ---
+// Kycon KPJX-PM-4S, hoja Rev. C2 (2026-01-08), p.1 (tolerancia X.X +-0.35, X.XX +-0.25).
+// El plano de montaje es la CARA DELANTERA de la brida: de ahi se cuenta el
+// fondo, y la clavija entra por ella. Largo mayor de la brida en z, menor en y.
+kycon_brida_z   = 25.2;   // largo de la brida, a lo largo de los dos taladros
+kycon_brida_y   = 14.2;   // ancho de la brida
+kycon_tal_sep   = 19.0;   // entre los dos taladros de la brida
+kycon_tal_d     = 2.3;    // taladros de la brida (rosca el tornillo M2.5)
+kycon_fondo     = 9.9;    // de la cara delantera de la brida al fondo del cuerpo
+kycon_oreja     = 6.1;    // lo que sobresalen tras la brida las dos orejas de los taladros
+kycon_patilla   = 4.1;    // lo que asoman los cuatro contactos de potencia (copa de soldar) tras el fondo
+kycon_tornillo  = 6.6;    // "Recommended Mounting Screw 6.60 + X", X = espesor del panel
+// SOLO DIBUJAN, leidos a escala del dibujo (ESTIMADO): no entran en ninguna
+// cuenta de guarda_enchufe().
+kycon_brida_t   = 1.4;    // espesor de la brida
+kycon_cuerpo_d  = 12.7;   // diametro del cuerpo tras la brida
+// Tornillo de montaje M2.5 de cabeza alomada (dibujo de la hoja del KPJX).
+m25_cabeza_d    = 4.9;
+m25_cabeza_h    = 1.8;
+m25_largo       = 8;      // 6.60 + 2 = 8.6 -> M2.5 x 8: 6.0 de rosca en el enchufe, por debajo de los 6.6 de la hoja
+// Kycon KPPX-4P, hoja Rev. A17 (2025-05-29), p.1.
+kppx_cuerpo_d     = 13.0;
+kppx_nariz_d      = 9.6;
+kppx_nariz_largo  = 6.5;  // entre parentesis en la hoja: cota de referencia
+// ESTIMADO, y asi se imprime: ni la hoja de la clavija ni la del enchufe
+// publican la fuerza de insercion ni la de retencion del bloqueo. Es la
+// carga con que guarda_enchufe() estima la flecha de la placa.
+kppx_fuerza_est   = 30;   // N
+// La placa del enchufe: taladro de la nariz (nariz + 0.4) y paso del M2.5.
+escuadra_agujero_nariz = 10.0;
+escuadra_agujero_m25   = 2.9;
+// Holgura de la ventana al cuerpo de la clavija, por cada lado.
+ventana_holgura_kppx = 1.0;
+// Solo para el render C: 1 dibuja los dos M2.5 avellanados y a ras de la
+// placa (con la ventana de 16 las cabezas quedan DETRAS de la trasera, y una
+// cabeza alomada de 1.8 no cabe entre la placa y el acrilico). 0 = alomados.
+enchufe_avellanado = 0;
+
+// --- la escuadra del enchufe (#130, Samuel 2026-10-26) ---
+// Una L de 6082-T6 anodizada en negro (su cara se ve por la ventana) con UN
+// doblez. t_escuadra = 2 y radio interior = 1 t (radio_doblez_escuadra): HUECO
+// declarado, el 6082-T6 a 1 t puede fisurar (RFQ, B).
+t_escuadra            = 2;
+radio_doblez_escuadra = 2;
+// La placa rebasa la ventana por cada lado: 6 mm, que tiene que quedarse por
+// debajo de vent_puente_min para no tapar una ranura de la rejilla.
+escuadra_solape       = 6;
+// Aire de la placa a la cara interior NOMINAL de la trasera. La regla de la
+// trasera (guarda_trasera_capturada, la del postmortem de la spec 26-08 s3)
+// pide tol_pmma + 0.5 = 1.70: una plancha del lote 1.2 mas gruesa no puede
+// encontrarse una chapa fija detras. 2.0 deja 0.3 sobre la regla. Por el otro
+// lado lo acota el cuerpo del enchufe contra la tapa del chasis
+// (guarda_enchufe).
+escuadra_aire_trasera = 2.0;
+// Aire de la escuadra a la pestana del talon: al corte en U de su ventana, por
+// los lados, y a su canto de arriba, por encima. 0.5 = corte_pestana, el mismo
+// medio milimetro del corte. El encargo daba 1.0 (lenguetas hasta z = 506.8 y
+// desde 534.8), y con 1.0 la lengueta B -- 14 de ancho, lo que pide su CLS-M4 a
+// pem_borde de los dos cantos -- acaba en z = 548.83 y pisa 0.21 la pata del
+// marco de la ventana del anillo derecho, que arranca en 548.62
+// (ancho_total - t_anillo - t_placa). Con 0.5 acaba en 548.33 y quedan 0.29.
+escuadra_aire_talon   = 0.5;
+// El canto libre del pie de la escuadra queda tanto dentro del canto libre del
+// pie del talon. Su CLS-M4 va a m4_pie_borde() de ESE canto.
+escuadra_pie_dentro   = 0.5;
 
 // --- banda delantera del valle; la meseta queda maciza ---
 // De la antigua tapa solo queda la banda LISA del vuelo delantero. Es la

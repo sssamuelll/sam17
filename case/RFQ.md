@@ -206,7 +206,8 @@ taller nuevo**, pero desde el 2026-08-28 **ya no hace la costilla** — esa
 pieza se mecaniza en un taller aparte (§D). Lo que sí hace: el **techo
 macizo** (blank 593.02 × 78.85, sin ranuras, retorno de 9, labio de 20 y una brida R2 en
 cada punta), el **talón** (blank 545.62 × 42.23, pie de 22.5 con muescas y
-ocho pestañas lanzadas), la
+ocho pestañas lanzadas), la **escuadra del enchufe** (blank 55.00 × 67.84,
+aluminio de 2 mm con UN doblez a 90° a radio 2, y dos CLS-M4), la
 **nariz** (la banda del frente, blank 545.62 × 53.10, tres dobleces), los
 dos **marcos de la ventana** (pletina de 6 cortada a láser, con seis cajeados
 por el lado del anillo, un par espejado), la **tapa del valle** (aluminio de
@@ -246,7 +247,8 @@ la trasera, muertos esa misma noche, ya no existen.)
    **Y la tapa del valle, 6082-T6 de 3 mm, se dobla a R3 (1 t).** ¿Lo hacen sin
    fisurar? Si su radio mínimo en ese espesor es mayor, díganlo con el
    presupuesto: es un HUECO del diseño (`radio_doblez_valle`), no una cota que
-   el taller pueda cambiar por su cuenta.
+   el taller pueda cambiar por su cuenta. **Lo mismo la escuadra del enchufe,
+   6082-T6 de 2 mm, doblada a R2 (1 t)** (`radio_doblez_escuadra`, #130).
 
 El techo de esta tanda **no lleva ranuras**. Se eliminan 16 operaciones del
 blank y no aparece ningún proceso nuevo de chapa. Por eso no se añade una
@@ -265,7 +267,7 @@ el estándar Intellijel 1U, y los tres planos de panel quedan rehundidos
 
 **Los DXF que reciben son DESARROLLOS PLANOS, no contornos** (salvo el
 marco de la ventana, que no se dobla). `miembro_alto_2d`, `talon_2d`,
-`nariz_2d` y `tapa_valle_2d` traen el recorte; la pieza doblada mide menos. Cortar el
+`nariz_2d`, `tapa_valle_2d` y `escuadra_enchufe_2d` traen el recorte; la pieza doblada mide menos. Cortar el
 contorno de la pieza montada da un fichero válido e inservible — es el mismo
 error que el modelo vigila con un sobre por pieza. **`costilla_2d` YA NO ES
 DE ESTE TALLER**: desde el 2026-08-28 es un contorno real (sin plegar, sin
@@ -291,7 +293,7 @@ el fichero. **Se cortan dos y se cajean por caras opuestas.**
 7. **La base (rev. 28).** ¿Cortan **1118 agujeros de Ø5 cada 8** en 6082-T6 de
    3 mm, **salteados**, sin pasar de **1 mm de planitud** en 568 × 308, medida
    antes de anodizar? ¿Desbarban a máquina las dos caras?
-8. **¿Prensan insertos PEM** (tuercas CLS-M4 en chapa de 1.5; espárragos FH-M4
+8. **¿Prensan insertos PEM** (tuercas CLS-M4 en chapa de 1.5 y de 2; espárragos FH-M4
    en chapa de 3), de **acero o inoxidable**, **después de anodizar**, con el
    agujero a la cota del catálogo sobre la pieza anodizada? Si no tienen
    prensa, ¿quién la tiene cerca?

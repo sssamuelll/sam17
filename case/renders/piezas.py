@@ -29,14 +29,16 @@ OPENSCAD = r"C:\Program Files\OpenSCAD\openscad.exe"
 # nombre de pieza -> material de render.py (o el acero, que render.py no tiene)
 GRUPOS = {
     "aluminio": ["anillos", "rieles_3u", "rieles_1u", "paneles", "marcos_ventana",
-                 "nariz", "talon", "miembro_alto", "tapa_valle", "persianas", "base"],
+                 "nariz", "talon", "escuadra_enchufe", "miembro_alto", "tapa_valle",
+                 "persianas", "base"],
     "junta": ["tira_anti_ruido_valle"],
     "acrilico": ["piel_trasera"],
     "goma": ["paticas"],
-    "acero": ["chasis"],
+    "acero": ["chasis", "enchufe_tornillos"],
+    "plastico": ["enchufe_kycon"],
 }
 MATERIAL = {"acrilico": "acrilico_naranja", "goma": "goma",
-            "aluminio": "aluminio", "junta": "anti_ruido", "acero": "acero"}
+            "aluminio": "aluminio", "junta": "anti_ruido", "acero": "acero", "plastico": "goma"}
 
 
 def verificar_apoyo_valle() -> None:
