@@ -1,6 +1,8 @@
 # Junta de las piezas de la fuente v5, antes de la firma
 
-**Fecha**: 2026-10-25 · **Estado**: **junta, no firma**. Este papel no elige ni
+**Fecha**: 2026-10-25 · **Estado**: **junta, no firma**; las decisiones de
+§4.1 a §4.5 y §4.7 se firmaron el 2026-10-26, la de §4.4 condicionada a TRACO,
+y §4.6 sigue abierta. Este papel no elige ni
 descarta ninguna pieza: dictamina sobre lo que
 [`2026-10-22-fuente-v5-piezas-propuesta.md`](2026-10-22-fuente-v5-piezas-propuesta.md)
 pone a firmar ·
@@ -371,6 +373,11 @@ da polaridad buena, inversión bloqueada o 0 V, y nunca un corto. Las tres
 lentes encontraron el corto por separado; dos proponen esta salida, y la
 tercera el arnés para un solo ladrillo, apoyada en el contrato exclusivo.
 
+**Decidido el 2026-10-26: un pin por polo.** `X1.1` → `J1.1` y `X1.2` →
+`J1.2`, con 3 y 4 sin conectar. Faltan el arnés en `bom-chasis.csv`, la
+constante del conector en `ladrillo_budget.py` (de 30 a 60 mΩ), y la puerta y
+el paso de banco de §3.1.
+
 ### 4.2 La variante del TE90: A o B
 
 «A» deja la salida flotante; «B» une el común de salida a la tierra de red (nota
@@ -380,6 +387,9 @@ toca PE más que por la fuga del ladrillo (<4 mA de salida a tierra, p. 2); con
 chasis quedan atados a tierra desde el ladrillo, con el lazo que eso abre hacia
 otros equipos con tierra por el audio. Es H-V5-PE, y lo decide su mapa. La
 variante no cambia el caso de §2 P7 (d): ese viene de una fuente ajena.
+
+**Decidido el 2026-10-26: «A», la salida flotante.** La referencia es
+`TE90A2449F01`, que falta llevar a los nueve archivos de §3.2.
 
 ### 4.3 El respaldo del ladrillo
 
@@ -399,12 +409,23 @@ Falta retirarlo de la propuesta, de `ladrillo_budget.py` y de `curvas.py`.
 | **Restituir** | Dos interruptores de carga en ±12 V, un segundo canal de detector y su punto 2b de bring-up. Placa: reruteo |
 | **Firmar su retiro** | Que el sujeto se fue con los dos módulos: hoy es un solo THN 30 doble. Pide que TRACO confirme por escrito que una falta en una salida baja las dos, un punto de banco «los dos o ninguno», y enmendar v5 §7, el T23 del censo y `secuencia_budget.py` |
 
+**Decidido el 2026-10-26: se firma su retiro si TRACO confirma por escrito**
+que una falta en una salida del THN 30 baja las dos (pregunta enviada el
+2026-10-25). Con esa respuesta faltan el punto de banco «los dos o ninguno» y
+las enmiendas a v5 §7, al T23 del censo y a `secuencia_budget.py`. Si TRACO
+contesta que no, la restitución vuelve a la mesa.
+
 ### 4.5 T19: el tiristor del +5 V digital
 
 | Opción | Qué pide |
 |---|---|
 | **Retirarlo** | `SCR4` y su disparo sin montar, sin rerutear, y el requisito pasa al módulo 2, como en la v4: que su entrada de 5 V aguante el OVP máximo del URB, 8,0 V (p. 2). El módulo 2 es nuestro |
 | **Adoptarlo con nombre propio** | Una decisión nueva, no D-F6; un filtro en `REF_CB4` más largo que la recuperación del URB (500 µs máx., p. 2) y comprobado contra la subida de su OVP, o una referencia más estrecha. Placa: componentes nuevos |
+
+**Decidido el 2026-10-26: `SCR4` sale.** Queda sin montar con su disparo, sin
+rerutear, y el requisito pasa al módulo 2: su entrada de 5 V aguanta los 8,0 V
+del OVP máximo del URB. Faltan la BOM, `check_absmax.py`, `absmax.csv`, la
+propuesta y #476, que lo cuentan como D-F6 (§3.4).
 
 ### 4.6 Simplificaciones que la firma puede tomar o dejar
 
@@ -449,12 +470,12 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | El arnés (§3.1), la referencia del TE90 (§3.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), el retiro del respaldo Mean Well (§4.3), y la propuesta enmendada (§3.9) |
+| **Papel** | El arnés (§3.1), la referencia del TE90, `TE90A2449F01` (§3.2, §4.2), ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5), el retiro del respaldo Mean Well (§4.3), el retiro de D-F4 cuando conteste TRACO (§4.4), el requisito de 8,0 V al módulo 2 (§4.5), y la propuesta enmendada (§3.9) |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
-| **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y si se retira, `SCR4` sin montar (§4.5) |
+| **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y `SCR4` sin montar (§4.5) |
 | **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
-| **Placa** | D-F4 en rack, si se restituye (§4.4); el filtro de los crowbars, si el digital se queda (§4.5); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |
-| **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; y la polaridad de `X1` con cada ladrillo antes de conectar `J1` (§3.1) |
+| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y la toma de `+5V_AUX`, si se mueve (§3.5) |
+| **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con cada ladrillo antes de conectar `J1` (§3.1); y «los dos o ninguno» en `PS1` (§4.4) |
 
 ## 6. Lo que la junta no pudo comprobar
 
