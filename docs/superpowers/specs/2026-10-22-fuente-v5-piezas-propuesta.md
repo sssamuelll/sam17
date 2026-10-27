@@ -191,7 +191,7 @@ Se cierran sin contradecirse:
 
 ### 9.4 Qué falta, en orden de coste
 
-1. **Gratis:** preguntar a TRACO por escrito (a) qué hace el OVP del módulo al dispararse y si es independiente del lazo de regulación, (b) la constante de trim de la serie WI, (c) arranque contra capacidad y enchufe en caliente, (d) cómo falla la barrera. Preguntar a AE por la temporización del hiccup y una variante con enclavamiento.
+1. **Gratis:** preguntar a TRACO por escrito (a) qué hace el OVP del módulo al dispararse y si es independiente del lazo de regulación, ~~(b) la constante de trim de la serie WI~~ (está en su nota, `traco_thn15wi_thn20wi_thn30wi_voltage_adjustment.pdf` p. 1, #497), (c) arranque contra capacidad y enchufe en caliente, (d) cómo falla la barrera. Preguntar a AE por la temporización del hiccup y una variante con enclavamiento.
 2. **Barato:** en 3 muestras de THN 20-2413WI, llevar el trim a −Vout y registrar la tensión, si el OVP dispara y qué hace en 10 min. Resuelve F1 y F2 del árbol.
 3. **Diseño pendiente:** si el lazo de retorno realmente se cierra en la v5 (M2 + J5, H-CENSO-MAPA); y las preguntas de fabricante del §6.
 4. **Ensayos que pueden fallar:** la tabla de inyección de reintentos (4 pulsos exactos, espera de 1,0 s, sin pulso tras reconectar, el rebote no gasta intentos) y la de #334 (inyección en el nodo de salida del módulo con control sin protección: debe aparecer el rizado de ~27 V, o el banco no reproduce la falla y cualquier «pasa» no vale; ruido A/B contra los 0,8 µVrms).
