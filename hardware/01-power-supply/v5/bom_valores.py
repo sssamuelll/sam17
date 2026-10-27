@@ -42,6 +42,29 @@ def a_si(texto: str) -> float:
     return float(m.group(1)) * _SUFIJO[m.group(2)]
 
 
+def montada(ref: str) -> bool:
+    """False si la fila de `ref` es supplier "SIN MONTAR": la huella queda en
+    la placa y la pieza no se suelda (ni JLC ni a mano)."""
+    f = filas()
+    if ref not in f:
+        raise KeyError(f"{ref} no esta en bom.csv")
+    return f[ref]["supplier"].strip() != "SIN MONTAR"
+
+
+def tension_v(ref: str) -> float:
+    """Tension nominal que su valor declara: '100nF 100V X7R' -> 100.0.
+
+    La lee de bom.csv y no de una copia: lo que un condensador aguanta es lo
+    que se compra, no lo que alguien recordaba."""
+    f = filas()
+    if ref not in f:
+        raise KeyError(f"{ref} no esta en bom.csv")
+    m = re.search(r"(\d+(?:\.\d+)?)\s*V\b", f[ref]["value"])
+    if not m:
+        raise ValueError(f"el valor de {ref} ({f[ref]['value']!r}) no declara tension")
+    return float(m.group(1))
+
+
 def valor(ref: str) -> float:
     f = filas()
     if ref not in f:

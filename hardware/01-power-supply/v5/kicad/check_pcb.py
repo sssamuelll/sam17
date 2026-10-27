@@ -22,8 +22,9 @@ QUE MIRA:
      esquematico) que escribe build_pcb.py, con el sha256 del .kicad_pcb que
      comprobo. Si la placa cambio despues, rojo: hay que volver a pasarlo.
      check_drc.py lo vuelve a correr en vivo donde hay KiCad.
-  5. Que los caminos de ~3 A (entrada de 24 V y +5 V digital) van por cobre
-     de >= ANCHO_MIN de pad a pad, sin pasar por una pista ruteada de 0.5 mm.
+  5. Que los caminos de ~3 A (entrada de 24 V con su retorno por Q7, y +5 V
+     digital) van por cobre de >= ANCHO_MIN de pad a pad, sin pasar por una
+     pista ruteada de 0.5 mm.
   6. Que las masas no se tocan: >= 2 mm entre GNDD y las otras dos en todas
      las capas, >= 1 mm entre GND24 y GNDA (que solo une NT1).
   7. Que U1 y U2 tienen sus vias termicas.
@@ -52,6 +53,10 @@ ANCHO_MIN = 1.4
 SOLAPE_MIN = 0.1                              # mm de cobre comun para contar como unido
 CAMINOS = [
     ("+24V_RAW", "J1.1", ["Q2.1", "Q2.2", "Q2.3", "D1.1"]),
+    # El retorno: J1.2 -> drenador de Q7 y D1.2 (RET24_RAW, la isla), y las tres
+    # fuentes de Q7 juntas en GND24 (P7 (d), H-V5-INVERSION)
+    ("RET24_RAW", "J1.2", ["Q7.5", "D1.2"]),
+    ("GND24", "Q7.1", ["Q7.2", "Q7.3"]),
     ("+24V_PROT", "Q2.5", ["U16.1", "U16.2", "U16.3"]),
     ("+24V_SW", "U16.18", ["U16.19", "U16.20", "PS1.1", "PS4.1", "PS5.1", "PS3.1",
                            "PS2.3", "C14.1"]),
@@ -389,7 +394,22 @@ def mutar() -> int:
             if v["red"] == "-15V5_FILT":
                 v["red"] = "GNDA"
 
+    def sin_isla(pl):
+        pl["segs"] = [s for s in pl["segs"] if not (s["red"] == "RET24_RAW" and s["w"] >= ANCHO_MIN)]
+
+    def sin_cobre_fuentes_q7(pl):
+        pl["segs"] = [s for s in pl["segs"] if not (s["red"] == "GND24" and s["w"] >= ANCHO_MIN
+                                                    and abs(s["a"][1] - 61.2) < 1.0)]
+
+    def j1_2_en_gnd24(pl):
+        # la placa de antes de Q7: J1.2 pegado a GND24
+        p = next(p for p in pl["pads"] if p.ref == "J1" and p.num == "2")
+        p.red = "GND24"
+
     canarios = [("se corta el bus de +24V_SW", sin_bus, "+24V_SW"),
+                ("se quita el cobre de la isla RET24_RAW", sin_isla, "RET24_RAW"),
+                ("se quita el cobre que junta las fuentes de Q7", sin_cobre_fuentes_q7, "GND24"),
+                ("J1.2 vuelve a GND24 (sin Q7)", j1_2_en_gnd24, "paridad"),
                 ("U16.7 cambia de red", red_cambiada, "paridad"),
                 ("GNDD a 0.5 mm de GNDA", gndd_pegada, "GNDD y GNDA"),
                 ("placa sin vias", sin_vias, "sin rutear"),

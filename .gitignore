@@ -208,3 +208,6 @@ docs/reference/datasheets/*.pdf
 !docs/reference/datasheets/tmp1075.pdf
 !docs/reference/datasheets/phoenix-mkds-1715747-2018-11.pdf
 !docs/reference/datasheets/iso1541.pdf
+# El CSD18534Q5A de Q2 y de Q7, el MOSFET del retorno de la fuente v5 (TI SLPS389D):
+# check_absmax.py cita su p. 1 (VDS, VGS) y su p. 3 (BVDSS, RDS(on)).
+!docs/reference/datasheets/csd18534q5a.pdf

@@ -1,8 +1,9 @@
 # Junta de las piezas de la fuente v5, antes de la firma
 
 **Fecha**: 2026-10-25 · **Estado**: **junta, no firma**; las decisiones de
-§4.1 a §4.5 y §4.7 se firmaron el 2026-10-26, la de §4.4 condicionada a TRACO,
-y §4.6 sigue abierta. Este papel no elige ni
+§4.1 a §4.5 y §4.7 se firmaron el 2026-10-26, la de §4.4 condicionada a TRACO;
+las de §3.7, §3.8, P7 (d), §4.6 y el banco del enchufe (§3.10) se firmaron el
+2026-10-27. Este papel no elige ni
 descarta ninguna pieza: dictamina sobre lo que
 [`2026-10-22-fuente-v5-piezas-propuesta.md`](2026-10-22-fuente-v5-piezas-propuesta.md)
 pone a firmar ·
@@ -130,6 +131,26 @@ se restituye, y el tiristor digital, si se queda.
 | **Lo que aguanta** | El núcleo es el mínimo que firman M3 y M5, y sus guiones salen en verde: 17,40 V de pico en `U1` en el peor caso (`check_absmax.py`). Enchufar con la salida viva lo cubre `U16`, abierto durante su retardo de UVLO y su rampa |
 | **Lo que falla** | (a) **El temporizador de `U16` del guion no es el de la placa** (§3.7). (b) **`D1` está mal coordinado con el ladrillo** (§3.8). (c) **Los crowbars no tienen filtro.** `REF_CB1` a `REF_CB4` solo tocan su divisor y su `TL431` (netlist), así que disparan en microsegundos con cualquier pico; en el digital eso ya cae dentro del transitorio del URB (§3.4). (d) **La inversión solo se bloquea en el positivo.** `Q2` está entre `+24V_RAW` y `+24V_PROT`, y `GND24` va de `J1.2` a `NT1` y de ahí al chasis por `J5` (netlist). Con una clavija ajena cableada al revés y de salida a tierra, `GND24`, `GNDA` y el chasis quedan a +24 V sobre PE, y cualquier equipo con tierra unido por audio o USB cierra el lazo, limitado solo por la sobrecarga de esa fuente (inferencia, no de una hoja). §9.3 pide bloquear la inversión y recuperar al corregir. (e) **Piezas sin trabajo demostrable.** `D12` (S1M de salida a entrada de `U1`) viene del LM2941, y el LT1963A dice «No Protection Diodes Needed» (`lt1963a-rev-g-2021-02.pdf` p. 1) y aguanta «reverse voltages from output to input» (p. 19). `D10` (SMBJ16A) no conduce en ningún caso modelado (V_BR 17,8–19,7 V contra 17,40 V, `bourns_smbj.pdf` p. 2), y frente a una fuente rígida tampoco sujetaría `U1` por debajo de 20 V (V_C 26,0 V). Ningún fusible de riel tiene apertura garantizada contra lo que lo alimenta (#476). (f) El texto de §9 publica cifras de antes del 25-10 (§3.9) |
 | **Veredicto** | **NO FIRMABLE AÚN.** Falta: el temporizador de `U16` corregido en el guion y en el firmware, o `PGTH` cableado para que PGOOD suba (§3.7); `D1` con V_BR por encima del OVP del TE90 (§3.8); filtro en las referencias de los crowbars, o el digital retirado (§4.5); y la inversión con una fuente ajena a tierra resuelta: bloqueo del retorno, o escrita en §9.3 como fuera de contrato. `D10`, `D12` y los fusibles van a la firma como simplificaciones opcionales (§4.6) |
+
+**Decidido el 2026-10-27, (d): se bloquea el retorno.** Solo eso hace lo que
+promete `H-V5-INVERSION`: «Un elemento físico impide que la polaridad inversa
+llegue a nada», «precisamente porque el conector va a admitir adaptadores que
+el contrato no cubre» (v5 l. 896–902). Va un MOSFET de canal N en el retorno,
+entre `J1.2` y `GND24`, con su resistencia de puerta desde `+24V_RAW` y un
+zener de puerta a fuente. El `LM74502` que maneja `Q2` es de lado alto
+(`lm74502.pdf` p. 1) y no puede con este.
+
+**Hecho el 2026-10-27.** `J1.2` va a `RET24_RAW`, el drenador de `Q7`
+(CSD18534Q5A, la pieza de `Q2`); su fuente es `GND24`, y la puerta sale de
+`+24V_RAW` por `R85` (10 kΩ) con el zener `D20` (BZT52C15) a `GND24`: `VGS`
+no pasa de 15,6 V contra ±20 V (`csd18534q5a.pdf` p. 1). `D1` cuelga de `J1`,
+entre `+24V_RAW` y `RET24_RAW`, para que un transitorio vuelva sin cruzar
+`Q7`. `Q7` cae 43,3 mV a 2,889 A, suma 0,128 W al cajón y deja 22,32 V a los
+DC-DC (`ladrillo_budget.py`). `check_netlist.py` exige que `RET24_RAW` sea solo
+`J1.2`, `D1.2` y el drenador de `Q7`, con diez roturas a propósito en rojo, y
+`check_pcb.py` mide el cobre de la isla y de las fuentes. DRC: 0 y 0 sin
+conectar. En el banco, `medidas.csv` pide la caída de `Q7` (< 60 mV), su `VGS`
+(12 a 15,6 V) y la prueba con una fuente a tierra conectada al revés.
 
 ---
 
@@ -352,6 +373,25 @@ por encima de 221 ms en el firmware, o `PGTH` cableado para que PGOOD suba; la
 FSM contando un colapso que llegue poco después de confirmar; y el umbral
 mínimo del TE90 garantizado por AE (P5).
 
+**Decidido el 2026-10-27: `PGTH` sigue a masa y la confirmación pasa a
+225 ms.** `U16` no pasa nunca de 1 × I_OL: 4,82 A en lo alto de su banda,
+bajo los 4,875 A típicos del disparo del TE90, así que corta antes que el
+ladrillo si AE confirma ese umbral a 45 °C (pregunta 12). Sin cambio de placa.
+No hay firmware del MSP430 en el repo: los 225 ms quedan como requisito suyo,
+en `T_CONFIRMA_SANO_S`.
+
+**Hecho el 2026-10-27.** `recuperacion_budget.py` toma `tCL_PLIM(dly)`, 202 ms
+máx. (p. 9), en vez del tCB, y lee `PGTH` y `MODE` de la netlist: si cambian,
+sale rojo. El aserto del pulso de 2 × I_OL contra el conector deja su sitio a
+esa lectura. Con 200 ms sale rojo (la rampa más `tCL_PLIM` son 221,0 ms) y con
+225 ms verde. Un intento confirmado queda **en prueba** en la FRAM hasta el
+rearme sano de 60 s, y un apagón antes de eso gasta el intento al volver: diez
+arranques confirmados con un apagón detrás dan cuatro pulsos y abandono, donde
+antes daban diez pulsos y ningún intento. Lo que cuesta: desenchufar antes del
+minuto también gasta, y cuatro arranques seguidos de menos de 60 s piden el
+botón. Siete propiedades y siete mutantes, todos mordiendo. Falta el umbral
+de AE.
+
 ### 3.8 MEDIA — `D1` conduce antes que la sobretensión del TE90 (P5, P7) · #494
 
 `D1` (SMBJ26CA) está entre `+24V_RAW` y `GND24`, en `J1`, delante de `Q2` y de
@@ -371,12 +411,29 @@ detrás y no lo alivia.
 (100 nF de 50 V), `Q2`, `U16`, la cadena de `U18` y el pico de enchufar en
 caliente; o un fusible delante de `D1`.
 
+**Decidido el 2026-10-27: `D1` pasa a SMBJ33CA**, que conduce de 36,7 a
+40,6 V y recorta a 53,3 V (`bourns_smbj.pdf` p. 2), por encima del OVP del
+TE90 y del de `U16` (32,7 V). Con él, `R64` pasa de 1 kΩ a 1,2 kΩ, porque a
+40,6 V el zener `D2` disiparía 377 mW contra sus 370 mW, y `C10` pasa a
+100 V. El fusible no cabe: tendría que aguantar el límite de `U16`, hasta
+4,82 A durante 202 ms, y abrir con la sobrecarga del ladrillo desde 4,875 A, a
+un 1,2 %.
+
+**Hecho el 2026-10-27.** `D1` es la SMBJ33CA de Littelfuse (C83325; las cifras
+son de `bourns_smbj.pdf` p. 2, porque la hoja de Littelfuse no está en el
+repo), `R64` 1,2 kΩ y `C10` 100 nF / 100 V (C106243). `check_absmax.py`: la
+V_BR mínima de 36,7 V queda sobre el OVP del TE90 (36,0 V) y el de `U16` en lo
+alto de su banda (33,46 V); con 53,3 V aguantan `C10` (su tensión se lee de la
+BOM), el `VS` del `LM74502` (65 V), el `IN` de `U16` (67 V) y el `VDS` de `Q2`
+y `Q7` (60 V). `U18` IN queda en 26,80 V y `D2` en 315 mW. Cada aserto tiene su
+canario.
+
 ### 3.9 BAJA — la propuesta publica cifras y piezas viejas (todas) · #495
 
 - §1 sigue con «cuatro módulos TRACO» y con LEMO o EN3 como conector: el URB y
   el camino 1 no llegaron.
 - §2: el +5 V de rack a 0,5 A / 2,5 W (son 0,8 A / 4,0 W); la RPMB «sin UVLO
-  declarado» (lo declara, p. 1 y 4); «Hot Plug: Unavailable» en la p. 1 (está
+  declarado» (lo declara, p. 1 y ~~4~~ **7**); «Hot Plug: Unavailable» en la p. 1 (está
   en la 2).
 - §4 y §5: las caídas, a 2,68 A (el guion da 2,867 A en el peor caso).
 - §6: a AE no se le hace la pregunta 12.
@@ -394,6 +451,10 @@ caliente; o un fusible delante de `D1`.
 
 **Cierra:** la propuesta enmendada antes de la firma.
 
+**Hecho el 2026-10-27 (#495):** cada cifra vieja de la propuesta queda
+tachada, con la actual y su guion u hoja al lado. La UVLO de la RPMB está en la
+p. 1 y en el diagrama de la p. 7; la p. 4 no la trae.
+
 ### 3.10 Fuera de la fuente: la ventana IEC del case
 
 El case conserva el recorte IEC de 48 × 27,5 mm (`case/cad/params.scad`,
@@ -407,6 +468,18 @@ una escuadra del suelo, a 2,0 de la cara interior de la trasera, y la ventana
 de la trasera pasa a 30 × 18 con esquinas R3 (`iec_*` en `params.scad`;
 `guarda_enchufe()` y `guarda_red()` en `clearance_budget.py`). Lo que queda de
 la profundidad tras el enchufe es un requisito a la caja de #424.
+
+**Firmado el 2026-10-27: el banco del enchufe antes de pedir la escuadra.** El
+cuerpo de la clavija (Ø13) pasa por la ventana de 18 de alto y su hombro
+asienta en la placa de la escuadra, como ya lo tenía el modelo: los 2 mm que
+pierde la nariz son esa placa, el «panel» de Kycon («6.60 + X, X = Panel
+Thickness»). Pero ninguna de las dos hojas da la profundidad que pide el
+bloqueo, y leída a escala la cara de enganche de las rampas queda de 0 a
+0,5 mm más allá de la cara del enchufe. Un KPJX-PM-4S y una KPPX-4P sobre
+recortes de 1, 1,5 y 2 mm lo contestan, y de paso miden la fuerza de
+inserción y de extracción, que el cálculo de flexión supone en 30 N. La
+escuadra no va a cotizar antes (`case/RFQ.md` §B); si 2 mm no engancha y 1 mm
+sí, la placa lleva un avellanado de Ø13,2 × 1,0.
 
 ---
 
@@ -438,6 +511,13 @@ por debajo de 3,26 A y la holgura del cordón la pide por encima de 4,0 A. El
 TPS26630, sin ese pulso, solo se vende en VQFN-24 (reruteo). El arnés queda
 1+3 → `J1.1` y 2+4 → `J1.2`; un ladrillo cableado de otra forma entra en
 hiccup sin quemar nada, y el contrato ya nombra solo el TE90.
+
+**Corregido el 2026-10-27: la reapertura se apoyó en un pulso que la placa no
+da.** El de 2 × I_OL solo existe con PGOOD alto, y §3.7 ya decía que PGOOD no
+sube. Con lo firmado en §3.7, `U16` no pasa de 4,82 A, que cabe en los 7,5 A
+de un pin. **Firmado ese día: el arnés se queda como está**, dos pines por
+polo, y ya no es requisito sino margen: con uno por polo la caja tendría
+0,26 W más (`ladrillo_budget.py`).
 
 ### 4.2 La variante del TE90: A o B
 
@@ -516,6 +596,30 @@ cuentan tres crowbars.
 - `L3` también SRP1265A-220M, y `R32`/`R33` con la misma referencia al 0,1 %
   que `R45`/`R46`: dos referencias menos. `L3` cambia de huella.
 
+**Decidido el 2026-10-27:**
+
+- **`D12` y `D10`, sin montar**, con su huella en la placa. `D13` se queda.
+- **`F2`, `F3` y `F5` se quedan**, y la BOM dice por qué: ningún caso
+  modelado los abre, y #476 decide su trabajo. A 0 Ω pasan cuando #476
+  resuelva, con el modelo de D-F6 reescrito una sola vez: hoy `check_absmax.py`
+  y `check_bringup.py` cuelgan el I²t y el nominal de su referencia.
+- **`PS2` sigue en el URB.** El THN 20-2411WI tiene el OVP hasta el 164 %,
+  8,20 V (`traco_thn20wi.pdf` p. 2), y rompería por 0,20 V el requisito de
+  8,0 V al módulo 2 firmado en §4.5.
+- **`L3` a SRP1265A-220M y `R32`/`R33` a RT0805BRE0745K3L**, en la misma
+  regeneración de la placa que §3.8 y P7 (d).
+
+**Hecho el 2026-10-27.** `D10` y `D12` van «SIN MONTAR» en la BOM, con su
+huella, y salen del BOM y del CPL de JLC; `check_absmax.py` lee de la BOM que
+`D10` no está y comprueba que no hace falta: 17,40 V en `U1` contra su V_BR
+mínima de 17,8 V. `F2`, `F3` y `F5` llevan la nota de #476. `L3` es la
+SRP1265A-220M en la huella de `L2` (13,5 × 12,5 mm), y la placa ruteó sin
+solapes. `R32`/`R33` son la RT0805BRE0745K3L de `R45`/`R46`; LCSC tiene 830
+(C866072), la reserva más corta de las piezas nuevas. Con las dos bobinas
+iguales, `margen_budget.py` lee la bobina de cada rama de la BOM y su DCR máxima
+de hoja (37,0 mΩ, `bourns_srp1265a.pdf` p. 1), y el margen de `U1` pasa de +872
+a +868 mV.
+
 ### 4.7 Cómo se lee el derating de `PS1`
 
 La curva de TRACO está en potencia de salida, y `PS1` lleva sus dos salidas
@@ -534,7 +638,7 @@ carcasa de `PS1` medida por debajo de 100 °C a carga declarada con el aire a
 62,6–65 °C (`medidas.csv`, paso 7), y la confirmación escrita de TRACO de que
 su curva vale así con las salidas desiguales. Aparte, ninguna salida pasa de su
 corriente nominal: el +12 V va al 84 % de 1,25 A. Con la curva de `curvas.py`,
-`derating_budget.py` pone el rojo de `PS1` con el aire a 70,3 °C, +7,8 K. Son
+`derating_budget.py` pone el rojo de `PS1` con el aire a 70,3 °C, +7,7 K. Son
 0,3 K menos que la recta de §3.6, porque cada punto toma el borde frío del
 trazo.
 
@@ -544,12 +648,12 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, el temporizador de `U16` en el guion (§3.7), ~~el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5)~~, ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y la propuesta enmendada (§3.9) |
-| **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
-| **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y ~~`SCR4` sin montar (§4.5)~~ |
-| **Firmware** | La confirmación de sano por encima de 221 ms, o la que salga del temporizador corregido (§3.7) |
-| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y ~~la toma de `+5V_AUX`, si se mueve (§3.5)~~: detrás de `F4`, con `PS3` en THN y `C39` |
-| **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con el ladrillo antes de conectar `J1` (§3.1); y «los dos o ninguno» en `PS1` (§4.4) |
+| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, ~~el temporizador de `U16` en el guion (§3.7)~~, ~~el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5)~~, ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y ~~la propuesta enmendada (§3.9)~~ |
+| **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). AE pasó las preguntas a su soporte técnico el 2026-10-26 (caso P-258801) y pidió los datos de la empresa, que se le dieron el 2026-10-27. **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
+| **BOM, sin rerutear** | ~~`D1` con V_BR mínima por encima de 36 V (§3.8)~~; y ~~`SCR4` sin montar (§4.5)~~ |
+| **Firmware** | La confirmación de sano a 225 ms, y el intento en prueba hasta el rearme sano (§3.7): requisitos del firmware del MSP430, que aún no existe |
+| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); ~~el bloqueo del retorno, si se elige (P7)~~; y ~~la toma de `+5V_AUX`, si se mueve (§3.5)~~: detrás de `F4`, con `PS3` en THN y `C39` |
+| **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con el ladrillo antes de conectar `J1` (§3.1); «los dos o ninguno» en `PS1` (§4.4); el bloqueo del retorno con una fuente a tierra conectada al revés (P7 (d)); y el enchufe sobre recortes de 1, 1,5 y 2 mm, antes de pedir la escuadra (§3.10) |
 
 ## 6. Lo que la junta no pudo comprobar
 

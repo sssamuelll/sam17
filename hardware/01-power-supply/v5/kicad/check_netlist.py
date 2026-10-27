@@ -20,6 +20,9 @@ lo que el circuito va a hacer, contra la cifra del presupuesto que lo pide.
   5. Patillas que no admiten lo que tienen: EN del TPS709, PGFB/VIOC de las
      cascadas, SHDN de U19 fuera de D-F4, orientacion de TL431 y BAT54S,
      UVLO y FLT de U19, Schottky de rueda libre, pull-down de SHDN_M5 y R_GK.
+  6. El retorno (P7 (d), H-V5-INVERSION): J1.2 es RET24_RAW, y entre RET24_RAW
+     y GND24 solo esta Q7. retorno() lee los invariantes y _canario_retorno()
+     rompe cada uno a proposito: si alguno sale verde, la puerta no mira.
 """
 from __future__ import annotations
 
@@ -56,8 +59,9 @@ CONTRATO = [
      "drenador de Q2 -> IN e IN_SYS del eFuse U16"),
     ("+24V_SW", {"U16.18", "U16.19", "U16.20", "PS1.1", "PS2.3", "PS3.1",
                  "PS4.1", "PS5.1"}, "salida de U16 a los cinco convertidores"),
-    ("GND24", {"J1.2", "PS1.2", "PS2.2", "PS3.2", "PS4.2", "PS5.2", "U16.9",
-               "U16.21", "U17.6", "U18.2", "NT1.1"}, "retorno del ladrillo"),
+    ("GND24", {"Q7.1", "Q7.2", "Q7.3", "PS1.2", "PS2.2", "PS3.2", "PS4.2", "PS5.2",
+               "U16.9", "U16.21", "U17.6", "U18.2", "NT1.1", "D20.2"},
+     "retorno del ladrillo DETRAS de Q7 (la fuente de Q7 es GND24)"),
     ("+5V_RAW_RACK", {"PS3.3", "C16.1", "C39.1", "F4.1"},
      "PS3 aislado (#491) con el electrolitico que frena su fuga"),
     ("+5V_FUSED_RACK", {"F4.2", "R30.1", "R20.1", "U12.10", "U14.10"},
@@ -118,6 +122,73 @@ def resistencias_entre(nets: dict[str, set[str]], red_a: str, red_b: str) -> lis
 
 def cerca(real: float, objetivo: float, tol: float) -> bool:
     return abs(real - objetivo) <= tol
+
+
+# El retorno del ladrillo pasa por Q7 (CSD18534Q5A, canal N): drenador en
+# RET24_RAW, fuente en GND24, puerta a +24V_RAW por R85 y recortada por D20
+# (catodo en la puerta). Con el ladrillo al reves bloquea, y D1 cuelga de J1
+# para que un transitorio vuelva sin cruzar Q7. RET24_RAW es EXACTAMENTE esto:
+# J1.2, D1.2 y el drenador de Q7 (el simbolo junta sus pads 5..8 y la aleta en
+# la patilla 5). Cualquier otra pata ahi dentro es un camino que se salta a Q7.
+RET24_RAW_EXACTO = {"J1.2", "D1.2", "Q7.5"}
+G_Q7_EXACTO = {"Q7.4", "R85.2", "D20.1"}
+
+
+def retorno(nets: dict[str, set[str]]) -> list[str]:
+    """Invariantes del bloque de Q7 sobre una netlist {red: {REF.PIN}}."""
+    out: list[str] = []
+    if red_de(nets, "J1.2") != "RET24_RAW":
+        out.append(f"J1.2 esta en {red_de(nets, 'J1.2')!r}: tiene que ser RET24_RAW (Q7 va entre J1.2 y GND24)")
+    if (ret := nets.get("RET24_RAW", set())) != RET24_RAW_EXACTO:
+        out.append(f"RET24_RAW lleva {sorted(ret)}: solo J1.2, D1.2 y el drenador de Q7 "
+                   f"(sobran {sorted(ret - RET24_RAW_EXACTO)}, faltan {sorted(RET24_RAW_EXACTO - ret)})")
+    for pin in ("Q7.1", "Q7.2", "Q7.3"):
+        if red_de(nets, pin) != "GND24":
+            out.append(f"{pin}: la fuente de Q7 va a GND24, esta en {red_de(nets, pin)!r}")
+    if red_de(nets, "Q7.5") != "RET24_RAW":
+        out.append(f"Q7.5: el drenador de Q7 va a RET24_RAW, esta en {red_de(nets, 'Q7.5')!r}")
+    if (g := nets.get("G_Q7", set())) != G_Q7_EXACTO:
+        out.append(f"G_Q7 lleva {sorted(g)}: solo la puerta de Q7, R85.2 y el catodo de D20")
+    if red_de(nets, "Q7.4") != "G_Q7":
+        out.append(f"Q7.4: la puerta de Q7 va a G_Q7, esta en {red_de(nets, 'Q7.4')!r}")
+    if (red_de(nets, "R85.1"), red_de(nets, "R85.2")) != ("+24V_RAW", "G_Q7"):
+        out.append(f"R85 va de +24V_RAW a G_Q7 y esta de {red_de(nets, 'R85.1')!r} a {red_de(nets, 'R85.2')!r}")
+    if (red_de(nets, "D20.1"), red_de(nets, "D20.2")) != ("G_Q7", "GND24"):
+        out.append(f"D20: catodo en G_Q7 y anodo en GND24; esta {red_de(nets, 'D20.1')!r} / {red_de(nets, 'D20.2')!r}")
+    if (red_de(nets, "D1.1"), red_de(nets, "D1.2")) != ("+24V_RAW", "RET24_RAW"):
+        out.append(f"D1 va entre +24V_RAW y RET24_RAW (a los dos lados de J1), no a GND24; "
+                   f"esta {red_de(nets, 'D1.1')!r} / {red_de(nets, 'D1.2')!r}")
+    return out
+
+
+def _mover(nets: dict[str, set[str]], nodo: str, red: str) -> dict[str, set[str]]:
+    """Copia de `nets` con `nodo` cambiado a `red`."""
+    n = {k: set(v) for k, v in nets.items()}
+    for v in n.values():
+        v.discard(nodo)
+    n.setdefault(red, set()).add(nodo)
+    return n
+
+
+def _canario_retorno(nets: dict[str, set[str]]) -> int:
+    """Cada invariante de retorno() rompe a proposito y tiene que salir rojo. Devuelve cuantas roturas."""
+    assert not retorno(nets), f"el canario necesita el retorno en verde: {retorno(nets)}"
+    roturas = {
+        "J1.2 de vuelta a GND24 (como antes de Q7)": _mover(nets, "J1.2", "GND24"),
+        "D1.2 a GND24 (D1 salta por encima de J1)": _mover(nets, "D1.2", "GND24"),
+        "el drenador de Q7 a GND24": _mover(nets, "Q7.5", "GND24"),
+        "una fuente de Q7 en RET24_RAW": _mover(nets, "Q7.2", "RET24_RAW"),
+        "una fuente de Q7 al aire": _mover(nets, "Q7.3", "unconnected-Q7-3"),
+        "la puerta de Q7 a GND24": _mover(nets, "Q7.4", "GND24"),
+        "R85 a GND24 en vez de a +24V_RAW": _mover(nets, "R85.1", "GND24"),
+        "D20 con el catodo en GND24 y el anodo en la puerta": _mover(_mover(nets, "D20.1", "GND24"),
+                                                                    "D20.2", "G_Q7"),
+        "una pata de U15 colgando de RET24_RAW": _mover(nets, "U15.7", "RET24_RAW"),
+        "TP2 colgando de RET24_RAW": _mover(nets, "TP2.1", "RET24_RAW"),
+    }
+    for nombre, rota in roturas.items():
+        assert retorno(rota), f"canario: '{nombre}' pasa la puerta del retorno"
+    return len(roturas)
 
 
 def main() -> int:
@@ -278,9 +349,16 @@ def main() -> int:
     for d, ain in (("D14", "AIN0"), ("D15", "AIN1"), ("D16", "AIN2"), ("D17", "AIN3")):
         if (red_de(nets, f"{d}.3"), red_de(nets, f"{d}.1"), red_de(nets, f"{d}.2")) != (ain, "GNDA", "+5V_AUX"):
             fallos.append(f"{d}: BAT54S con COM en {ain}, A en GNDA y K en +5V_AUX")
-    for nodo in ("Q2.1", "Q2.4", "Q2.5"):
+    for nodo in ("Q2.1", "Q2.4", "Q2.5", "Q7.1", "Q7.4", "Q7.5"):
         if red_de(nets, nodo) is None:
             fallos.append(f"{nodo} sin red")
+
+    # 6. El retorno por Q7
+    f_retorno = retorno(nets)
+    fallos += f_retorno
+    # Los canarios parten del retorno en verde: con el retorno ya rojo, la puerta
+    # ya esta cantando y no hay verde que romper.
+    n_roturas = 0 if f_retorno else _canario_retorno(nets)
 
     print(f"{len(nets)} redes leidas de {os.path.basename(NET)}")
     print("  direcciones I2C: " + ", ".join(f"{u} 0x{d:02X}" for u, d in sorted(dirs.items())))
@@ -288,6 +366,8 @@ def main() -> int:
     print(f"  trim PS4/PS5: {trim_thn('R32'):.3f} / -{trim_thn('R33'):.3f} V")
     print(f"  U1 {lo1:.2f}..{hi1:.2f} V, U2 -{lo2:.2f}..-{hi2:.2f} V")
     print(f"  U16 UVLO {uvlo:.2f} V / OVP {ovp16:.2f} V; U19 OVP {ovp19:.2f} V")
+    print(f"  retorno: J1.2 = {red_de(nets, 'J1.2')}, Q7 {red_de(nets, 'Q7.5')} -> {red_de(nets, 'Q7.1')}, "
+          f"{n_roturas} roturas del bloque, todas en rojo" if n_roturas else "retorno en rojo")
     print(f"  D-F4: umbrales {umbral_p:.3f} / -{umbral_n:.3f} V en la ventana "
           f"{suelo + err + sb.HISTERESIS_V:.3f}..{techo - err:.3f} V")
 

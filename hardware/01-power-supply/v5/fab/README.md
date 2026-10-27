@@ -9,7 +9,7 @@ reexporta, la puerta se pone roja.
 
 ```
 DRC (kicad-cli, todas las severidades + paridad)  0 infracciones · 0 sin conectar · 0 de paridad
-cobre            1510 pistas, 284 vías (72 térmicas de U1/U2, 107 de masa cosidas)
+cobre            1464 pistas, 294 vías (72 térmicas de U1/U2, 108 de masa cosidas)
 stackup          F.Cu señal+potencia | In1 masas GND24/GNDA/GNDD | In2 señal | B.Cu señal+masa
 ```
 
@@ -28,7 +28,7 @@ La placa de #474 que había aquí antes no tenía ni una pista (161 huellas,
 | Capas | **4** |
 | Cobre | 1 oz exterior: los caminos de 3 A están calculados con ese espesor |
 | Espesor | 1.6 mm, FR-4 |
-| Vías | 263 de 0.6 / 0.3 mm y 21 de 0.8 / 0.4 mm (redes de potencia); las huellas DFN traen sus vías térmicas de 0.2 mm |
+| Vías | 271 de 0.6 / 0.3 mm y 23 de 0.8 / 0.4 mm (redes de potencia); las huellas DFN traen sus vías térmicas de 0.2 mm |
 | Pista mínima | 0.187 mm (la entrada a los pines de 0.45 mm de paso) |
 | Holgura mínima | 0.15 mm |
 
@@ -40,11 +40,17 @@ La placa de #474 que había aquí antes no tenía ni una pista (161 huellas,
   las otras dos en las cuatro capas. GND24 y GNDA se unen **solo** en NT1,
   entre PS5 y PS3: con los cinco convertidores aislados no lleva corriente de
   carga (#491).
+- **El retorno del ladrillo pasa por Q7** (CSD18534Q5A, canal N en el polo
+  negativo): J1.2 es `RET24_RAW`, una isla de cobre fijo en F.Cu que lleva
+  J1.2, D1.2 y el drenador de Q7, cortada de los vertidos de GND24. Las tres
+  fuentes de Q7 van juntas a GND24 por cobre de 1,8 mm. D1 cuelga de J1 (no de
+  GND24) para que un transitorio vuelva por J1 sin cruzar Q7.
 - **Caminos de ~3 A en cobre fijo**, no en pista ruteada: J1 → Q2 → U16 → bus
   de 2,5 mm a las +Vin de los cinco convertidores (24 V, hasta 2,9 A) y PS2 →
   F5 → J9 (+5 V digital, hasta 2,9 A). `check_pcb.py` comprueba que cada pad
   de esos caminos se alcanza desde el origen por cobre de ≥ 1,4 mm (~3 A con
-  10 °C de subida en 1 oz, IPC-2221).
+  10 °C de subida en 1 oz, IPC-2221), incluidos J1.2 → Q7 y D1.2 y las fuentes
+  de Q7.
 - **Disipación de U1 y U2** (1,75 / 1,82 W en DD-PAK con la cascada a
   450 mA/riel, `../tj_budget.py`: la unión de U1 queda en 120,5 °C y la de U2
   se acota midiendo su aleta en el bring-up, #478): la aleta de U1 es
@@ -81,14 +87,15 @@ huellas (SOT-23, electrolíticos, DFN) no coincide con el de su biblioteca y
 - **THT con código LCSC** (se compran en LCSC y van a mano): conectores,
   SCR1–SCR3, RV2/RV3, SW1, puntos de prueba.
 - **Sin montar** (`supplier` «SIN MONTAR» en `bom.csv`): SCR4 y su disparo
-  (U25, Q6, R51, R52, R56, R73, R77, R81). Las huellas quedan en la placa.
+  (U25, Q6, R51, R52, R56, R73, R77, R81), D10 (SMBJ16A) y D12 (S1M). Las
+  huellas quedan en la placa.
 - `bom_jlc.py` lo decide por la placa: entra cada huella SMD del fichero de
   posiciones que se compra en LCSC; una SMD de la placa que no esté en
   `bom.csv` es un error.
 
-Ocho referencias no caben en la serigrafía de las zonas densas y van solo
-en F.Fab (el dibujo de montaje de `../pcb/sam17-power-v5.pdf`): R3, R22,
-R41, R43, R70, R71, R78 y FB1.
+Nueve referencias no caben en la serigrafía de las zonas densas y van solo
+en F.Fab (el dibujo de montaje de `../pcb/sam17-power-v5.pdf`): R22, R41,
+R48, R53, R67, R70, R75, R78 y FB1.
 
 ## Regenerar
 
