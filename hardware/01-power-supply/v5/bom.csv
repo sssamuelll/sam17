@@ -72,7 +72,7 @@ R5,9.31k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD079K31L,C865720,LC
 R7,9.09k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD079K09L,C865717,LCSC,U2: -1.22 V * (1 + (9.09k + RV3)/1.00k) = -12.31..-13.53 V.
 "R21,R22,R23,R24",100k 0.1%,Resistor_SMD:R_0805_2012Metric,4,Yageo,RT0805BRD07100KL,C122537,LCSC,Rama alta de los divisores del ADS1115.
 "R25,R26,R27,R28",20.0k 0.1%,Resistor_SMD:R_0805_2012Metric,4,Yageo,RT0805BRD0720KL,C469660,LCSC,Rama baja de los divisores del ADS1115.
-R11,4.02k,Resistor_SMD:R_0805_2012Metric,1,UniOhm,0805W8F4021T5E,C17663,LCSC,"ILIM de U16: 18.1/4.02 = 4.50 A, banda 4.185..4.815 A (tps2663.pdf p. 7, p. 22 ec. 5): bajo el disparo minimo del TE90 (4.875 A)."
+R11,4.02k,Resistor_SMD:R_0805_2012Metric,1,UniOhm,0805W8F4021T5E,C17663,LCSC,"ILIM de U16: 18.1/4.02 = 4.50 A, banda 4.185..4.815 A con R exacta y 4.146..4.866 A con su 1 % (tps2663.pdf p. 7, p. 22 ec. 5): 9 mA bajo el disparo minimo tipico del TE90 (4.875 A)."
 R34,18.2k,Resistor_SMD:R_0805_2012Metric,1,UniOhm,0805W8F1822T5E,C17497,LCSC,ILIM de U19: 0.99 A.
 "R1,R2,R57,R58,R59,R60",2.2k,Resistor_SMD:R_0805_2012Metric,6,UniOhm,0805W8F2201T5E,C17520,LCSC,LED de +-12 V ultra y pull-ups I2C.
 "R3,R4",680,Resistor_SMD:R_0805_2012Metric,2,UniOhm,0805W8F6800T5E,C17798,LCSC,LED de +5 V.
