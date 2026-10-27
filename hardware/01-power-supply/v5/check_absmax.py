@@ -755,6 +755,15 @@ def _guarda_ovp_sobreimpulso(p: dict[str, float]) -> str:
             f"de la hoja sola")
 
 
+def _guarda_ovp_techo(p: dict[str, float]) -> None:
+    """Con el THN atascado arriba sin pasar del OVP (lazo roto, o R32 en corto:
+    19,89 V, traco_thn20wi.pdf nota de la p. 1), U19 no abre y U1 ve el borde
+    alto del OVP en continua. El disparo rapido no lo ve: no hay sobrecorriente."""
+    assert p["v_disparo_u1_v"] < V_ABSMAX_U1_V, (
+        f"techo del OVP de U19: deja pasar hasta {p['v_disparo_u1_v']:.2f} V a U1, "
+        f"por encima de su absmax ({V_ABSMAX_U1_V:.1f} V)")
+
+
 def _guarda_fuga_ps3(p: dict[str, float]) -> None:
     mpn = filas()["PS3"]["mpn"]
     assert mpn in AISLADOS, (
@@ -1003,6 +1012,14 @@ def demo() -> int:
     print(f"  canario OVP de U19: con un sobreimpulso tipico > {V_DISPARO_MIN_U1_V - v_sano_max_hoja_u1_v():.2f} V, "
           f"o un borde bajo < {borde_min:.2f} V (R36 > {r36_rojo / 1e3:.2f} kohm, hoy {valor('R36') / 1e3:.2f}), "
           f"ni la hoja sola deja pasar un alivio de carga sin abrir U19")
+    _guarda_ovp_techo(dict(P_BASE))
+    ovp_techo = borde_rojo(_guarda_ovp_techo, dict(P_BASE), "v_disparo_u1_v",
+                           V_DISPARO_MAX_U1_V, 30.0, "techo del OVP de U19")
+    r36_techo = valor("R35") / (V_ABSMAX_U1_V / (V_OVPR_NOM_V * (1.0 + TOL_OVPR_TPS26631_FRAC
+                                                                + TOL_DIVISOR_01PCT_FRAC)) - 1.0)
+    print(f"  canario techo del OVP de U19: con el borde alto en {ovp_techo:.2f} V "
+          f"(R36 < {r36_techo / 1e3:.2f} kohm, hoy {valor('R36') / 1e3:.2f}) un THN atascado "
+          f"arriba llega a U1 por encima de {V_ABSMAX_U1_V:.1f} V sin abrir U19")
     print(f"  canario D-F6: con I_H > {ih_max:.2f} A el crowbar se soltaria "
           f"(el BT151-500R pide <= 0,04 A)")
     print(f"  canario U18: R64 < {r64_v:.0f} ohm lleva U18 IN por encima de 30 V, y "
