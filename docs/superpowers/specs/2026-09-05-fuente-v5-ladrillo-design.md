@@ -825,7 +825,10 @@ firmó en dirección el 2026-09-08 (§9); queda pendiente ejecutar su relevo**
 >   ladrillo certificado, para su cordón cautivo (§9.2, `H-V5-CORTO`)** en
 >   **H-PL-ABANDONO-FUENTE** (pliego §4.1; censo §2.6). **El tramo nuestro,
 >   del zócalo a `U16`, sigue fuera de M5: contra un corto franco ahí el
->   ladrillo reintenta sin fin ([mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) §6).** Las asignaciones firmadas no cubren íntegramente el conjunto
+>   ladrillo reintenta sin fin ([mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) §6).
+>   Desde el 2026-10-27 se trata como el cordón: lo protege el ladrillo, y sus
+>   piezas se dimensionan para la corriente más alta que sostiene sin disparar
+>   (§9.2, `H-V5-CORTO`).** Las asignaciones firmadas no cubren íntegramente el conjunto
 >   mínimo anunciado por el censo; se registra la carencia sin completar M5.
 >
 > **Lo que esta firma NO compra:** no cierra ningún HUECO ni issue, no elige
@@ -836,6 +839,7 @@ firmó en dirección el 2026-09-08 (§9); queda pendiente ejecutar su relevo**
 > **El séptimo punto NO se firmó:** «¿Corregir la polaridad rearma el cupo de
 > reintentos?» sigue exactamente como **obligación abierta, sin dueño**, en
 > §9.3. No se contesta aquí ni se infiere de M5; queda fuera de esta firma.
+> **Se contestó aparte el 2026-10-27 (§9.3, enmienda de esa fecha).**
 
 ### 9.2 Los 16 HUECOS que arrastran D-V2 y D-V5
 
@@ -850,6 +854,12 @@ de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 > el cobre lo que todavía puede cambiar la placa. Es la regla que ya se aplicó a
 > `H-V2-CORTO-DCDC` el 25-10, extendida a todas las filas.
 
+> **ENMIENDA (2026-10-27, segunda firma de Samuel).** Por la misma razón, una
+> fila que solo toca el panel trasero y el cordón, y no puede cambiar la placa,
+> tampoco bloquea su cobre: bloquea el panel y el chasis (#424). Son
+> `H-V5-CONECTOR` (#488) y `H-V5-RETENCION`. Siguen siendo condición para
+> fabricar el panel.
+
 | HUECO | Qué falta | Dueño |
 |---|---|---|
 | `H-V2-ENTRADA` | ventana garantizada del ladrillo y de los DC-DC, con las caídas del cordón dentro | **fabricante** |
@@ -859,13 +869,13 @@ de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 | `H-V2-RECUPERACION` | ~~política de rearranque~~ **decidida 08-09: reintentos con abandono (§9.3)**; faltan intervalo, cupo, condición de abandono y estado de rieles | ~~**Samuel** +~~ fabricante |
 | `H-V2-CORTO-DCDC` | ~~qué limita el corto entrada↔salida antes de `IN` de `U1` — **es el #334**~~ **cerrado en diseño el 2026-10-25 (#334, §3): `U19` corta por disparo rápido, con `L2` = SRP1265A-220M; 17,40 V de pico en el peor caso.** Su ensayo (paso 8 del bring-up) necesita la placa y no bloquea el cobre | diseño |
 | `H-V2-AISLAMIENTO` | ~~clase, aislamiento y fuga de la referencia, con hoja o certificado~~ **decidido 2026-10-27 (firma de Samuel): el aislamiento red↔secundario y la fuga los da el ladrillo certificado, y el SAM17 es una carga de 24 V DC en ES1, clase III, sin borne de PE.** Requisito al ladrillo, tomado de su hoja: EN/CSA/IEC/UL 62368-1 (no 60601-1); 4000 VAC entrada↔salida, 1500 VAC entrada↔tierra y salida↔tierra; fuga < 500 µA entrada↔tierra y < 4 mA salida↔tierra a 264 VAC, 60 Hz (`ae-TE90-datasheet.pdf` p. 2); variante A, salida sin unir a tierra (p. 5, nota 3). Falta que AE diga qué mide la cifra de 4 mA en la variante A, la corriente de contacto en la salida con PE abierto, el grado del aislamiento y el informe CB (caso P-258801) | **fabricante** |
-| `H-V5-CONECTOR` | pareja y polaridad, con hoja que acredite límites y resistencia de contacto | diseño |
-| `H-V5-RETENCION` | retención y alivio de tracción, con su ensayo | diseño |
+| `H-V5-CONECTOR` | pareja y polaridad, con hoja que acredite límites y resistencia de contacto. **No bloquea el cobre de la placa (segunda enmienda de arriba): `X1` va en el panel trasero; sigue en #488** | diseño |
+| `H-V5-RETENCION` | ~~retención y alivio de tracción, con su ensayo~~ **decidido 2026-10-27 (firma de Samuel): el cordón se queda enganchado con el Snap n Lock de la opción 49 (`ae-TE90-datasheet.pdf` p. 6), y una abrazadera en el panel trasero toma el tirón antes de que llegue a `X1` y a sus tornillos M2,5.** Va con #424, que ya tiene que elegir la pieza que toma el tirón del cordón. Faltan la pieza y su ensayo; Kycon no publica fuerza de retención ni de extracción de la clavija ni del receptáculo. Referencia ESTIMADA: 100 N, 25 tirones de 1 s y torsión, con menos de 2 mm de deslizamiento (IEC 62368-1 G.7.3.2.1, citada por proveedores de equipos de ensayo y no leída en la norma; 100 N es el tramo de más de 4 kg, y la masa del SAM17 no está escrita). No bloquea el cobre de la placa (segunda enmienda de arriba) | diseño |
 | `H-V5-CALIBRE` | calibre, longitud y resistencia total vinculantes | diseño |
-| `H-V5-INVERSION` | ~~qué pasa con polaridad inversa~~ **decidido 08-09: bloquear y recuperar al corregir (§9.3)**; ~~faltan el elemento, su envolvente y su caída~~ **cerrado en diseño el 2026-10-27, por la enmienda de arriba: `U15` (LM74502) con `Q2` en el positivo y `Q7` en el retorno, con su caída en `ladrillo_budget.py`. Sus ensayos con el ladrillo al revés son del paso 1 del bring-up (`check_bringup.py`).** La obligación de §9.3 sobre el cupo sigue aparte | diseño |
+| `H-V5-INVERSION` | ~~qué pasa con polaridad inversa~~ **decidido 08-09: bloquear y recuperar al corregir (§9.3)**; ~~faltan el elemento, su envolvente y su caída~~ **cerrado en diseño el 2026-10-27, por la enmienda de arriba: `U15` (LM74502) con `Q2` en el positivo y `Q7` en el retorno, con su caída en `ladrillo_budget.py`. Sus ensayos con el ladrillo al revés son del paso 1 del bring-up (`check_bringup.py`).** La obligación de §9.3 sobre el cupo ~~sigue aparte~~ **se contestó el 2026-10-27 (§9.3)** | diseño |
 | `H-V5-CALIENTE` | ~~si se admite conectar en caliente~~ **decidido 08-09: desenergizado como norma, accidente cubierto (§9.3)**; falta la envolvente de supervivencia | diseño |
 | `H-V5-RECONEXION` | ~~rearranque con energía residual o rebote~~ **derivado 08-09 de `H-V2-RECUPERACION` (§9.3)**; falta separar un rebote de un intento legítimo | diseño |
-| `H-V5-CORTO` | corto entre conductores o contra chasis, incluido el tramo de cable expuesto. **Decidido 2026-10-27 (firma de Samuel): el cordón cautivo, aguas arriba de nuestro zócalo, es del ladrillo certificado, y le toca a su certificación.** ~~Un corto franco en hiccup son unos 2,4 W~~ **(corregido el mismo día: esos 2,4 W son la I²R del cordón de escenario, 16 AWG y 2 m, con 6,75 A continuos; no son el hiccup, cuyo pico no se publica, ni el cordón del TE90; [mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) §4.1)**; uno parcial por debajo del disparo de sobrecarga son de 117 a 162 W (4,875–6,75 A, típicos) sin disparar nada. A AE se le preguntan el hiccup (encendido, apagado y pico), la corriente máxima sin disparo y la clasificación PS/LPS de la salida. ~~Falta el mapa de fallos de nuestro tramo, del zócalo a `U16`~~ **El [mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) (2026-10-27) cierra la parte de papel: delante de `U16` nada nuestro para un corto parcial y no hay abandono, y detrás lo cubren `U16` y M5 (§6). Quedan sus HUECOS `H-MF-*` (§7) y dos ensayos de banco (§8)** | diseño |
+| `H-V5-CORTO` | corto entre conductores o contra chasis, incluido el tramo de cable expuesto. **Decidido 2026-10-27 (firma de Samuel): el cordón cautivo, aguas arriba de nuestro zócalo, es del ladrillo certificado, y le toca a su certificación.** ~~Un corto franco en hiccup son unos 2,4 W~~ **(corregido el mismo día: esos 2,4 W son la I²R del cordón de escenario, 16 AWG y 2 m, con 6,75 A continuos; no son el hiccup, cuyo pico no se publica, ni el cordón del TE90; [mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) §4.1)**; uno parcial por debajo del disparo de sobrecarga son de 117 a 162 W (4,875–6,75 A, típicos) sin disparar nada. A AE se le preguntan el hiccup (encendido, apagado y pico), la corriente máxima sin disparo y la clasificación PS/LPS de la salida. ~~Falta el mapa de fallos de nuestro tramo, del zócalo a `U16`~~ **El [mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) (2026-10-27) cierra la parte de papel: delante de `U16` nada nuestro para un corto parcial y no hay abandono, y detrás lo cubren `U16` y M5 (§6). Quedan sus HUECOS `H-MF-*` (§7) y dos ensayos de banco (§8)**. **Decidido 2026-10-27 (firma de Samuel): nuestro tramo delante de `U16` (`X1`, el arnés de 0,3 m, `J1` y el cobre hasta `U16`) se trata como el cordón: lo protege solo el ladrillo certificado, y sus piezas se dimensionan para la corriente más alta que el ladrillo sostiene sin disparar (`H-MF-SOSTENIDA`, pregunta 5 a AE en el caso P-258801).** Un fusible ahí no ayuda: el que aguante el límite de `U16` (hasta 4,87 A durante 202 ms, en cada uno de los 4 pulsos de un abandono, `recuperacion_budget.py`) no abre a tiempo un corto parcial por debajo del disparo del ladrillo, 9 mA más arriba | diseño |
 | `H-V5-INCOMPATIBLE` | ~~qué adaptadores cubre el contrato~~ **decidido 08-09: contrato exclusivo (§9.3)**; faltan las referencias admitidas y su acreditación | ~~**Samuel** +~~ diseño |
 | `H-V5-PE` | **relevo de D-F5**: ~~quién da el camino de modo común~~ **M2 lo asigna fuera, con el ladrillo, y une chasis al retorno DC (firma 2026-09-08, §9)**; faltan mapa, evidencia y ensayo, preservando GNDD por M1; **HUECO abierto**. **2026-10-27 (firma de Samuel): no cambia la placa.** El encuentro de `GNDD` y `GNDA` en la pantalla se resuelve en #480 con un convertidor aislado en la pantalla (§8, punto 2); el chasis, su unión al retorno y la entrada del cordón, en #424 (hito 6). Con el SAM17 en clase III, el espárrago de #424 es la unión M2 del chasis al retorno DC, no un borne de PE | diseño + medida |
 
@@ -937,7 +947,7 @@ HUECOS que estuvieran escondidos, y van a la condición de fabricación:
 | Obligación nueva | De dónde sale |
 |---|---|
 | **El rebote de contactos no puede gastar reintentos.** Un cupo que se consume solo con enchufar y desenchufar no protege de nada. Hay que declarar qué separa un intento legítimo de un rebote. | `H-V5-RECONEXION` heredando reintentos |
-| **Corregir la polaridad, ¿rearma el cupo?** Si el bloqueo por inversión gastó intentos, corregir el cable tiene que poder volver a arrancar. Falta decir si el cupo se reinicia y bajo qué condición. | cruce `H-V5-INVERSION` × `H-V2-RECUPERACION` |
+| **Corregir la polaridad, ¿rearma el cupo?** Si el bloqueo por inversión gastó intentos, corregir el cable tiene que poder volver a arrancar. Falta decir si el cupo se reinicia y bajo qué condición. **Contestada el 2026-10-27 (enmienda de abajo).** | cruce `H-V5-INVERSION` × `H-V2-RECUPERACION` |
 | **La caída del bloqueo de inversión se paga en `H-V2-ENTRADA`.** El elemento que responde a la polaridad inversa va en serie y consume saldo de la misma ventana que todavía no tiene extremos. | cruce `H-V5-INVERSION` × `H-V2-ENTRADA` |
 
 > **ENMIENDA (2026-09-08, alcance de la firma D-V4/M1–M5 · §9).** La fila
@@ -945,6 +955,16 @@ HUECOS que estuvieran escondidos, y van a la condición de fabricación:
 > dueño**. Ese séptimo punto no se firmó: no hay condición de rearme elegida
 > ni se deduce una respuesta o una asignación de M5. Sigue siendo obligación
 > abierta en la condición de fabricación.
+
+> **ENMIENDA (2026-10-27, firma de Samuel).** Contestada: **una inversión no
+> gasta reintentos, así que corregirla no rearma nada; el cupo queda como estaba
+> antes del enchufe al revés, y un abandono anterior solo lo libera el botón.**
+> Con el ladrillo al revés, `Q7` corta el retorno y `GND24` queda suelto: ni
+> `U18` (el LDO del vigilante, por `R64` desde `+24V_PROT`, detrás de `Q2`) ni
+> `U17` llegan a encender, y no hay quien cuente. El abandono anterior sigue en
+> la FRAM (`recuperacion_budget.py`, «un abandono NO se borra desenchufando»).
+> Esa topología la vigila `recuperacion_budget.py` contra la netlist, y el
+> ensayo es del paso 1 del bring-up (`inversion_J1_no_gasta_intento`).
 
 Y la que ya estaba y ahora tiene dueño único: **la envolvente de supervivencia
 del enchufe en caliente accidental sigue sin número**, porque vive en

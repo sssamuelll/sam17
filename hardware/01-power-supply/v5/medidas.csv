@@ -9,6 +9,7 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 1,polaridad_X1_arnes_suelto_J1_1_a_J1_2,V,22.8 .. 25.2,,,,,,"#487 / junta sec. 3.1: con el ladrillo en X1 y el arnes suelto de J1, del hilo de J1.1 al de J1.2; negativo = arnes invertido, ~0 V = polos en corto (ladrillo en hiccup)"
 1,inversion_J1_corriente_chasis_tierra,uA,<= 10,,,,,,"H-V5-INVERSION / P7 (d): fuente de banco de 24 V con el negativo a tierra y los polos AL REVES en J1 (J1.1 a su negativo, J1.2 a su positivo), J5 puesto y un amperimetro entre chasis y tierra: lo que deja pasar Q7 apagado (IDSS 1 uA a 48 V, csd18534q5a.pdf p. 3)"
 1,inversion_J1_U16_no_arranca,si/no,= si,,,,,,"H-V5-INVERSION / P7 (d): en la misma prueba, U16 no arranca (+24V_PROT y +24V_SW se quedan en 0 V y D18 no enciende)"
+1,inversion_J1_no_gasta_intento,si/no,= si,,,,,,"sec. 9.3 / recuperacion_budget: en la misma prueba, los intentos gastados en la FRAM de U17, leidos por J10 antes y despues (J10 suelto mientras esta al reves), no cambian"
 1,tension_ladrillo_vacio,V,23.52 .. 24.48,24,0.48,,,,T09 / L04: salida continua nominal del ladrillo 24 V en vacio
 1,caida_LM74502_ideal_diode,mV,<= 50,,,,,,M5 / L04: caida directa del controlador de diodo ideal + FET inverso
 1,caida_Q7_retorno_plena_carga,mV,<= 60,,,,,,"H-V5-INVERSION / P7 (d): V(GND24 - RET24_RAW) con el cordon a plena carga declarada (2.89 A x 15 mohm = 43 mV, ladrillo_budget)"

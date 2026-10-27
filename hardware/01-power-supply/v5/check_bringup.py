@@ -189,6 +189,13 @@ def _puntos() -> list[Punto]:
                "H-V5-INVERSION / P7 (d): en la misma prueba, U16 no arranca (+24V_PROT y +24V_SW "
                "se quedan en 0 V y D18 no enciende)",
                literal="si"))
+    # Sec. 9.3 (firma del 2026-10-27): una inversion no gasta intento. El
+    # contador se lee por J10 con la placa sin 24 V; J10 se quita durante la
+    # prueba, porque el depurador alimentaria a U17 por +3V3_MCU.
+    p.append(P("1", "inversion_J1_no_gasta_intento", "si/no",
+               "sec. 9.3 / recuperacion_budget: en la misma prueba, los intentos gastados en la FRAM "
+               "de U17, leidos por J10 antes y despues (J10 suelto mientras esta al reves), no cambian",
+               literal="si"))
     p.append(P("1", "tension_ladrillo_vacio", "V",
                "T09 / L04: salida continua nominal del ladrillo 24 V en vacio",
                predicho=24.0, tol=0.48))
