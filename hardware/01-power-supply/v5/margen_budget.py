@@ -181,7 +181,7 @@ def demo() -> int:
         print(f"    MARGEN:               {m_mv:+.0f} mV\n")
 
     print(f"  maximo sano en vacio del crudo: {v_entrada_maxima_sana_v():.3f} V "
-          f"(contra 20,0 V absmax de U1 y 16,92 V max de disparo del TPS26631)\n")
+          f"(contra 20,0 V absmax de U1 y el borde alto del OVP de U19, check_absmax.py)\n")
 
     _guarda_margen_u1(dict(P_BASE))
     _guarda_margen_u2(dict(P_BASE))

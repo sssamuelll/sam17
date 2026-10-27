@@ -9017,23 +9017,23 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 417.83) (xy 215.9 412.75)
+			(xy 218.44 417.83) (xy 218.44 412.75)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "8485e5ab-c4e4-57a6-94e1-979d1d9a52bc")
+		(uuid "536bad06-a5e0-5714-ba74-9a86606c13d4")
 	)
 	(wire
 		(pts
-			(xy 215.9 425.45) (xy 215.9 430.53)
+			(xy 218.44 425.45) (xy 218.44 430.53)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "f4c62f10-e14f-5d88-ba01-505f4cc44d86")
+		(uuid "ac9eb26c-c092-5062-a291-df44524e9e83")
 	)
 	(wire
 		(pts
@@ -9057,43 +9057,43 @@
 	)
 	(wire
 		(pts
-			(xy 266.7 417.83) (xy 266.7 412.75)
+			(xy 269.24 417.83) (xy 269.24 412.75)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "931aad49-889e-5366-b115-0685d0ffa7a1")
+		(uuid "37f37108-2284-560d-ba79-a744ab7c3ac1")
 	)
 	(wire
 		(pts
-			(xy 266.7 425.45) (xy 266.7 430.53)
+			(xy 269.24 425.45) (xy 269.24 430.53)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "19774d1c-fb6c-5d9f-9137-1ebab7ff6d52")
+		(uuid "a80480a4-3228-5182-a04f-5291eba312f7")
 	)
 	(wire
 		(pts
-			(xy 287.02 417.83) (xy 287.02 412.75)
+			(xy 289.56 417.83) (xy 289.56 412.75)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "4a37cd0e-e573-5dda-8421-c15d48ba74db")
+		(uuid "df8c0ee3-6878-51d8-a77d-3102edf5e876")
 	)
 	(wire
 		(pts
-			(xy 287.02 425.45) (xy 287.02 430.53)
+			(xy 289.56 425.45) (xy 289.56 430.53)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "8d76eb67-777e-5d37-a930-f8fd230c1655")
+		(uuid "42d7ce5f-4c2a-5d8f-b131-e78969be2ff3")
 	)
 	(wire
 		(pts
@@ -15171,25 +15171,25 @@
 	)
 	(global_label "DVDT_U19"
 		(shape passive)
-		(at 215.9 412.75 90)
+		(at 218.44 412.75 90)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "a2242221-c0c4-59be-8655-83e68f6b1b6c")
+		(uuid "1ef8804f-03ea-5429-acc5-21c74984a488")
 	)
 	(global_label "GNDA"
 		(shape passive)
-		(at 215.9 430.53 270)
+		(at 218.44 430.53 270)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "40647735-bc35-5ccb-bf1a-650d40390701")
+		(uuid "e918f3b9-3a9b-51b4-b898-42fbb6dbe90f")
 	)
 	(global_label "+15V5_EFUSE"
 		(shape passive)
@@ -15215,47 +15215,47 @@
 	)
 	(global_label "+15V5_LC"
 		(shape passive)
-		(at 266.7 412.75 90)
+		(at 269.24 412.75 90)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "a4070391-dee8-543b-81a4-f4240e0e252e")
+		(uuid "adcc9759-2327-52aa-8a24-34df7c4e1ac9")
 	)
 	(global_label "GNDA"
 		(shape passive)
-		(at 266.7 430.53 270)
+		(at 269.24 430.53 270)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "98e63a81-cc26-55a7-9e50-217b412b50df")
+		(uuid "4b909370-9bab-534e-ac24-29fc4b03b8d3")
 	)
 	(global_label "+15V5_LC"
 		(shape passive)
-		(at 287.02 412.75 90)
+		(at 289.56 412.75 90)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "352dc998-f438-5e26-9ffe-50a9ac0013c2")
+		(uuid "23be395a-4184-577b-b526-8779ceb0730f")
 	)
 	(global_label "GNDA"
 		(shape passive)
-		(at 287.02 430.53 270)
+		(at 289.56 430.53 270)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "e765f495-fa9a-5d8b-8603-581b1ce46a8e")
+		(uuid "a4731aa3-9a88-5978-ab99-eac37cccb85c")
 	)
 	(global_label "+15V5_LC"
 		(shape passive)
@@ -25118,7 +25118,7 @@
 				)
 			)
 		)
-		(property "Value" "3.9k 0.1%"
+		(property "Value" "3.74k 0.1%"
 			(at 195.58 436.63 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25161,7 +25161,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C865471"
+		(property "LCSC" "C865467"
 			(at 195.58 419.1 0)
 			(hide yes)
 			(show_name no)
@@ -25172,7 +25172,7 @@
 				)
 			)
 		)
-		(property "MPN" "RT0805BRD073K9L"
+		(property "MPN" "RT0805BRD073K74L"
 			(at 195.58 419.1 0)
 			(hide yes)
 			(show_name no)
@@ -25200,7 +25200,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 215.9 421.64 0)
+		(at 218.44 421.64 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -25208,7 +25208,7 @@
 		(dnp no)
 		(uuid "3bbb5d18-edb7-531a-ba53-0c4c8f7809bd")
 		(property "Reference" "C13"
-			(at 215.9 399.51 0)
+			(at 218.44 399.51 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25218,7 +25218,7 @@
 			)
 		)
 		(property "Value" "22nF 50V X7R"
-			(at 215.9 439.17 0)
+			(at 218.44 439.17 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25228,7 +25228,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 215.9 421.64 0)
+			(at 218.44 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25239,7 +25239,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 215.9 421.64 0)
+			(at 218.44 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25250,7 +25250,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 215.9 421.64 0)
+			(at 218.44 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25261,7 +25261,7 @@
 			)
 		)
 		(property "LCSC" "C1729"
-			(at 215.9 421.64 0)
+			(at 218.44 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25272,7 +25272,7 @@
 			)
 		)
 		(property "MPN" "CL21B223KBANNNC"
-			(at 215.9 421.64 0)
+			(at 218.44 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25398,7 +25398,7 @@
 	)
 	(symbol
 		(lib_id "Device:C_Polarized")
-		(at 266.7 421.64 0)
+		(at 269.24 421.64 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -25406,7 +25406,7 @@
 		(dnp no)
 		(uuid "8e767ad0-550b-5b93-abf9-081a0f5e5353")
 		(property "Reference" "C3"
-			(at 266.7 399.51 0)
+			(at 269.24 399.51 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25416,7 +25416,7 @@
 			)
 		)
 		(property "Value" "47uF 35V"
-			(at 266.7 439.17 0)
+			(at 269.24 439.17 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25426,7 +25426,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:CP_Elec_6.3x7.7"
-			(at 266.7 421.64 0)
+			(at 269.24 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25437,7 +25437,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 266.7 421.64 0)
+			(at 269.24 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25448,7 +25448,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 266.7 421.64 0)
+			(at 269.24 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25459,7 +25459,7 @@
 			)
 		)
 		(property "LCSC" "C249923"
-			(at 266.7 421.64 0)
+			(at 269.24 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25470,7 +25470,7 @@
 			)
 		)
 		(property "MPN" "VZH470M1VTR-0607"
-			(at 266.7 421.64 0)
+			(at 269.24 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25497,7 +25497,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 287.02 421.64 0)
+		(at 289.56 421.64 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -25505,7 +25505,7 @@
 		(dnp no)
 		(uuid "5cd6b734-f346-55e3-b4a1-4e5ea86f9f67")
 		(property "Reference" "C5"
-			(at 287.02 399.51 0)
+			(at 289.56 399.51 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25515,7 +25515,7 @@
 			)
 		)
 		(property "Value" "100nF 50V X7R"
-			(at 287.02 439.17 0)
+			(at 289.56 439.17 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25525,7 +25525,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 287.02 421.64 0)
+			(at 289.56 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25536,7 +25536,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 287.02 421.64 0)
+			(at 289.56 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25547,7 +25547,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 287.02 421.64 0)
+			(at 289.56 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25558,7 +25558,7 @@
 			)
 		)
 		(property "LCSC" "C49678"
-			(at 287.02 421.64 0)
+			(at 289.56 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25569,7 +25569,7 @@
 			)
 		)
 		(property "MPN" "CC0805KRX7R9BB104"
-			(at 287.02 421.64 0)
+			(at 289.56 421.64 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

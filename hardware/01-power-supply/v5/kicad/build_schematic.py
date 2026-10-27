@@ -253,7 +253,7 @@ def tope_y_lc() -> None:
     # corriente de L2 vuelve por aqui y no por OUT (-0.3 V absoluto, p. 5).
     dos("D19", "DS", b, "+15V5_EFUSE", "GNDA")
     dos("R34", "R", b, "ILIM_U19", "GNDA")          # 18/18.2k = 0.99 A
-    dos("R35", "R", b, "+15V5_RAW", "OVP_U19")      # 1.2*(1+49.9/3.9) = 16.55 V
+    dos("R35", "R", b, "+15V5_RAW", "OVP_U19")      # 1.2*(1+49.9/3.74) = 17.21 V
     dos("R36", "R", b, "OVP_U19", "GNDA")
     dos("C13", "C", b, "DVDT_U19", "GNDA")
     dos("L2", "L", b, "+15V5_EFUSE", "+15V5_LC")

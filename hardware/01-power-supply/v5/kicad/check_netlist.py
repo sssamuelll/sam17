@@ -263,8 +263,8 @@ def main() -> int:
     if not (17.0 <= uvlo <= 19.0 and 32.0 <= ovp16 <= 33.5):
         fallos.append(f"U16: UVLO {uvlo:.2f} V / OVP {ovp16:.2f} V fuera de 18 / 33 V")
     ovp19 = 1.2 * (1 + valor("R35") / valor("R36"))
-    if not cerca(ovp19, 16.55, 0.05):
-        fallos.append(f"U19: OVP a {ovp19:.2f} V; check_absmax.py modela 16,55 V")
+    if not cerca(ovp19, 17.21, 0.05):
+        fallos.append(f"U19: OVP a {ovp19:.2f} V; check_absmax.py modela 17,21 V")
 
     import secuencia_budget as sb  # noqa: E402  (vive en v5/)
     suelo, techo = sb.suelo_ventana_v(), sb.techo_ventana_v()

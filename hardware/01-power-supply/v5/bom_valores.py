@@ -2,7 +2,7 @@
 
     from bom_valores import valor
     valor("L2")   # 2.2e-05
-    valor("R36")  # 3900.0
+    valor("R36")  # 3740.0
 
 Existe para que los presupuestos y las puertas de la v5 calculen con LAS PIEZAS
 DE LA PLACA y no con una copia de sus valores. En #474 el modelo RK4 de #334

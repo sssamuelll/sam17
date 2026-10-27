@@ -35,7 +35,7 @@ C29,100uF 25V,Capacitor_SMD:CP_Elec_6.3x7.7,1,Nichicon,UCD1E101MCL1GS,C250945,LC
 C39,1000uF 16V,Capacitor_SMD:CP_Elec_10x10,1,Lelon,VZH102M1CTR-1010,C249844,LCSC,"Frena la fuga de PS3 (#491): con los 7.6 A del limite del THN, 0.0076 V/us; SCR3 dispara antes de los 6.0 V de +5V_AUX (check_absmax.py)."
 "R37,R38",0.68,Resistor_SMD:R_1206_3216Metric,2,UniOhm,1206W4F680LT5E,C19108,LCSC,Rd de la rama de amortiguamiento.
 "FB1,FB2",BLM21PG600SN1D,Inductor_SMD:L_0805_2012Metric,2,Murata,BLM21PG600SN1D,C18305,LCSC,"Perla tras el LC, hacia U1/U2."
-D10,SMBJ16A,Diode_SMD:D_SMB,1,Littelfuse,SMBJ16A,C151254,SIN MONTAR,"Sin montar: no conduce en ningún caso modelado (check_absmax.py: 17,40 V en U1 contra V_BR 17,8 V); junta de piezas v5 sec. 4.6. La huella queda en la placa."
+D10,SMBJ16A,Diode_SMD:D_SMB,1,Littelfuse,SMBJ16A,C151254,SIN MONTAR,"Sin montar: no conduce en ningún caso modelado (check_absmax.py: 17,59 V en U1, el borde alto del OVP de U19, contra V_BR 17,8 V); junta de piezas v5 sec. 4.6. La huella queda en la placa."
 D11,BAT54WS,Diode_SMD:D_SOD-323,1,Diodes Incorporated,BAT54WS-7-F,C124205,LCSC,"K a GNDA, A en -15V5_FILT: VIN de U2 nunca por encima de +0.3 V."
 D12,S1M,Diode_SMD:D_SMA,1,Vishay,S1M-E3/61T,C144860,SIN MONTAR,"Sin montar: el LT1963A no la necesita (lt1963a-rev-g-2021-02.pdf p. 1 y p. 19); junta de piezas v5 sec. 4.6. La huella queda en la placa."
 D13,S1M,Diode_SMD:D_SMA,1,Vishay,S1M-E3/61T,C144860,LCSC,Antirretorno OUT -> IN de U2.
@@ -58,7 +58,7 @@ R20,0.1,Resistor_SMD:R_2512_6332Metric,1,Vishay,WSL2512R1000FEA,C844904,LCSC,Shu
 "R12,R35",49.9k 0.1%,Resistor_SMD:R_0805_2012Metric,2,Yageo,RT0805BRD0749K9L,C469661,LCSC,Rama alta de los divisores UVLO/OVP de U16 y OVP de U19.
 R13,1.62k 0.1%,Resistor_SMD:R_0805_2012Metric,1,UniOhm,TC0525B1621T5G,C50670348,LCSC,UVLO de U16: 1.2 V * 53.48/3.58 = 17.9 V.
 R14,1.96k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Vishay,TNPW08051K96BEEN,C2093012,LCSC,OVP de U16: 1.2 V * 53.48/1.96 = 32.7 V.
-R36,3.9k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD073K9L,C865471,LCSC,"OVP de U19: 1.2 V * (1 + 49.9/3.9) = 16.55 V, el disparo nominal de check_absmax.py."
+R36,3.74k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD073K74L,C865467,LCSC,"OVP de U19: 1.2 V * (1 + 49.9/3.74) = 17.21 V, el disparo nominal de check_absmax.py."
 R39,47.5k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD0747K5L,C865514,LCSC,"Canal + de D-F4: 2.495 V * (1 + 47.5/10) = 14.35 V, dentro de la ventana util de secuencia_budget.py (48.1k no tiene stock en 0805 0.1%)."
 "R40,R47,R48,R50",10.0k 0.1%,Resistor_SMD:R_0805_2012Metric,4,Yageo,RT0805BRD0710KL,C110775,LCSC,Ramas de 10k de los divisores de precision (D-F4 y D-F6).
 R52,10.0k 0.1%,Resistor_SMD:R_0805_2012Metric,1,Yageo,RT0805BRD0710KL,C110775,SIN MONTAR,"Sin montar: el disparo del +5 V digital (SCR4), T19 (junta de piezas v5 sec. 4.5). La huella queda en la placa."
