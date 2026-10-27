@@ -90,9 +90,9 @@ flowchart LR
   ([review](docs/superpowers/specs/2026-10-25-junta-fuente-v5-piezas.md)). It
   is not cleared for copper yet: the open questions in §9.2 of the spec, 14 of
   the original 16, are the condition for fabrication, several of them answered
-  only by the manufacturers. Twelve hold up the board and two only the rear
-  panel. Tests that need the built board run in its bring-up. The test kit runs
-  from a bench supply.
+  only by the manufacturers. Eleven hold up the board, and three only the rear
+  panel, the chassis and the display. Tests that need the built board run in
+  its bring-up. The test kit runs from a bench supply.
 
 ## Status, October 2026
 
@@ -103,7 +103,7 @@ hangs from one of them. As of 27 October 2026:
 
 | Milestone | Done when | Where it stands |
 |---|---|---|
-| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its parts were signed on 26 and 27 October and the board regenerated with them; its gates and DRC pass. Between it and copper stand 12 open questions of §9.2, the answers asked of TRACO and Advanced Energy, and four open issues. The bench tests come after, on the first board |
+| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its parts were signed on 26 and 27 October and the board regenerated with them; its gates and DRC pass. Between it and copper stand 11 open questions of §9.2, the answers asked of TRACO and Advanced Energy, and three open issues. The bench tests come after, on the first board |
 | 2 · Power supply v4 in copper | The supply boards are built and measured on the bench | Not started. The v5 bring-up is written as a checked sheet of 106 measurements with their limits ([`check_bringup.py`](hardware/01-power-supply/v5/check_bringup.py)) |
 | 3 · The brain boots | Our firmware runs on the N657, speaks USB MIDI and lights the display | In progress: the firmware has run on the NUCLEO-N657X0-Q since 1 October. It takes USB MIDI, measured at 5,000 messages per second on 19 October, and drives the J2 link from an 8 kHz tick. The link ran 24 hours without a fault on 17 October at 1 kHz; the soak at 8 kHz runs from a Raspberry Pi and has no result yet |
 | 4 · Test kit: brain plus one voice | A MIDI note comes in and one voice sounds through the J2 | The current front: the J2 header and master are on paper and in the firmware, which since 20 October also carries the voice module's v1 message set. The full voice board has no KiCad in the repository yet |
