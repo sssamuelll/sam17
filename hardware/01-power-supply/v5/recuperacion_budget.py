@@ -13,17 +13,18 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
      - Limite de corriente programado con `R_ILIM = 4,02 kohm` (E96 1 %):
        segunda ecuacion de diseno `I_OL = 18,1 / R_ILIM(kohm) = 4,50 A` nominal
        (`tps2663.pdf` p. 22 ec. 5), con banda de exactitud de `+-7 %`
-       (`tps2663.pdf` p. 7: `4,185 A .. 4,815 A`). La banda cabe entre dos
+       (`tps2663.pdf` p. 7: `4,185 A .. 4,815 A` con R_ILIM exacta; con el
+       1 % de `R11`, `4,146 .. 4,866 A`). La banda cabe entre dos
        cotas. Por arriba, el disparo minimo del ladrillo TE90A2449F01: su
        sobrecarga va del 130 al 180 % de `3,75 A` (`ae-TE90-datasheet.pdf`
        p. 2 y p. 5), asi que `U16` corta antes de que el ladrillo entre en
-       hiccup si su maximo queda bajo `4,875 A`. Por abajo, `1,50 x` la
-       corriente del cordon a 24 V nominales (`2,67 A`) y `1,30 x` la de su
-       peor caso (`2,87 A`, `ladrillo_budget.py`); el minimo de la banda les
-       da `1,57 x` y `1,46 x`. Con `+-7 %` la banda abarca `1,15 x`, asi que
-       con `R11 = 4,02 kohm` el `1,5 x` aguanta el cordon nominal hasta
-       `2,79 A`: con la cascada a 650 mA/riel eran `2,98 A` y la puerta
-       estuvo en `1,40 x`.
+       hiccup si su maximo queda bajo `4,875 A`, tipico a 25 C (nota de la
+       p. 2). Por abajo, `1,50 x` la corriente del cordon a 24 V nominales
+       (`2,69 A`) y `1,30 x` la de su peor caso (`2,89 A`,
+       `ladrillo_budget.py`); el minimo de la banda les da `1,54 x` y
+       `1,44 x`. La banda abarca `1,17 x`, asi que con `R11 = 4,02 kohm` el
+       `1,5 x` aguanta el cordon nominal hasta `2,76 A`: con la cascada a
+       650 mA/riel eran `2,98 A` y la puerta estuvo en `1,40 x`.
      - El pulso de `2 x I_OL` del TPS26631 solo se activa con PGOOD alto
        (`tps2663.pdf` p. 23), y en la placa `PGTH` (pin 16) va a `GND24`, que
        lo deshabilita (p. 19): PGOOD no sube nunca. Con `MODE` al aire, `U16`
@@ -128,6 +129,13 @@ R_ILIM_KOHM = valor("R11") / 1e3
 K_ILIM_TPS26631_A_KOHM = 18.1             # tps2663.pdf p. 22 ec. (5): R = 18,1 / I_OL
 TOL_ILIM_TPS26631_FRAC = 0.07             # +-7 % en tps2663.pdf p. 7
 TOL_ILIM_U19_FRAC = 0.10                  # p. 7: +-10 % a 30 kohm, +-8 % a 9 kohm
+# Las bandas de la p. 7 son para R(ILIM) exacta; R11 y R34 son UniOhm "W8F" (la F
+# del codigo es el 1 %), y como I_OL va con 1/R (ec. 5) su tolerancia ensancha la
+# banda: con R11, 4,146 .. 4,866 A en vez de 4,185 .. 4,815 (la fila de la p. 7
+# redondea el nominal a 4,5 A; aqui va 18,1 / 4,02). El techo queda a 9 mA del
+# disparo tipico del TE90, y con 1,2 % ya no cabe. El coeficiente termico de
+# R11/R34 no cuenta: no hay hoja de UniOhm en el repo.
+TOL_R_ILIM_FRAC = 0.01
 MARGEN_ILIM_NOMINAL = 1.50                # sobre el cordon a 24 V nominales
 MARGEN_ILIM_PEOR = 1.30                   # sobre el cordon en su peor caso
 I_OCP_LADRILLO_MIN_A = 1.30 * 3.75        # TE90A2449F01: 3,75 A (p. 5), OCP 130..180 % (p. 2)
@@ -190,9 +198,11 @@ def arranque_cadena_max_s() -> float:
 
 def corriente_limite_tps26631_a(ref: str = "R11",
                                 tol: float = TOL_ILIM_TPS26631_FRAC) -> tuple[float, float, float]:
-    """Devuelve (min_a, nom_a, max_a) del limite de corriente que pone `ref`."""
+    """Devuelve (min_a, nom_a, max_a) del limite de corriente que pone `ref`, con
+    la banda de la hoja y la tolerancia de la resistencia."""
     nom = K_ILIM_TPS26631_A_KOHM / (valor(ref) / 1e3)
-    return nom * (1.0 - tol), nom, nom * (1.0 + tol)
+    return (nom * (1.0 - tol) / (1.0 + TOL_R_ILIM_FRAC), nom,
+            nom * (1.0 + tol) / (1.0 - TOL_R_ILIM_FRAC))
 
 
 def _crc16_ccitt(intentos: int, pendiente: bool, abandonado: bool, en_prueba: bool) -> int:
