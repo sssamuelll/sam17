@@ -78,6 +78,9 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
      - **Un abandono NO se borra desenchufando:** persiste en FRAM y solo se
        suelta manteniendo pulsado el boton dedicado durante `>= 2,0 s` con la
        entrada de 24 V dentro de la ventana valida.
+     - **Un ladrillo al reves no gasta intento** (sec. 9.3 de la spec v5, firma
+       del 2026-10-27): el vigilante se alimenta detras de `Q2` y `Q7`, asi que
+       al reves no enciende y no cuenta. Lo vigila `_guarda_vigilante_tras_bloqueo`.
 
   4. **Alcance honesto (T24):**
      - Un corto en el cordon del ladrillo *aguas arriba* del vigilante M5 no
@@ -417,6 +420,23 @@ class VigilanteM5:
         return False
 
 
+def _guarda_vigilante_tras_bloqueo(nets: dict[str, set[str]]) -> None:
+    """Con el ladrillo al reves, Q7 corta el retorno y GND24 queda suelto: U18 y
+    U17 no encienden y no gastan intento, porque los dos se alimentan detras de
+    Q2 (por R64 desde +24V_PROT) y de Q7 (GND24). Si alguno colgara de J1 por
+    delante, una inversion podria contar como intento (sec. 9.3)."""
+    esperado = {"J1.1": "+24V_RAW", "J1.2": "RET24_RAW",
+                "Q2.1": "+24V_RAW", "Q2.5": "+24V_PROT",
+                "Q7.5": "RET24_RAW", "Q7.1": "GND24",
+                "R64.1": "+24V_PROT", "R64.2": "+24V_LDO",
+                "U18.1": "+24V_LDO", "U18.2": "GND24", "U18.5": "+3V3_MCU",
+                "U17.5": "+3V3_MCU", "U17.6": "GND24"}
+    malos = {p: red_de(nets, p) for p, r in esperado.items() if red_de(nets, p) != r}
+    assert not malos, (
+        f"el vigilante ya no se alimenta solo detras de Q2 y Q7 ({malos}): un ladrillo "
+        "al reves podria encenderlo y gastar intentos (sec. 9.3)")
+
+
 def _verifica_politica(cls_kwargs: dict) -> None:
     """Bateria de propiedades exigidas al vigilante M5."""
     # Propiedad 1: corto persistente con colapso de alimentacion en cada pulso
@@ -531,6 +551,18 @@ def _autocomprobacion() -> None:
         "contra el conector y el tCB de 31 ms (tps2663.pdf p. 9, 23)")
     assert red_de(nets, "U16.12") is None, (
         "MODE de U16 ya no esta al aire: cambia lo que hace al agotar tCL_PLIM (Tabla 8-1, p. 28)")
+    # Un ladrillo al reves no gasta intento; el canario cuelga la masa de U18
+    # del retorno crudo, y luego R64 del positivo crudo.
+    _guarda_vigilante_tras_bloqueo(nets)
+    for pin, red in (("U18.2", "RET24_RAW"), ("R64.1", "+24V_RAW")):
+        mutada = {n: nodos - {pin} for n, nodos in nets.items()}
+        mutada[red] = mutada[red] | {pin}
+        try:
+            _guarda_vigilante_tras_bloqueo(mutada)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError(f"canario: {pin} en {red} paso sin saltar")
 
     # 2. La ventana de la placa: arranca con el ladrillo en su minimo y el
     #    cordon cargado, y corta antes de que los DC-DC pasen de 36 V.
@@ -622,6 +654,8 @@ def demo() -> int:
     print("    [verde] FRAM con CRC16 corrupto: arranca en ABANDONADO (fallo seguro)")
     print("    [verde] FLT de U19 durante su arranque: no abandona")
     print("    [verde] bajon de entrada con U16 cerrando solo: 0 intentos gastados")
+    print("    [verde] ladrillo al reves: U18 y U17 se alimentan detras de Q2 y Q7 (netlist), "
+          "no encienden y no gastan intento; sus 2 canarios saltan")
     print("    [verde] apagon tras confirmar sano y antes del rearme: gasta intento; "
           "10 arranques asi, 4 pulsos y ABANDONADO")
     print("    [verde] los 7 mutantes (sin FRAM, sin antirrebote, abandono al 1er FLT de U19, "
