@@ -18,6 +18,10 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
          * OVP: `V(OVPR) = 1,176 .. 1,224 V` (p. 6; disparo nominal `16,55 V`,
            borde bajo `16,19 V` > maximo sano `16,01 V`, borde alto `16,92 V`),
            corte en `<= 14 us` (p. 8);
+         * contra un alivio de carga del THN, HUECO (`_guarda_ovp_sobreimpulso`): el
+           sobreimpulso tipico (`~0,19 V`, `traco_thn20wi_characteristic_curves.pdf`
+           p. 8) cabe con lo que la hoja garantiza y no en la envolvente de `2,5 %` de
+           `margen_budget.py`; TRACO no da maximo;
          * disparo rapido: `3 x I(OL)` en el TPS26631 (p. 7), con `I(OL)` de
            `R34` y su +-10 % (`recuperacion_budget.py`), respuesta `<= 4,5 us`
            (p. 9, soft short); por encima de `I(SCP) = 45 A`, `<= 1 us` (p. 9).
@@ -194,6 +198,16 @@ def _margen():
 def v_sano_max_u1_v() -> float:
     return _margen().v_entrada_maxima_sana_v()
 
+
+def v_sano_max_hoja_u1_v() -> float:
+    """Maximo sano con SOLO lo que la hoja garantiza (exactitud, linea, carga y
+    0,02 %/K): la cota OPTIMISTA, sin la tolerancia del recorte por Trim que la
+    hoja no da y que la envolvente de 2,5 % de margen_budget.py estima. Sin rizado:
+    el del pin de U19 es el del modulo sin LC (75 mVpp tipico, p. 2) y no se sabe
+    si el comparador lo sigue."""
+    mb = _margen()
+    return mb.V_NOM_V5 * (1.0 + TOL_HOJA_THN20_FRAC + mb.TEMPCO_PPM_K_V5 * 1e-6 * mb.DELTA_T_K_V5)
+
 # EL MODELO SIMULA LAS PIEZAS DE LA PLACA. L, C, Cd, Rd y el divisor del OVP
 # se leen de bom.csv (#474: el modelo llevaba un LC y la BOM otro, y con el de
 # la BOM U1 veia 21,0 V; ningun numero de este fichero lo habria delatado).
@@ -220,7 +234,20 @@ TOL_OVPR_TPS26631_FRAC = 0.020         # tps2663.pdf p. 6: 1,176..1,224 V (+-2,0
 TOL_DIVISOR_01PCT_FRAC = 0.002         # dos resistencias de 0,1 %
 V_DISPARO_MIN_U1_V = V_DISPARO_NOM_U1_V * (1.0 - TOL_OVPR_TPS26631_FRAC - TOL_DIVISOR_01PCT_FRAC)
 V_DISPARO_MAX_U1_V = V_DISPARO_NOM_U1_V * (1.0 + TOL_OVPR_TPS26631_FRAC + TOL_DIVISOR_01PCT_FRAC)
-T_CORTE_OVP_MAX_S = 14.0e-6            # tps2663.pdf p. 8: 8,5 us typ, 14 us max
+T_CORTE_OVP_MAX_S = 14.0e-6            # tps2663.pdf p. 8: 8,5 us min, 11 us nom, 14 us max
+# Sobreimpulso del THN 20-2413WI al soltar carga: lectura de la figura "Transient
+# Response to Dynamic Load Change (25%)" (100 mV/div, 100 us/div,
+# traco_thn20wi_characteristic_curves.pdf p. 8): la traza oscura sube 0,19 V
+# sobre el techo del rizado en reposo (el sombreado de persistencia, 0,22 V).
+# ESTIMADO: lectura de figura (+-0,02 V), a 15,0 V de salida y con el condensador
+# de salida de la hoja (1 uF || 10 uF, traco_thn20wi.pdf p. 2); +15V5_RAW no lleva
+# ninguno. HUECO: la hoja (p. 2: solo "Response Time 250 us typ.") y las curvas no
+# dan un maximo; se le pidio a TRACO.
+V_SOBREIMPULSO_TIP_THN20_V = 0.19
+V_SOBREIMPULSO_MAX_THN20_V: float | None = None
+# Lo que la hoja SI garantiza de la salida simple de 15 V (traco_thn20wi.pdf p. 2):
+# exactitud +-1 %, regulacion de linea 0,2 % y de carga 0,2 %, maximas.
+TOL_HOJA_THN20_FRAC = 0.010 + 0.002 + 0.002
 # Disparo rapido del TPS26631: 3 x I(OL) (p. 7), con I(OL) de R34 y su +-10 %
 # (recuperacion_budget.py); respuesta 2,2..4,5 us en corto blando y 1 us por
 # encima de I(SCP) (p. 9).
@@ -604,6 +631,9 @@ P_BASE: dict[str, float] = {
     "t_disparo_rapido_us": T_FASTTRIP_MAX_S * 1e6,
     "i_disparo_rapido_a": None,             # None: el de R34 (i_fasttrip_max_u19_a)
     "v_disparo_u1_v": V_DISPARO_MAX_U1_V,
+    "v_disparo_min_u1_v": V_DISPARO_MIN_U1_V,
+    "v_sobreimpulso_tip_v": V_SOBREIMPULSO_TIP_THN20_V,
+    "v_sobreimpulso_max_v": V_SOBREIMPULSO_MAX_THN20_V,   # None: HUECO, TRACO no lo da
     "i_mantenimiento_scr_a": I_MANTENIMIENTO_BT151_A,
     "r64_ohm": valor("R64"),
     "v_rwm_d1_v": V_RWM_SMBJ33CA_V,
@@ -703,6 +733,37 @@ def _guarda_u1_rk4(p: dict[str, float]) -> None:
         f"(hasta {CURVA_L2_A_UH[-1][0]:.0f} A): el pico no vale")
 
 
+def _guarda_ovp_sobreimpulso(p: dict[str, float]) -> str:
+    """El borde bajo del OVP de U19 contra un alivio de carga del THN: OK, HUECO
+    o FALLO (el assert). Sin un maximo garantizado por TRACO nunca es OK: la
+    cota es la de la hoja sola (optimista) contra el sobreimpulso TIPICO, y lo
+    que sale es HUECO, con el margen que queda en la envolvente del repo. Con un
+    maximo garantizado cuenta ese, contra la envolvente del repo, y puede ser OK."""
+    tip, mx = p["v_sobreimpulso_tip_v"], p["v_sobreimpulso_max_v"]
+    m_repo = p["v_disparo_min_u1_v"] - v_sano_max_u1_v()
+    m_hoja = p["v_disparo_min_u1_v"] - v_sano_max_hoja_u1_v()
+    margen, exigido = (m_hoja, tip) if mx is None else (m_repo, mx)
+    assert margen >= exigido, (
+        f"OVP de U19: un alivio de carga sube la salida del THN {exigido:.2f} V "
+        f"({'tipico' if mx is None else 'maximo'}) y el borde bajo del OVP "
+        f"({p['v_disparo_min_u1_v']:.2f} V) solo deja {margen:.3f} V sobre el maximo sano")
+    if mx is not None:
+        return f"OK: maximo garantizado {mx:.2f} V <= margen {m_repo:.3f} V"
+    cabe = "cabe" if m_repo >= tip else f"NO cabe ({m_repo - tip:+.3f} V)"
+    return (f"HUECO: TRACO no da un maximo del sobreimpulso; el tipico {tip:.2f} V {cabe} en el "
+            f"margen de {m_repo:.3f} V de la envolvente del repo, y cabe en los {m_hoja:.3f} V "
+            f"de la hoja sola")
+
+
+def _guarda_ovp_techo(p: dict[str, float]) -> None:
+    """Con el THN atascado arriba sin pasar del OVP (lazo roto, o R32 en corto:
+    19,89 V, traco_thn20wi.pdf nota de la p. 1), U19 no abre y U1 ve el borde
+    alto del OVP en continua. El disparo rapido no lo ve: no hay sobrecorriente."""
+    assert p["v_disparo_u1_v"] < V_ABSMAX_U1_V, (
+        f"techo del OVP de U19: deja pasar hasta {p['v_disparo_u1_v']:.2f} V a U1, "
+        f"por encima de su absmax ({V_ABSMAX_U1_V:.1f} V)")
+
+
 def _guarda_fuga_ps3(p: dict[str, float]) -> None:
     mpn = filas()["PS3"]["mpn"]
     assert mpn in AISLADOS, (
@@ -777,6 +838,21 @@ def demo() -> int:
     print()
 
     _guarda_u1_rk4(dict(P_BASE))
+    print(f"    maximo sano con solo la hoja:     {v_sano_max_hoja_u1_v():.3f} V "
+          f"(exactitud 1 % + linea 0,2 % + carga 0,2 % + 0,02 %/K, traco_thn20wi.pdf p. 2)")
+    print(f"    {_guarda_ovp_sobreimpulso(dict(P_BASE))}")
+    # Con un maximo garantizado el aserto pasa a medir la envolvente del repo: OK por debajo
+    # del margen, FALLO por encima.
+    m_repo = V_DISPARO_MIN_U1_V - v_sano_max_u1_v()
+    assert _guarda_ovp_sobreimpulso(dict(P_BASE, v_sobreimpulso_max_v=m_repo - 0.001)).startswith("OK")
+    try:
+        _guarda_ovp_sobreimpulso(dict(P_BASE, v_sobreimpulso_max_v=m_repo + 0.001))
+    except AssertionError as e:
+        assert "OVP de U19:" in str(e), str(e)
+    else:
+        raise AssertionError("un maximo garantizado mayor que el margen sale verde: el aserto no lo mira")
+    print(f"    con un maximo garantizado, OK solo si es <= {m_repo:.3f} V (el tipico, "
+          f"{V_SOBREIMPULSO_TIP_THN20_V:.2f} V, {'daria FALLO' if V_SOBREIMPULSO_TIP_THN20_V > m_repo else 'cabria'})\n")
 
     print("  2. Ventanas de disparo en rack (D-F6: BT151-500R + TL431BI):")
     for riel, d in RACK_RIELES.items():
@@ -887,6 +963,10 @@ def demo() -> int:
                              T_FASTTRIP_MAX_S * 1e6, 100.0, "#334:")
     i_rapido_a = borde_rojo(_guarda_u1_rk4, dict(P_BASE), "i_disparo_rapido_a",
                             i_fasttrip_max_u19_a(), 40.0, "#334:")
+    ovp_tip = borde_rojo(_guarda_ovp_sobreimpulso, dict(P_BASE), "v_sobreimpulso_tip_v",
+                         V_SOBREIMPULSO_TIP_THN20_V, 20.0, "OVP de U19:")
+    ovp_min = borde_rojo(_guarda_ovp_sobreimpulso, dict(P_BASE), "v_disparo_min_u1_v",
+                         V_DISPARO_MIN_U1_V, 15.0, "OVP de U19:")
     ih_max = borde_rojo(_guarda_enganche_scr, dict(P_BASE), "i_mantenimiento_scr_a",
                         0.040, 5.0, "el crowbar se suelta")
     r64_v = borde_rojo(_guarda_u18, dict(P_BASE), "r64_ohm", valor("R64"), 1.0, "U18 IN")
@@ -922,6 +1002,24 @@ def demo() -> int:
     print(f"\n  canario #334: si el disparo rapido de U19 tarda > {t_rapido_us:.1f} us "
           f"(la hoja garantiza <= {T_FASTTRIP_MAX_S * 1e6:.1f}), o salta por encima de "
           f"{i_rapido_a:.1f} A (hoy {i_fasttrip_max_u19_a():.2f}), U1 o L2 salen de su limite")
+    # El borde exacto (la biseccion devuelve un punto ya dentro del rojo) y el R36 que lo da:
+    # V_OVPR * (1 + R35/R36) * (1 - tolerancias) = borde bajo.
+    borde_min = v_sano_max_hoja_u1_v() + V_SOBREIMPULSO_TIP_THN20_V
+    assert abs(ovp_min - borde_min) < 0.05 and abs(ovp_tip - (V_DISPARO_MIN_U1_V - v_sano_max_hoja_u1_v())) < 0.05, (
+        "los canarios de OVP de U19 no coinciden con el borde calculado a mano")
+    r36_rojo = valor("R35") / (borde_min / (V_OVPR_NOM_V * (1.0 - TOL_OVPR_TPS26631_FRAC
+                                                            - TOL_DIVISOR_01PCT_FRAC)) - 1.0)
+    print(f"  canario OVP de U19: con un sobreimpulso tipico > {V_DISPARO_MIN_U1_V - v_sano_max_hoja_u1_v():.2f} V, "
+          f"o un borde bajo < {borde_min:.2f} V (R36 > {r36_rojo / 1e3:.2f} kohm, hoy {valor('R36') / 1e3:.2f}), "
+          f"ni la hoja sola deja pasar un alivio de carga sin abrir U19")
+    _guarda_ovp_techo(dict(P_BASE))
+    ovp_techo = borde_rojo(_guarda_ovp_techo, dict(P_BASE), "v_disparo_u1_v",
+                           V_DISPARO_MAX_U1_V, 30.0, "techo del OVP de U19")
+    r36_techo = valor("R35") / (V_ABSMAX_U1_V / (V_OVPR_NOM_V * (1.0 + TOL_OVPR_TPS26631_FRAC
+                                                                + TOL_DIVISOR_01PCT_FRAC)) - 1.0)
+    print(f"  canario techo del OVP de U19: con el borde alto en {ovp_techo:.2f} V "
+          f"(R36 < {r36_techo / 1e3:.2f} kohm, hoy {valor('R36') / 1e3:.2f}) un THN atascado "
+          f"arriba llega a U1 por encima de {V_ABSMAX_U1_V:.1f} V sin abrir U19")
     print(f"  canario D-F6: con I_H > {ih_max:.2f} A el crowbar se soltaria "
           f"(el BT151-500R pide <= 0,04 A)")
     print(f"  canario U18: R64 < {r64_v:.0f} ohm lleva U18 IN por encima de 30 V, y "
@@ -959,6 +1057,9 @@ def demo() -> int:
     print(f"    - la desviacion transitoria de {', '.join(sin_transitorio)}: las hojas del "
           "THN 30-2422WI y del THN 20-2411WI no la dan (pregunta a TRACO); el maximo sano "
           "no la cuenta")
+    print(f"    - el sobreimpulso MAXIMO del THN 20-2413WI al soltar carga: la hoja y sus curvas solo dan "
+          f"el tipico (~{V_SOBREIMPULSO_TIP_THN20_V:.2f} V a 15,0 V, lectura de figura, p. 8) y el "
+          f"comparador de U19 tarda 8,5..14 us (tps2663.pdf p. 8); sin condensador de salida en +15V5_RAW")
     print("    - la fuga de PS3 a su limite maximo es una cota: la hoja no dice como se desboca")
     print("    - la descarga de C39 por SCR3: el BT151 pide dI_T/dt <= 50 A/us (p. 3) y la "
           "inductancia del lazo C39-F4-R30-SCR3 no esta medida")
