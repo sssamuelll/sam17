@@ -14,8 +14,9 @@ Goethe-Institut Venezuela selected it for its programme *Pensar la Música
 Electrónica en Venezuela*. Since then it has been redesigned, in Nürnberg, as
 the sixteen-voice instrument this repository describes. **There is no finished
 unit yet.** The firmware runs on the STM32N657 evaluation board, the voice
-board is being drawn, the power supply board is routed but not yet cleared for
-fabrication, and the first complete instrument is due in May 2027.
+board is specified but not yet drawn, the power supply board is routed and its
+parts are signed but it is not yet cleared for fabrication, and the first
+complete instrument is due in May 2027.
 Details, with dates, under [Status](#status-october-2026).
 
 The working language of the project is Spanish: specs, budgets and design
@@ -71,37 +72,41 @@ flowchart LR
   unified panel is on top, 3U. A slim 55 mm utility row in the middle takes the
   instrument's connection tiles; it is not Intellijel 1U and is not advertised
   as compatible. A 3U Eurorack row below is for the instrument's own expansion
-  modules, with its own current budget. The skeleton is machined aluminium;
-  the outer finish is being decided. Dimensions, materials and drawings in
+  modules, with its own current budget. The skeleton is machined aluminium.
+  Each side is a louvre of black anodised aluminium, 44 vertical bars the
+  instrument breathes through; the rear panel is amber, and the case stands
+  on a 3 mm sheet-metal base. Dimensions, materials and drawings in
   [`case/README.md`](case/README.md).
-- Power is 230 VAC through an external 24 V brick. In the v5 supply, signed
+- Power is 230 VAC through an external 24 V brick, an SL Power TE90 that
+  plugs into a 4-pin mini-DIN socket on the case. In the v5 supply, signed
   on 8 September 2026 ([spec](docs/superpowers/specs/2026-09-05-fuente-v5-ladrillo-design.md)),
-  the AC-DC stage moves out of the case. Inside it stay the DC-DC conversion
-  and the cascade of linear regulators carried over from v4. The v5 board is
-  routed on four layers with a clean DRC
-  ([`hardware/01-power-supply/v5/fab`](hardware/01-power-supply/v5/fab)), but
-  it is not cleared for copper yet: the open questions in §9.2 of the spec,
-  15 of the original 16, are the condition for fabrication, several of them answered only by the
-  manufacturers, and the
-  [parts proposal](docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
-  is unsigned. The test kit runs from a bench supply.
+  the AC-DC stage moves out of the case. Inside it stay five isolated DC-DC
+  modules and the cascade of linear regulators carried over from v4, behind a
+  protection chain against reverse polarity, overvoltage and overload. The v5
+  board is routed on four layers with a clean DRC
+  ([`hardware/01-power-supply/v5/fab`](hardware/01-power-supply/v5/fab)), and
+  its [parts](docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
+  were reviewed on 25 October and signed on 26 and 27 October
+  ([review](docs/superpowers/specs/2026-10-25-junta-fuente-v5-piezas.md)). It
+  is not cleared for copper yet: the open questions in §9.2 of the spec, 15 of
+  the original 16, are the condition for fabrication, several of them answered
+  only by the manufacturers. The test kit runs from a bench supply.
 
 ## Status, October 2026
 
 The project map is the
 [GitHub milestones](https://github.com/sssamuelll/sam17/milestones):
 eight stages, each with its "done when" in the description, and every issue
-hangs from one of them. As of 11 October 2026, and 25 October for the two
-power supply rows:
+hangs from one of them. As of 27 October 2026:
 
 | Milestone | Done when | Where it stands |
 |---|---|---|
-| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its board is routed and its gates pass; 15 open questions of §9.2, the unsigned parts proposal and nine open issues stand between it and copper |
-| 2 · Power supply v4 in copper | The supply boards are built and measured on the bench | Not started. The v5 bring-up is written as a checked sheet of 104 measurements with their limits ([`check_bringup.py`](hardware/01-power-supply/v5/check_bringup.py)) |
-| 3 · The brain boots | Our firmware runs on the N657, speaks USB MIDI and lights the display | In progress: the firmware has run on the NUCLEO-N657X0-Q since 1 October, and the J2 link has 26 hours of soak without a fault |
-| 4 · Test kit: brain plus one voice | A MIDI note comes in and one voice sounds through the J2 | The current front: the J2 header and master are on paper, and the full voice board is being drawn in KiCad |
+| 1 · Power supply v4: paper closed | No open decision is left in the power supply paper | The supply that gets built is now v5, signed on 8 September. Its parts were signed on 26 and 27 October and the board regenerated with them; its gates and DRC pass. Between it and copper stand 15 open questions of §9.2, the answers asked of TRACO, Advanced Energy and Mornsun, the bench tests the parts review lists, and five open issues |
+| 2 · Power supply v4 in copper | The supply boards are built and measured on the bench | Not started. The v5 bring-up is written as a checked sheet of 106 measurements with their limits ([`check_bringup.py`](hardware/01-power-supply/v5/check_bringup.py)) |
+| 3 · The brain boots | Our firmware runs on the N657, speaks USB MIDI and lights the display | In progress: the firmware has run on the NUCLEO-N657X0-Q since 1 October. It takes USB MIDI, measured at 5,000 messages per second on 19 October, and drives the J2 link from an 8 kHz tick. The link ran 24 hours without a fault on 17 October at 1 kHz; the soak at 8 kHz runs from a Raspberry Pi and has no result yet |
+| 4 · Test kit: brain plus one voice | A MIDI note comes in and one voice sounds through the J2 | The current front: the J2 header and master are on paper and in the firmware, which since 20 October also carries the voice module's v1 message set. The full voice board has no KiCad in the repository yet |
 | 5 · The remaining boards | The rest of the boards are in KiCad with their gates green | Pending |
-| 6 · Case and panel to the workshop | Case and panel cut and assembled, with the supply inside and breathing | Skeleton drawings in [`case/plans`](case/plans); the outer finish is being decided this week |
+| 6 · Case and panel to the workshop | Case and panel cut and assembled, with the supply inside and breathing | Skeleton drawings in [`case/plans`](case/plans). The finish was decided on 11 and 12 October: louvred sides, amber rear, sheet-metal base. Next come a sample strip of the louvre and a bench test of the 24 V socket before its floor bracket goes out for quotes ([`case/RFQ.md`](case/RFQ.md)) |
 | 7 · The first SAM17 that sounds | Everything in the case, calibrated, thirty minutes without drifting | Depends on all of the above |
 | 8 · Parked: does not block sound | App and plugin, sequencer, the agent | Resumes after 7 |
 
