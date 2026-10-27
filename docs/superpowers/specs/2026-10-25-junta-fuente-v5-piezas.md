@@ -140,6 +140,18 @@ entre `J1.2` y `GND24`, con su resistencia de puerta desde `+24V_RAW` y un
 zener de puerta a fuente. El `LM74502` que maneja `Q2` es de lado alto
 (`lm74502.pdf` p. 1) y no puede con este.
 
+**Hecho el 2026-10-27.** `J1.2` va a `RET24_RAW`, el drenador de `Q7`
+(CSD18534Q5A, la pieza de `Q2`); su fuente es `GND24`, y la puerta sale de
+`+24V_RAW` por `R85` (10 kΩ) con el zener `D20` (BZT52C15) a `GND24`: `VGS`
+no pasa de 15,6 V contra ±20 V (`csd18534q5a.pdf` p. 1). `D1` cuelga de `J1`,
+entre `+24V_RAW` y `RET24_RAW`, para que un transitorio vuelva sin cruzar
+`Q7`. `Q7` cae 43,3 mV a 2,889 A, suma 0,128 W al cajón y deja 22,32 V a los
+DC-DC (`ladrillo_budget.py`). `check_netlist.py` exige que `RET24_RAW` sea solo
+`J1.2`, `D1.2` y el drenador de `Q7`, con diez roturas a propósito en rojo, y
+`check_pcb.py` mide el cobre de la isla y de las fuentes. DRC: 0 y 0 sin
+conectar. En el banco, `medidas.csv` pide la caída de `Q7` (< 60 mV), su `VGS`
+(12 a 15,6 V) y la prueba con una fuente a tierra conectada al revés.
+
 ---
 
 ## 3. Defectos ejecutables
@@ -407,12 +419,21 @@ TE90 y del de `U16` (32,7 V). Con él, `R64` pasa de 1 kΩ a 1,2 kΩ, porque a
 4,82 A durante 202 ms, y abrir con la sobrecarga del ladrillo desde 4,875 A, a
 un 1,2 %.
 
+**Hecho el 2026-10-27.** `D1` es la SMBJ33CA de Littelfuse (C83325; las cifras
+son de `bourns_smbj.pdf` p. 2, porque la hoja de Littelfuse no está en el
+repo), `R64` 1,2 kΩ y `C10` 100 nF / 100 V (C106243). `check_absmax.py`: la
+V_BR mínima de 36,7 V queda sobre el OVP del TE90 (36,0 V) y el de `U16` en lo
+alto de su banda (33,46 V); con 53,3 V aguantan `C10` (su tensión se lee de la
+BOM), el `VS` del `LM74502` (65 V), el `IN` de `U16` (67 V) y el `VDS` de `Q2`
+y `Q7` (60 V). `U18` IN queda en 26,80 V y `D2` en 315 mW. Cada aserto tiene su
+canario.
+
 ### 3.9 BAJA — la propuesta publica cifras y piezas viejas (todas) · #495
 
 - §1 sigue con «cuatro módulos TRACO» y con LEMO o EN3 como conector: el URB y
   el camino 1 no llegaron.
 - §2: el +5 V de rack a 0,5 A / 2,5 W (son 0,8 A / 4,0 W); la RPMB «sin UVLO
-  declarado» (lo declara, p. 1 y 4); «Hot Plug: Unavailable» en la p. 1 (está
+  declarado» (lo declara, p. 1 y ~~4~~ **7**); «Hot Plug: Unavailable» en la p. 1 (está
   en la 2).
 - §4 y §5: las caídas, a 2,68 A (el guion da 2,867 A en el peor caso).
 - §6: a AE no se le hace la pregunta 12.
@@ -429,6 +450,10 @@ un 1,2 %.
   2 (l. 75, 83 y 97).
 
 **Cierra:** la propuesta enmendada antes de la firma.
+
+**Hecho el 2026-10-27 (#495):** cada cifra vieja de la propuesta queda
+tachada, con la actual y su guion u hoja al lado. La UVLO de la RPMB está en la
+p. 1 y en el diagrama de la p. 7; la p. 4 no la trae.
 
 ### 3.10 Fuera de la fuente: la ventana IEC del case
 
@@ -584,6 +609,17 @@ cuentan tres crowbars.
 - **`L3` a SRP1265A-220M y `R32`/`R33` a RT0805BRE0745K3L**, en la misma
   regeneración de la placa que §3.8 y P7 (d).
 
+**Hecho el 2026-10-27.** `D10` y `D12` van «SIN MONTAR» en la BOM, con su
+huella, y salen del BOM y del CPL de JLC; `check_absmax.py` lee de la BOM que
+`D10` no está y comprueba que no hace falta: 17,40 V en `U1` contra su V_BR
+mínima de 17,8 V. `F2`, `F3` y `F5` llevan la nota de #476. `L3` es la
+SRP1265A-220M en la huella de `L2` (13,5 × 12,5 mm), y la placa ruteó sin
+solapes. `R32`/`R33` son la RT0805BRE0745K3L de `R45`/`R46`; LCSC tiene 830
+(C866072), la reserva más corta de las piezas nuevas. Con las dos bobinas
+iguales, `margen_budget.py` lee la bobina de cada rama de la BOM y su DCR máxima
+de hoja (37,0 mΩ, `bourns_srp1265a.pdf` p. 1), y el margen de `U1` pasa de +872
+a +868 mV.
+
 ### 4.7 Cómo se lee el derating de `PS1`
 
 La curva de TRACO está en potencia de salida, y `PS1` lleva sus dos salidas
@@ -612,11 +648,11 @@ trazo.
 
 | | |
 |---|---|
-| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, ~~el temporizador de `U16` en el guion (§3.7)~~, ~~el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5)~~, ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y la propuesta enmendada (§3.9) |
+| **Papel** | ~~El arnés (§3.1)~~, ~~la referencia del TE90, `TE90A2449F01` (§3.2, §4.2)~~, ~~la cita de `curvas.py` (§3.6)~~, ~~el temporizador de `U16` en el guion (§3.7)~~, ~~el modelo del +5 V de rack y las víctimas de `+5V_AUX` (§3.5)~~, ~~el retiro del respaldo Mean Well (§4.3)~~, el retiro de D-F4 cuando conteste TRACO (§4.4), ~~el requisito de 8,0 V al módulo 2 (§4.5)~~, y ~~la propuesta enmendada (§3.9)~~ |
 | **Gratis: preguntas** | Enviadas el 2026-10-25. **TRACO:** la regulación cruzada por debajo del 25 %, la desviación transitoria máxima del THN 20 y del THN 30 (sus notas solo traen capturas típicas), si el THN 30 baja las dos salidas a la vez, si su derating vale por potencia total con las salidas desiguales (§4.7), y su corte térmico, que la p. 3 publica como «105°C min. / 130°C typ. / 115°C max.». La constante de recorte y las curvas de derating ya están en sus notas (P3, §3.6). **AE:** la pregunta 12 (el umbral mínimo de sobrecarga a 45 °C y su retardo), la tensión máxima antes de que actúe su OVP (§3.8), y la 19 (el acople con el KPJX, la carcasa de la clavija y el cordón). AE pasó las preguntas a su soporte técnico el 2026-10-26 (caso P-258801) y pidió los datos de la empresa, que se le dieron el 2026-10-27. **Mornsun:** el umbral de sobrecorriente del K78 y su corriente en corto. ~~**Mean Well**, solo si el respaldo sigue~~: sale (§4.3) |
-| **BOM, sin rerutear** | `D1` con V_BR mínima por encima de 36 V (§3.8); y ~~`SCR4` sin montar (§4.5)~~ |
+| **BOM, sin rerutear** | ~~`D1` con V_BR mínima por encima de 36 V (§3.8)~~; y ~~`SCR4` sin montar (§4.5)~~ |
 | **Firmware** | La confirmación de sano a 225 ms, y el intento en prueba hasta el rearme sano (§3.7): requisitos del firmware del MSP430, que aún no existe |
-| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); el bloqueo del retorno, si se elige (P7); y ~~la toma de `+5V_AUX`, si se mueve (§3.5)~~: detrás de `F4`, con `PS3` en THN y `C39` |
+| **Placa** | D-F4 en rack, solo si TRACO no confirma (§4.4); ~~el bloqueo del retorno, si se elige (P7)~~; y ~~la toma de `+5V_AUX`, si se mueve (§3.5)~~: detrás de `F4`, con `PS3` en THN y `C39` |
 | **Banco** | El −12 V a carga ligera (P1); la carcasa de `PS1` (P1); las 3 muestras del THN 20 con el recorte y el alivio de carga (P3); el arranque con la carga declarada entera; la polaridad de `X1` con el ladrillo antes de conectar `J1` (§3.1); «los dos o ninguno» en `PS1` (§4.4); el bloqueo del retorno con una fuente a tierra conectada al revés (P7 (d)); y el enchufe sobre recortes de 1, 1,5 y 2 mm, antes de pedir la escuadra (§3.10) |
 
 ## 6. Lo que la junta no pudo comprobar
