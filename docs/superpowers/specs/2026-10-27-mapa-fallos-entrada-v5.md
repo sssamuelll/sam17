@@ -188,7 +188,7 @@ ya la cuenta (`TOL_R_ILIM_FRAC`, también para `R34` en `U19`); su aserto de
 selectividad sigue en verde, y con un 1,2 % de tolerancia sale rojo. El
 pico de `U1` en el #334 no cambia (17,40 V). El mapa no cambia de veredicto,
 porque la selectividad ya colgaba de que AE confirme su umbral a 45 °C
-(pregunta 12). El suelo sigue holgado: 4,146 / 2,889 = 1,435 veces la
+(pregunta 12 del pliego; preguntas 1 y 3 del correo del caso P-258801). El suelo sigue holgado: 4,146 / 2,889 = 1,435 veces la
 corriente del cordón en su peor caso, contra el 1,3 que pide el guion.
 
 ### 4.3 Las demás
@@ -273,7 +273,7 @@ disparar. Eso es una decisión de Samuel, no una consecuencia de este mapa.
 | `H-MF-HICCUP` | pico, tiempo encendido y tiempo apagado del hiccup con un corto franco en el extremo del cordón; resistencia del cordón de la opción 49 | **AE**, en el seguimiento del caso P-258801; pliego preguntas 15 y 19 | A1, B1, C1, C3 franco, D1; §4.1 |
 | `H-MF-SOSTENIDA` | la mayor corriente que sostiene sin disparar, a 45 °C, y cuánto tiempo antes de que actúe su OTP | **AE**, en el seguimiento del caso P-258801 | A2, B2, C2, C3, D2; §5 |
 | `H-MF-PS` | clase PS/LPS de la salida. Ni el informe CB (IEC 60950-1, `ae-TE90-CB-cert.pdf`) ni el certificado DEMKO (`ae-TE90-DEMKO-EN62368.pdf`) la dan | **AE**, en el seguimiento del caso P-258801 | de ella depende qué le exige 62368-1 al tramo nuestro delante de `U16` y a la caja; la norma no está en el repo |
-| `H-MF-SELECTIVIDAD` | disparo mínimo garantizado de la sobrecarga a 45 °C, contra 4,866 A | **AE**: pregunta 12, enviada el 2026-10-25, caso P-258801 | E1 |
+| `H-MF-SELECTIVIDAD` | disparo mínimo garantizado de la sobrecarga a 45 °C, contra 4,866 A | **AE**: pregunta 12 del pliego, hecha como preguntas 1 y 3 del correo del caso P-258801 | E1 |
 | `H-MF-ARNES` | referencia del cable de `X1` a `J1`, con clase de aislamiento y su ampacidad con el aire del cajón; su I²t; la hoja de `J1` | diseño | C1, C2; §5 |
 | `H-MF-CHASIS` | corriente admisible de `J5`; el hilo de `J5` al chasis, que no está en `bom-chasis.csv`; el cobre de `NT1`; qué piezas metálicas son chasis (la escuadra del enchufe, la base) | diseño, junto con `H-V5-PE` | A3, B3, C3, C4, D3, E3 |
 | `H-MF-R11` | ~~la banda de `U16` con la tolerancia de `R11`~~ **contada en `recuperacion_budget.py` (§4.2)**; falta su coeficiente térmico, sin hoja de UniOhm en el repo | diseño | E1; §4.2 |
