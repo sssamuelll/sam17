@@ -671,6 +671,16 @@ firmó en dirección el 2026-09-08 (§9); queda pendiente ejecutar su relevo**
 2. **La pantalla de 7" sigue sin pieza.** `pantalla-motor` l.250-256 manda su
    fila «cuando la pieza tenga nombre». Entra con 550 mA de +12 V, que son
    6,6 W: no es un redondeo. Es una cita, no una hoja.
+
+   > **#480, opción 2 (2026-10-27, firma de Samuel): un convertidor aislado en
+   > la pantalla, alimentado del +12 V de rack.** La barrera de `GNDD` de M1
+   > aguanta y la placa v5 no cambia. Lo que arrastra: la pérdida de ese
+   > convertidor sale del mismo +12 V. Con un rendimiento de 0,85 (ESTIMADO,
+   > sin pieza) los 550 mA de la pantalla piden unos 650 mA, y el +12 V de rack
+   > pasa de 1,050 a unos 1,15 A, el 92 % de los 1,25 A del `THN 30-2422WI`
+   > (`traco_thn30wi.pdf` p. 1) en vez del 84 %. Es la misma pregunta de
+   > derating que tiene TRACO. Entra en `ladrillo_budget.py` cuando el
+   > convertidor tenga pieza.
 3. **#256 sigue abierto.** El digital entra por su máximo a TJ = 125 °C porque
    el punto de trabajo real (85 °C) no está publicado. Entre ese máximo y el
    típico hay **3,0 veces** de corriente.
@@ -811,8 +821,9 @@ firmó en dirección el 2026-09-08 (§9); queda pendiente ejecutar su relevo**
 >   ([pliego](2026-09-08-pliego-ladrillo.md) §3.2; censo §5).
 > - **Cobertura incompleta de T24:** M5 asigna el vigilante en la entrada,
 >   pero **no asigna quién deja de energizar un corto del cordón aguas arriba**.
->   Ese tramo **sigue sin dueño** en **H-PL-ABANDONO-FUENTE** (pliego §4.1;
->   censo §2.6). Las asignaciones firmadas no cubren íntegramente el conjunto
+>   Ese tramo ~~**sigue sin dueño**~~ **tiene dueño desde el 2026-10-27: el
+>   ladrillo certificado, para su cordón cautivo (§9.2, `H-V5-CORTO`)** en
+>   **H-PL-ABANDONO-FUENTE** (pliego §4.1; censo §2.6). Las asignaciones firmadas no cubren íntegramente el conjunto
 >   mínimo anunciado por el censo; se registra la carencia sin completar M5.
 >
 > **Lo que esta firma NO compra:** no cierra ningún HUECO ni issue, no elige
@@ -831,6 +842,12 @@ de las dos firmas autoriza cobre mientras tenga filas abiertas. El «dueño» sa
 de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 *a Samuel*, o sin destinatario, que es trabajo nuestro.
 
+> **ENMIENDA (2026-10-27, firma de Samuel).** Una fila o condición que solo se
+> puede cerrar ensayando la placa construida pasa al bring-up (hito 2) y **no
+> bloquea fabricar la primera placa**: esa placa es el banco de ensayo. Bloquea
+> el cobre lo que todavía puede cambiar la placa. Es la regla que ya se aplicó a
+> `H-V2-CORTO-DCDC` el 25-10, extendida a todas las filas.
+
 | HUECO | Qué falta | Dueño |
 |---|---|---|
 | `H-V2-ENTRADA` | ventana garantizada del ladrillo y de los DC-DC, con las caídas del cordón dentro | **fabricante** |
@@ -839,16 +856,16 @@ de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 | `H-V2-RESERVA` | carga capacitiva y corriente de arranque admisibles, contra lo que la cadena exige | **fabricante** |
 | `H-V2-RECUPERACION` | ~~política de rearranque~~ **decidida 08-09: reintentos con abandono (§9.3)**; faltan intervalo, cupo, condición de abandono y estado de rieles | ~~**Samuel** +~~ fabricante |
 | `H-V2-CORTO-DCDC` | ~~qué limita el corto entrada↔salida antes de `IN` de `U1` — **es el #334**~~ **cerrado en diseño el 2026-10-25 (#334, §3): `U19` corta por disparo rápido, con `L2` = SRP1265A-220M; 17,40 V de pico en el peor caso.** Su ensayo (paso 8 del bring-up) necesita la placa y no bloquea el cobre | diseño |
-| `H-V2-AISLAMIENTO` | clase, aislamiento y fuga de la referencia, con hoja o certificado | **fabricante** |
+| `H-V2-AISLAMIENTO` | ~~clase, aislamiento y fuga de la referencia, con hoja o certificado~~ **decidido 2026-10-27 (firma de Samuel): el aislamiento red↔secundario y la fuga los da el ladrillo certificado, y el SAM17 es una carga de 24 V DC en ES1, clase III, sin borne de PE.** Requisito al ladrillo, tomado de su hoja: EN/CSA/IEC/UL 62368-1 (no 60601-1); 4000 VAC entrada↔salida, 1500 VAC entrada↔tierra y salida↔tierra; fuga < 500 µA entrada↔tierra y < 4 mA salida↔tierra a 264 VAC, 60 Hz (`ae-TE90-datasheet.pdf` p. 2); variante A, salida sin unir a tierra (p. 5, nota 3). Falta que AE diga qué mide la cifra de 4 mA en la variante A, la corriente de contacto en la salida con PE abierto, el grado del aislamiento y el informe CB (caso P-258801) | **fabricante** |
 | `H-V5-CONECTOR` | pareja y polaridad, con hoja que acredite límites y resistencia de contacto | diseño |
 | `H-V5-RETENCION` | retención y alivio de tracción, con su ensayo | diseño |
 | `H-V5-CALIBRE` | calibre, longitud y resistencia total vinculantes | diseño |
-| `H-V5-INVERSION` | ~~qué pasa con polaridad inversa~~ **decidido 08-09: bloquear y recuperar al corregir (§9.3)**; faltan el elemento, su envolvente y su caída | diseño |
+| `H-V5-INVERSION` | ~~qué pasa con polaridad inversa~~ **decidido 08-09: bloquear y recuperar al corregir (§9.3)**; ~~faltan el elemento, su envolvente y su caída~~ **cerrado en diseño el 2026-10-27, por la enmienda de arriba: `U15` (LM74502) con `Q2` en el positivo y `Q7` en el retorno, con su caída en `ladrillo_budget.py`. Sus ensayos con el ladrillo al revés son del paso 1 del bring-up (`check_bringup.py`).** La obligación de §9.3 sobre el cupo sigue aparte | diseño |
 | `H-V5-CALIENTE` | ~~si se admite conectar en caliente~~ **decidido 08-09: desenergizado como norma, accidente cubierto (§9.3)**; falta la envolvente de supervivencia | diseño |
 | `H-V5-RECONEXION` | ~~rearranque con energía residual o rebote~~ **derivado 08-09 de `H-V2-RECUPERACION` (§9.3)**; falta separar un rebote de un intento legítimo | diseño |
-| `H-V5-CORTO` | corto entre conductores o contra chasis, incluido el tramo de cable expuesto | diseño |
+| `H-V5-CORTO` | corto entre conductores o contra chasis, incluido el tramo de cable expuesto. **Decidido 2026-10-27 (firma de Samuel): el cordón cautivo, aguas arriba de nuestro zócalo, es del ladrillo certificado, y le toca a su certificación.** Un corto franco en hiccup son unos 2,4 W; uno parcial justo bajo el disparo mínimo de sobrecarga (4,875 A) son unos 117 W sin disparar nada. A AE se le preguntan el hiccup (encendido, apagado y pico), la corriente máxima sin disparo y la clasificación PS/LPS de la salida. Falta el mapa de fallos de nuestro tramo, del zócalo a `U16` | diseño |
 | `H-V5-INCOMPATIBLE` | ~~qué adaptadores cubre el contrato~~ **decidido 08-09: contrato exclusivo (§9.3)**; faltan las referencias admitidas y su acreditación | ~~**Samuel** +~~ diseño |
-| `H-V5-PE` | **relevo de D-F5**: ~~quién da el camino de modo común~~ **M2 lo asigna fuera, con el ladrillo, y une chasis al retorno DC (firma 2026-09-08, §9)**; faltan mapa, evidencia y ensayo, preservando GNDD por M1; **HUECO abierto** | diseño + medida |
+| `H-V5-PE` | **relevo de D-F5**: ~~quién da el camino de modo común~~ **M2 lo asigna fuera, con el ladrillo, y une chasis al retorno DC (firma 2026-09-08, §9)**; faltan mapa, evidencia y ensayo, preservando GNDD por M1; **HUECO abierto**. **2026-10-27 (firma de Samuel): no cambia la placa.** El encuentro de `GNDD` y `GNDA` en la pantalla se resuelve en #480 con un convertidor aislado en la pantalla (§8, punto 2); el chasis, su unión al retorno y la entrada del cordón, en #424 (hito 6). Con el SAM17 en clase III, el espárrago de #424 es la unión M2 del chasis al retorno DC, no un borne de PE | diseño + medida |
 
 **Tres de estas filas no son independientes:** `H-V5-CALIENTE` tiene que
 coincidir con `H-V2-TRANSITORIOS` y `H-V2-RESERVA`, y `H-V5-RECONEXION` ~~sigue
