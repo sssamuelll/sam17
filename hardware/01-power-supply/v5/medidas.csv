@@ -35,10 +35,10 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 1,potencia_ladrillo_reposo_w,W,<= 2.5,,,,,,ladrillo_budget: consumo propio del ladrillo y convertidores en vacio
 1,potencia_ladrillo_sostenida_w,W,56.3832 .. 65.8789,,,,,,"ladrillo_budget: potencia que da el ladrillo a carga sostenida, entre los rendimientos tipicos (-10 %) y salida_ladrillo_w()"
 1,corriente_ladrillo_sostenida_a,A,2.23743 .. 2.88943,,,,,,"ladrillo_budget: corriente del cordon a carga sostenida, del suelo a +5 % al peor caso corriente_del_cordon_a()"
-2,mas15_minimo_con_carga,V,>= 14.9121,,,,,,margen_budget.v_entrada_minima_rama_v('U1'): tension minima que alcanza U1 LT1963A
-2,menos15_maximo_con_carga,V,>= 14.9463,,,,,,margen_budget.v_entrada_minima_rama_v('U2'): tension minima que alcanza U2 LT3015
-2,margen_dropout_U1_v,V,0.87233 .. 1.97236,,,,,,"margen_budget: IN de U1 menos lo que pide la cascada, entre margen_v5_v('U1') y el maximo sano"
-2,margen_dropout_U2_v,V,1.11252 .. 2.17834,,,,,,"margen_budget: IN de U2 menos lo que pide la cascada, entre margen_v5_v('U2') y el maximo sano"
+2,mas15_minimo_con_carga,V,>= 14.9081,,,,,,margen_budget.v_entrada_minima_rama_v('U1'): tension minima que alcanza U1 LT1963A
+2,menos15_maximo_con_carga,V,>= 14.9427,,,,,,margen_budget.v_entrada_minima_rama_v('U2'): tension minima que alcanza U2 LT3015
+2,margen_dropout_U1_v,V,0.86834 .. 1.97236,,,,,,"margen_budget: IN de U1 menos lo que pide la cascada, entre margen_v5_v('U1') y el maximo sano"
+2,margen_dropout_U2_v,V,1.10888 .. 2.17834,,,,,,"margen_budget: IN de U2 menos lo que pide la cascada, entre margen_v5_v('U2') y el maximo sano"
 2,rizado_tras_LC_20MHz,Vpp,<= 0.003,,,,,,rizado_budget: rizado de conmutacion residual tras filtro LC de 22 uH + 47 uF
 2,pico_LC_en_resonancia,dB,<= 2.5,,,,,,rizado_budget: atenuacion en resonancia (filtro LC amortiguado criticamente)
 2b,quitar_mas15_caen_los_dos,si/no,= si,,,,,,"M4 / #339: al perder el crudo positivo, el comparador LM393B apaga U1 y U2"
@@ -46,7 +46,7 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 2b,cortar_linea_secuenciador_apaga_los_dos,si/no,= si,,,,,,M4 / #339: linea open-collector con pulldown apaga ambos por construccion
 2b,ventana_asimetria_caida_ms,ms,<= 10,,,,,,secuencia_budget: retardo maximo entre caida de rieles durante apagado
 2b,suelo_deteccion_v,V,13.7898 .. 14.2898,14.0398,0.25,,,,secuencia_budget.suelo_ventana_v(): umbral inferior de validez de rieles
-2b,techo_deteccion_v,V,14.6621 .. 15.1621,14.9121,0.25,,,,secuencia_budget.techo_ventana_v(): cota superior donde ambos rieles estan sanos
+2b,techo_deteccion_v,V,14.6581 .. 15.1581,14.9081,0.25,,,,secuencia_budget.techo_ventana_v(): cota superior donde ambos rieles estan sanos
 2c,pulsos_reintento_ante_corto,pulsos,4 .. 4,4,0,,,,M5 / recuperacion_budget: 4 pulsos = 1 inicial + 3 reintentos antes de enclavar
 2c,tiempo_espera_reintento_s,s,0.85 .. 1.15,1,0.15,,,,M5 / recuperacion_budget: tiempo de enfriamiento entre intentos de arranque
 2c,debounce_deteccion_ms,ms,85 .. 115,100,15,,,,M5 / recuperacion_budget: ventana de discriminacion contra transitorios de insercion
@@ -86,8 +86,8 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 7,temperatura_carcasa_THN30_c,C,<= 100,,,,,,"T10 / T27 / #492: carcasa de PS1 (THN 30-2422WI) a carga declarada, con el aire junto al modulo a 62.6-65 C (sala de 45 C, caja cerrada); su corte termico empieza en 105 C (traco_thn30wi.pdf p. 3)"
 7,temperatura_carcasa_URB2405_c,C,<= 80,,,,,,T10 / T27: temperatura de carcasa URB2405YMD-20WR3 a 45 C ambiente (< 80 C max)
 7,temperatura_carcasa_THN20_c,C,<= 100,,,,,,"T10 / T27 / #492: carcasa de PS3, PS4 y PS5 (THN 20-2411WI / -2413WI) a carga declarada, con el aire junto al modulo a 62.6-65 C (sala de 45 C, caja cerrada); la carcasa admite 105 C max. (traco_thn20wi.pdf p. 3)"
-7,U1_LT1963A_subida_aleta_30min_k,K,<= 55.3486,,,,,,"#478: aleta de U1 sobre el aire del banco tras 30 min entregando 450 mA (1.75 W); con el aire del cajon (62.6 C) y theta_JC 4 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es GND (GNDA, lt1963a p. 2): termopar aislado o IR sobre cinta Kapton"
-7,U2_LT3015_subida_aleta_30min_k,K,<= 56.8963,,,,,,"#478: aleta de U2 sobre el aire del banco tras 30 min entregando 450 mA (1.82 W); con el aire del cajon (62.6 C) y theta_JC 3 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es IN, a -15,5 V: termopar aislado o IR sobre cinta Kapton"
+7,U1_LT1963A_subida_aleta_30min_k,K,<= 55.3563,,,,,,"#478: aleta de U1 sobre el aire del banco tras 30 min entregando 450 mA (1.75 W); con el aire del cajon (62.6 C) y theta_JC 4 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es GND (GNDA, lt1963a p. 2): termopar aislado o IR sobre cinta Kapton"
+7,U2_LT3015_subida_aleta_30min_k,K,<= 56.902,,,,,,"#478: aleta de U2 sobre el aire del banco tras 30 min entregando 450 mA (1.82 W); con el aire del cajon (62.6 C) y theta_JC 3 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es IN, a -15,5 V: termopar aislado o IR sobre cinta Kapton"
 7,potencia_derating_ladrillo_45C_w,W,80.5 .. 84.5,82.5,2,,,,"curvas.derating('TE90A2449F01', 45) * 90.0: potencia garantizada del ladrillo a 45 C"
 8,disparo_crowbar_rack+12,V,13.367 .. 14.3695,13.7974,,,,,"check_absmax: disparo de proteccion en rack+12, banda de la hoja del TL431BI (banda_disparo_v)"
 8,disparo_crowbar_rack-12,V,13.367 .. 14.3695,13.7974,,,,,"check_absmax: disparo de proteccion en rack-12, banda de la hoja del TL431BI (banda_disparo_v)"

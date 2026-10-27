@@ -496,12 +496,19 @@ def _contrato(puntos: list[Punto], filas: dict[str, dict]) -> None:
     viejas = []
     for pt in puntos:
         fila = filas.get(pt.clave)
-        if fila is None or pt.predicho is None or not fila.get("predicho", ""):
+        if fila is None:
+            continue
+        # El criterio es lo que lee quien mide; juzga() usa el del codigo, asi
+        # que uno viejo en la hoja no saldria rojo en ningun otro sitio.
+        if fila.get("criterio", "") != pt.rango():
+            viejas.append(f"{pt.clave}: criterio de la hoja {fila.get('criterio', '')!r} "
+                          f"!= codigo {pt.rango()!r}")
+        if pt.predicho is None or not fila.get("predicho", ""):
             continue
         if abs(float(fila["predicho"]) - pt.predicho) > 1e-5 * max(1.0, abs(pt.predicho)):
             viejas.append(f"{pt.clave}: hoja {fila['predicho']} != codigo {pt.predicho:g}")
     assert not viejas, (
-        f"la hoja de campo tiene predicciones viejas: {viejas}. Corre --plantilla"
+        f"la hoja de campo tiene predicciones o criterios viejos: {viejas}. Corre --plantilla"
     )
     faltan = [pt.clave for pt in puntos if pt.clave not in filas]
     assert not faltan or not filas, (
@@ -571,7 +578,7 @@ def main(argv: list[str]) -> int:
               f"por medir en la placa fisica. La placa R no existe todavia: "
               f"esto es lo correcto, y sera 0 el dia que se mida. Lo que este "
               f"guion ya hace es impedir que la hoja de campo salga con un "
-              f"paso menos o con una prediccion vieja.")
+              f"paso menos, una prediccion vieja o un criterio viejo.")
         return 2
 
     print(f"\nOK: {medidos} criterios medidos y dentro de rango.")
