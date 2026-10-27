@@ -7,8 +7,12 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 0,aislamiento_GNDA_a_GNDD,Mohm,>= 1000,,,,,,T16 / M1: separacion galvanica entre masa analogica y masa digital (barrera URB2405 + ISO1541 > 1000 Mohm)
 0,mazo_pantalla_par_propio_desde_J3,si/no,= si,,,,,,"T26 (#477): la pantalla lleva su propio par, +12 V y retorno, de J3.1 y J3.2 hasta la pantalla, sin pasar por el bus de la fila; en J3.1 y J3.2 los dos hilos de la misma seccion (phoenix-mkds-1715747-2018-11.pdf p. 2-3)"
 1,polaridad_X1_arnes_suelto_J1_1_a_J1_2,V,22.8 .. 25.2,,,,,,"#487 / junta sec. 3.1: con el ladrillo en X1 y el arnes suelto de J1, del hilo de J1.1 al de J1.2; negativo = arnes invertido, ~0 V = polos en corto (ladrillo en hiccup)"
+1,inversion_J1_corriente_chasis_tierra,uA,<= 10,,,,,,"H-V5-INVERSION / P7 (d): fuente de banco de 24 V con el negativo a tierra y los polos AL REVES en J1 (J1.1 a su negativo, J1.2 a su positivo), J5 puesto y un amperimetro entre chasis y tierra: lo que deja pasar Q7 apagado (IDSS 1 uA a 48 V, csd18534q5a.pdf p. 3)"
+1,inversion_J1_U16_no_arranca,si/no,= si,,,,,,"H-V5-INVERSION / P7 (d): en la misma prueba, U16 no arranca (+24V_PROT y +24V_SW se quedan en 0 V y D18 no enciende)"
 1,tension_ladrillo_vacio,V,23.52 .. 24.48,24,0.48,,,,T09 / L04: salida continua nominal del ladrillo 24 V en vacio
 1,caida_LM74502_ideal_diode,mV,<= 50,,,,,,M5 / L04: caida directa del controlador de diodo ideal + FET inverso
+1,caida_Q7_retorno_plena_carga,mV,<= 60,,,,,,"H-V5-INVERSION / P7 (d): V(GND24 - RET24_RAW) con el cordon a plena carga declarada (2.89 A x 15 mohm = 43 mV, ladrillo_budget)"
+1,VGS_Q7_normal,V,12 .. 15.6,,,,,,"H-V5-INVERSION / P7 (d): G_Q7 menos GND24 en marcha, con D20 y R85: sobre los 12 V (el RDS(on) de la hoja es a 10 V, csd18534q5a.pdf p. 3) y bajo el V_Z max de D20 (check_absmax.py, diodes_bzt52.pdf p. 2)"
 1,ron_TPS26631_efuse_U16,mohm,19 .. 45,,,,,,"M5: caida de U16 / corriente del cordon, con >= 0,6 A (tps2663.pdf p. 7)"
 1,THN30_mas12_vacio,V,11.76 .. 12.24,12,0.24,,,,M1 / T10: THN30_mas12 en vacio a 24 V de entrada
 1,THN30_mas12_a_nominal,V,11.76 .. 12.24,12,0.24,,,,M1 / T10: THN30_mas12 con carga resistiva a corriente nominal
@@ -29,8 +33,8 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 1,THN20_menos15_a_nominal,V,-15.81 .. -15.19,-15.5,0.31,,,,M1 / T10: THN20_menos15 con carga resistiva a corriente nominal
 1,THN20_menos15_rizado_20MHz,Vpp,<= 0.1,,,,,,T12 / L05: rizado y ruido de conmutacion a 20 MHz de ancho de banda
 1,potencia_ladrillo_reposo_w,W,<= 2.5,,,,,,ladrillo_budget: consumo propio del ladrillo y convertidores en vacio
-1,potencia_ladrillo_sostenida_w,W,56.3832 .. 65.7487,,,,,,"ladrillo_budget: potencia que da el ladrillo a carga sostenida, entre los rendimientos tipicos (-10 %) y salida_ladrillo_w()"
-1,corriente_ladrillo_sostenida_a,A,2.23743 .. 2.88372,,,,,,"ladrillo_budget: corriente del cordon a carga sostenida, del suelo a +5 % al peor caso corriente_del_cordon_a()"
+1,potencia_ladrillo_sostenida_w,W,56.3832 .. 65.8789,,,,,,"ladrillo_budget: potencia que da el ladrillo a carga sostenida, entre los rendimientos tipicos (-10 %) y salida_ladrillo_w()"
+1,corriente_ladrillo_sostenida_a,A,2.23743 .. 2.88943,,,,,,"ladrillo_budget: corriente del cordon a carga sostenida, del suelo a +5 % al peor caso corriente_del_cordon_a()"
 2,mas15_minimo_con_carga,V,>= 14.9121,,,,,,margen_budget.v_entrada_minima_rama_v('U1'): tension minima que alcanza U1 LT1963A
 2,menos15_maximo_con_carga,V,>= 14.9463,,,,,,margen_budget.v_entrada_minima_rama_v('U2'): tension minima que alcanza U2 LT3015
 2,margen_dropout_U1_v,V,0.87233 .. 1.97236,,,,,,"margen_budget: IN de U1 menos lo que pide la cascada, entre margen_v5_v('U1') y el maximo sano"
@@ -78,25 +82,25 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 6,telemetria_ADS1115_AIN3_-12 V rack_vs_multimetro,V,-12.12 .. -11.88,-12,0.12,,,,T15: canal AIN3 (-12 V rack) frente a multimetro
 6,temperatura_U11_TMP1075_c,C,15 .. 65,,,,,,T15: sensor I2C local TMP1075 frente a termopar ambiental
 6,aislamiento_I2C_digital_ISO1541,Mohm,>= 1000,,,,,,T16: aislamiento de lineas SDA/SCL aisladas entre micro y cerebro
-7,calor_interior_cajon_w,W,56.3832 .. 65.3096,,,,,,"ladrillo_budget: calor dentro del cajon, entre los rendimientos tipicos (-10 %) y el peor caso calor_del_cajon_w()"
+7,calor_interior_cajon_w,W,56.3832 .. 65.4381,,,,,,"ladrillo_budget: calor dentro del cajon, entre los rendimientos tipicos (-10 %) y el peor caso calor_del_cajon_w()"
 7,temperatura_carcasa_THN30_c,C,<= 100,,,,,,"T10 / T27 / #492: carcasa de PS1 (THN 30-2422WI) a carga declarada, con el aire junto al modulo a 62.6-65 C (sala de 45 C, caja cerrada); su corte termico empieza en 105 C (traco_thn30wi.pdf p. 3)"
 7,temperatura_carcasa_URB2405_c,C,<= 80,,,,,,T10 / T27: temperatura de carcasa URB2405YMD-20WR3 a 45 C ambiente (< 80 C max)
 7,temperatura_carcasa_THN20_c,C,<= 100,,,,,,"T10 / T27 / #492: carcasa de PS3, PS4 y PS5 (THN 20-2411WI / -2413WI) a carga declarada, con el aire junto al modulo a 62.6-65 C (sala de 45 C, caja cerrada); la carcasa admite 105 C max. (traco_thn20wi.pdf p. 3)"
-7,U1_LT1963A_subida_aleta_30min_k,K,<= 55.3506,,,,,,"#478: aleta de U1 sobre el aire del banco tras 30 min entregando 450 mA (1.75 W); con el aire del cajon (62.6 C) y theta_JC 4 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es GND (GNDA, lt1963a p. 2): termopar aislado o IR sobre cinta Kapton"
-7,U2_LT3015_subida_aleta_30min_k,K,<= 56.8983,,,,,,"#478: aleta de U2 sobre el aire del banco tras 30 min entregando 450 mA (1.82 W); con el aire del cajon (62.6 C) y theta_JC 3 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es IN, a -15,5 V: termopar aislado o IR sobre cinta Kapton"
+7,U1_LT1963A_subida_aleta_30min_k,K,<= 55.3717,,,,,,"#478: aleta de U1 sobre el aire del banco tras 30 min entregando 450 mA (1.75 W); con el aire del cajon (62.6 C) y theta_JC 4 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es GND (GNDA, lt1963a p. 2): termopar aislado o IR sobre cinta Kapton"
+7,U2_LT3015_subida_aleta_30min_k,K,<= 56.9194,,,,,,"#478: aleta de U2 sobre el aire del banco tras 30 min entregando 450 mA (1.82 W); con el aire del cajon (62.6 C) y theta_JC 3 C/W la union queda <= 125 C (tj_budget.subida_max_aleta_k). La aleta es IN, a -15,5 V: termopar aislado o IR sobre cinta Kapton"
 7,potencia_derating_ladrillo_45C_w,W,80.5 .. 84.5,82.5,2,,,,"curvas.derating('TE90A2449F01', 45) * 90.0: potencia garantizada del ladrillo a 45 C"
 8,disparo_crowbar_rack+12,V,13.367 .. 14.3695,13.7974,,,,,"check_absmax: disparo de proteccion en rack+12, banda de la hoja del TL431BI (banda_disparo_v)"
 8,disparo_crowbar_rack-12,V,13.367 .. 14.3695,13.7974,,,,,"check_absmax: disparo de proteccion en rack-12, banda de la hoja del TL431BI (banda_disparo_v)"
 8,disparo_crowbar_rack+5,V,5.53362 .. 5.85716,5.66365,,,,,"check_absmax: disparo de proteccion en rack+5, banda de la hoja del TL431BI (banda_disparo_v)"
 8,crowbar_rack+12_se_suelta_solo,si/no,registro,,,,,,"#476 REGISTRO: tras un pulso de puerta (>= 30 mA, check_absmax.corriente_puerta_a), el convertidor de rack+12 suelta el SCR y el riel vuelve sin quitar la entrada"
 8,crowbar_rack+12_corriente_enclavado_a,A,registro,,,,,,"#476 REGISTRO: corriente media por el SCR de rack+12 enclavado, y si es constante o a pulsos (osciloscopio en el shunt o pinza)"
-8,crowbar_rack+12_subida_base_scr_30min_k,K,<= 48.7177,,,,,,#476: base del SCR de rack+12 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
+8,crowbar_rack+12_subida_base_scr_30min_k,K,<= 48.7388,,,,,,#476: base del SCR de rack+12 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
 8,crowbar_rack-12_se_suelta_solo,si/no,registro,,,,,,"#476 REGISTRO: tras un pulso de puerta (>= 30 mA, check_absmax.corriente_puerta_a), el convertidor de rack-12 suelta el SCR y el riel vuelve sin quitar la entrada"
 8,crowbar_rack-12_corriente_enclavado_a,A,registro,,,,,,"#476 REGISTRO: corriente media por el SCR de rack-12 enclavado, y si es constante o a pulsos (osciloscopio en el shunt o pinza)"
-8,crowbar_rack-12_subida_base_scr_30min_k,K,<= 48.7177,,,,,,#476: base del SCR de rack-12 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
+8,crowbar_rack-12_subida_base_scr_30min_k,K,<= 48.7388,,,,,,#476: base del SCR de rack-12 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
 8,crowbar_rack+5_se_suelta_solo,si/no,registro,,,,,,"#476 REGISTRO: tras un pulso de puerta (>= 30 mA, check_absmax.corriente_puerta_a), el convertidor de rack+5 suelta el SCR y el riel vuelve sin quitar la entrada"
 8,crowbar_rack+5_corriente_enclavado_a,A,registro,,,,,,"#476 REGISTRO: corriente media por el SCR de rack+5 enclavado, y si es constante o a pulsos (osciloscopio en el shunt o pinza)"
-8,crowbar_rack+5_subida_base_scr_30min_k,K,<= 53.2677,,,,,,#476: base del SCR de rack+5 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
+8,crowbar_rack+5_subida_base_scr_30min_k,K,<= 53.2888,,,,,,#476: base del SCR de rack+5 sobre el aire del banco tras 30 min enclavado; con el aire del cajon (62.6 C) la union queda <= 125 C (check_absmax.subida_max_scr_k)
 8,fusible_abre_sin_dano_a_pistas,si/no,= si,,,,,,check_absmax: fusible Bourns SF-1206F corta corriente de falta sin danar PCB
 8,pico_transitorio_U1_con_clamp_v,V,<= 18.5,16.4193,,,,,"check_absmax (#334): escalon de 36 V en la salida de PS4 con la rama a 15,5 V y cargada; U19 corta por disparo rapido. El peor caso de la hoja queda en 17.40 V < 20.0 V absmax"
 8,ruido_riel_ultra_20MHz_uvrms,uVrms,<= 0.3,,,,,,rizado_budget: ruido residual total de la cascada en ancho de banda de 20 MHz

@@ -37,7 +37,10 @@ from check_netlist import NET, leer, red_de  # noqa: E402
 # "4-pin Snap n Lock, Kycon Kpp - 4P or equivalent (Pins 1,3 = (+); pins 2,4 = (-))".
 LADRILLO = "TE90 opcion 49"
 POLO_PIN = {1: "+", 3: "+", 2: "-", 4: "-"}
-POLO_RED = {"+24V_RAW": "+", "GND24": "-"}
+# J1.2 es RET24_RAW desde que Q7 bloquea el retorno (H-V5-INVERSION): el polo
+# negativo del conector ya no esta en GND24, y un J1.2 en GND24 seria una
+# placa sin Q7.
+POLO_RED = {"+24V_RAW": "+", "RET24_RAW": "-"}
 
 
 def _ladrillo_budget():
@@ -70,7 +73,7 @@ def fallos(mapa: dict[int, list[int]], red_j1: dict[int, str | None],
     for j in (1, 2):
         red = red_j1.get(j)
         if red not in POLO_RED:
-            out.append(f"J1.{j} esta en {red!r}, que no es +24V_RAW ni GND24")
+            out.append(f"J1.{j} esta en {red!r}, que no es +24V_RAW ni RET24_RAW")
             continue
         pines = mapa.get(j, [])
         if not pines:
@@ -91,6 +94,12 @@ def _canario(red_j1: dict[int, str | None], n: int) -> None:
                          ("invertido", {1: [2, 4], 2: [1, 3]}),
                          (f"con otro numero de pines que los {n} por polo", otro_n)):
         assert fallos(mapa, red_j1, n), f"canario: el mapa {nombre} pasa la puerta"
+    # La red de J1.2: con el mapa bueno, GND24 (la placa sin Q7) y +24V_RAW (un
+    # corto del conector) tienen que fallar, y RET24_RAW pasar.
+    bueno = {1: [1, 3][:n], 2: [2, 4][:n]}
+    for nombre, red in (("J1.2 en GND24 (sin Q7)", "GND24"), ("J1.2 en +24V_RAW", "+24V_RAW")):
+        assert fallos(bueno, {1: "+24V_RAW", 2: red}, n), f"canario: {nombre} pasa la puerta"
+    assert not fallos(bueno, {1: "+24V_RAW", 2: "RET24_RAW"}, n), "canario: el mapa bueno no pasa"
 
 
 def main() -> int:

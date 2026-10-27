@@ -34,9 +34,12 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
          * sin eFuse, sin disparo rapido, o sin disparo rapido y sensando
            DESPUES del LC: ROJO. El disparo rapido es lo que salva a `U1`, y
            su retardo maximo tiene canario.
-       El TVS **Bourns SMBJ16A** (`bourns_smbj.pdf` p. 2: `V_WM = 16,0 V`,
-       `V_BR = 17,8..19,7 V`) en `U1 IN` queda de respaldo: con el tope no
-       llega a conducir.
+       El TVS **SMBJ16A** (`D10`, `bourns_smbj.pdf` p. 2: `V_WM = 16,0 V`,
+       `V_BR = 17,8..19,7 V`) en `U1 IN` va SIN MONTAR (junta de piezas v5
+       sec. 4.6): con el tope el pico es de `17,40 V` y no llega a su `V_BR`
+       minimo, asi que no conduce en ningun caso modelado. El modelo lee de
+       `bom.csv` si esta montado (`montada("D10")`), y `_guarda_d10_sobra()` es
+       la que respalda que sobra.
 
   2. **`U2` (`LT3015`, D-F9, T18):**
      - `IN Pin Voltage` maximo absoluto de **+-33,0 V** (`lt3015-rev-b.pdf` p. 2),
@@ -67,7 +70,8 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
        `5,66 V` nominal saltaba dentro del transitorio sano.
 
   5. **`U18` (`TPS709`, el LDO del supervisor M5):** `R64` y el zener `D2`
-     sujetan su entrada cuando `D1` recorta un transitorio a `42,1 V`.
+     sujetan su entrada cuando `D1` (`SMBJ33CA`) recorta un transitorio a
+     `53,3 V`.
 
   6. **D-F6 por dentro:** la corriente de puerta que el PNP puede dar con
      `R_GK` en el disparo mas bajo, y el `I^2t` de los fusibles contra el del SCR.
@@ -93,6 +97,24 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
        se apaga con el en vez de quedarse con el OVP del THN (`112..164 %`, hasta
        `8,20 V`, p. 2). Con ella se apagan la telemetria, el `+5 V` auxiliar del
        modulo 2 (`J6`) y el pull-up de `SHDN_CASCADE`, que para la cascada.
+
+  8. **`D1` (`SMBJ33CA`) y todo lo que cuelga de `+24V_RAW` (junta de piezas v5
+     sec. 3.8, #494; retorno por `Q7`, P7 (d)):**
+     - `V_BR` minimo `36,7 V` contra el OVP del TE90 (`130..150 %` de 24 V =
+       `36,0 V`, `ae-TE90-datasheet.pdf` p. 2) y el de `U16` (`32,7 V` nominal,
+       de `R12`, `R13` y `R14`): `D1` no conduce con el ladrillo en su OVP ni
+       antes de que `U16` corte.
+     - Con `V_C = 53,3 V` a `I_PP = 11,3 A` (`bourns_smbj.pdf` p. 2), todo lo
+       que esta entre `+24V_RAW` y `GND24` lo aguanta: `C10` (su tension sale
+       de `bom.csv`), `VS` del `LM74502` (`65 V`, `lm74502.pdf` p. 4), `IN` de
+       `U16` (`67 V`, `tps2663.pdf` p. 5) y el `VDS` de `Q2` y `Q7` (`60 V`,
+       `csd18534q5a.pdf` p. 1 y `BVDSS` de p. 3).
+     - La puerta de `Q7`: el zener `D20` (`BZT52C15`) fija `VGS` en su `V_Z`
+       maximo (`15,6 V`, `diodes_bzt52.pdf` p. 2) contra los `+-20 V` de
+       `csd18534q5a.pdf` p. 1.
+     - La hoja de `D1` que se cita es la de Bourns (valores JEDEC); la de
+       Littelfuse (la pieza que se compra, C83325) no esta en el arbol, y LCSC
+       lista las mismas cifras.
 
 Cada fila de `absmax.csv` sale de un modelo o de la BOM y se comprueba contra
 el: ninguna se cree.
@@ -138,7 +160,7 @@ if DIR not in sys.path:
     sys.path.insert(0, DIR)
 sys.path.insert(0, os.path.join(DIR, "..", "..", "tools"))
 
-from bom_valores import filas, valor  # noqa: E402
+from bom_valores import filas, montada, tension_v, valor  # noqa: E402
 from canario import borde_rojo  # noqa: E402
 
 _MODULOS: dict = {}
@@ -251,7 +273,11 @@ R_DAMP_OHM = valor("R37") + ESR_CD_OHM
 # MAXIMO: con el minimo (que es lo que usaba #474) el TVS recorta antes y el
 # modelo sale optimista.
 V_BR_SMBJ16A_V = 19.70
+V_BR_MIN_SMBJ16A_V = 17.80             # bourns_smbj.pdf p. 2: V_BR minimo, con el que D10 conduce primero
 R_DIN_SMBJ16A_OHM = 0.35               # pendiente dinamica del SMBJ16A en conduccion
+# D10 (SMBJ16A) va SIN MONTAR (junta de piezas v5 sec. 4.6): el modelo lo lee
+# de bom.csv y no lo supone.
+D10_MONTADO = montada("D10")
 
 # --- Parametros de D-F6 (NXP BT151-500R + TI TL431BI) -----------------------
 I_MANTENIMIENTO_BT151_A = 0.040        # nxp-bt151-500r.pdf p. 2: I_H max 40 mA
@@ -399,15 +425,39 @@ def subida_max_scr_k(riel: str, t_aire_c: float) -> float:
 
 
 # --- U18 (TPS709) detras de R64 + D2 ----------------------------------------
-V_C_SMBJ26CA_V = 42.1                  # bourns_smbj.pdf p. 2: V_C a I_PP = 14,3 A
-V_BR_MAX_SMBJ26CA_V = 31.9             # bourns_smbj.pdf p. 2: por debajo, D1 casi no conduce
+# D1 = SMBJ33CA (Littelfuse C83325). Las cifras son de la hoja de BOURNS, la
+# unica en el arbol (bourns_smbj.pdf p. 2, JEDEC, bidireccional "SMBJ33CA"); LCSC
+# lista las mismas para la Littelfuse. Si la de Littelfuse difiriera, mandaria ella.
+MPN_D1 = "SMBJ33CA"
+V_RWM_SMBJ33CA_V = 33.0                # bourns_smbj.pdf p. 2: V_RWM
+V_BR_MIN_SMBJ33CA_V = 36.7             # bourns_smbj.pdf p. 2: V_BR a 1 mA, minimo
+V_BR_MAX_SMBJ33CA_V = 40.6             # bourns_smbj.pdf p. 2: V_BR a 1 mA, maximo: por debajo D1 casi no conduce
+V_C_SMBJ33CA_V = 53.3                  # bourns_smbj.pdf p. 2: V_C a I_PP = 11,3 A (10/1000 us)
 V_IN_MAX_U18_V = 30.0                  # tps709.pdf p. 4: maximo de operacion
 V_ABSMAX_U18_V = 32.0                  # tps709.pdf p. 4
 # diodes_bzt52.pdf p. 2: (V_Z max, I_ZT, Z_ZT max) por valor; P_D 370 mW a 25 C.
-ZENER_BZT52 = {"BZT52C18": (19.1, 5e-3, 45.0), "BZT52C20": (21.2, 5e-3, 55.0),
+ZENER_BZT52 = {"BZT52C15": (15.6, 5e-3, 30.0), "BZT52C18": (19.1, 5e-3, 45.0), "BZT52C20": (21.2, 5e-3, 55.0),
                "BZT52C22": (23.3, 5e-3, 55.0), "BZT52C24": (25.6, 5e-3, 70.0),
                "BZT52C27": (28.9, 2e-3, 80.0), "BZT52C30": (32.0, 2e-3, 80.0)}
 P_D_BZT52_W = 0.370
+
+# --- lo que cuelga de +24V_RAW con D1 en V_C (D1, Q7 y su puerta) ------------
+V_OVP_MAX_TE90_V = 1.50 * 24.0         # ae-TE90-datasheet.pdf p. 2: OVP 130..150 % de la salida
+V_LADRILLO_MAX_V = 24.0 * 1.05         # salida nominal +5 % (ladrillo_budget.TOL_LADRILLO): lo mas alto en servicio
+V_ABSMAX_VS_LM74502_V = 65.0           # lm74502.pdf p. 4: VS to GND -65..65 V
+V_ABSMAX_IN_TPS2663_V = 67.0           # tps2663.pdf p. 5: IN, OUT... -0,3..67 V
+MPN_Q2_Q7 = "CSD18534Q5A"
+V_DS_MAX_CSD18534_V = 60.0             # csd18534q5a.pdf p. 1: VDS 60 V (BVDSS 60 V min, p. 3)
+V_GS_MAX_CSD18534_V = 20.0             # csd18534q5a.pdf p. 1: VGS +-20 V
+
+
+def v_ovp_u16_v(con_tolerancia: bool = True) -> float:
+    """OVP de U16 desde el divisor de la placa: V(OVPR) * (R12 + R13 + R14) / R14.
+    Con `con_tolerancia`, el borde ALTO de la banda (+-2 % de V(OVPR), tps2663.pdf
+    p. 6, y las dos resistencias al 0,1 %): el que importa para D1, que tiene que
+    quedar por encima."""
+    v = V_OVPR_NOM_V * (valor("R12") + valor("R13") + valor("R14")) / valor("R14")
+    return v * (1.0 + TOL_OVPR_TPS26631_FRAC + TOL_DIVISOR_01PCT_FRAC) if con_tolerancia else v
 
 
 def u18_peor(v_entrada_v: float, r64_ohm: float | None = None) -> dict[str, float]:
@@ -429,7 +479,8 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
                t_corte_s: float = T_CORTE_OVP_MAX_S,
                sensa_antes_del_lc: bool = True,
                con_efuse: bool = True,
-               con_tvs: bool = True,
+               con_tvs: bool | None = None,
+               v_br_tvs_v: float = V_BR_SMBJ16A_V,
                con_disparo_rapido: bool = True,
                t_disparo_rapido_s: float = T_FASTTRIP_MAX_S,
                i_disparo_rapido_a: float | None = None,
@@ -444,11 +495,15 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
     C1 en el borde bajo de su tolerancia. Sin el, el banco: 15,50 V, la rama
     cargada y las piezas en su valor central.
 
+    `con_tvs=None`: el TVS D10 esta si bom.csv lo monta (hoy no).
+
     Estado:
       i_L: corriente en L2 (A)
       v_1: tension en el condensador principal C3 = entrada de U1 (V)
       v_d: tension en el condensador de amortiguacion C1 (V)
     """
+    if con_tvs is None:
+        con_tvs = D10_MONTADO
     if peor_caso:
         v0, i_l, i_carga = v_sano_max_u1_v(), 0.0, 0.0
         c_lc, c_damp = (C_LC_F * (1.0 - TOL_ELECTROLITICO_FRAC),
@@ -492,8 +547,8 @@ def escalon_lc(*, v_fallo_v: float = 36.0,
 
         i_damp = (v1 - vd) / R_DAMP_OHM
         i_tvs = 0.0
-        if con_tvs and v1 > V_BR_SMBJ16A_V:
-            i_tvs = (v1 - V_BR_SMBJ16A_V) / R_DIN_SMBJ16A_OHM
+        if con_tvs and v1 > v_br_tvs_v:
+            i_tvs = (v1 - v_br_tvs_v) / R_DIN_SMBJ16A_OHM
 
         dv1 = (il - i_carga - i_damp - i_tvs) / c_lc
         dvd = i_damp / c_damp
@@ -551,6 +606,20 @@ P_BASE: dict[str, float] = {
     "v_disparo_u1_v": V_DISPARO_MAX_U1_V,
     "i_mantenimiento_scr_a": I_MANTENIMIENTO_BT151_A,
     "r64_ohm": valor("R64"),
+    "v_rwm_d1_v": V_RWM_SMBJ33CA_V,
+    "v_ladrillo_max_v": V_LADRILLO_MAX_V,
+    "v_br_min_d1_v": V_BR_MIN_SMBJ33CA_V,
+    "v_c_d1_v": V_C_SMBJ33CA_V,
+    "v_ovp_te90_max_v": V_OVP_MAX_TE90_V,
+    "v_ovp_u16_max_v": v_ovp_u16_v(),
+    "c10_v": tension_v("C10"),
+    "vs_u15_v": V_ABSMAX_VS_LM74502_V,
+    "in_u16_v": V_ABSMAX_IN_TPS2663_V,
+    "vds_q2_v": V_DS_MAX_CSD18534_V,
+    "vds_q7_v": V_DS_MAX_CSD18534_V,
+    "vz_max_d20_v": ZENER_BZT52[filas()["D20"]["value"]][0],
+    "vgs_max_q7_v": V_GS_MAX_CSD18534_V,
+    "v_br_min_d10_v": V_BR_MIN_SMBJ16A_V,
     "i_gt_max_a": I_GT_MAX_BT151_A,
     "factor_despeje_i2t": FACTOR_DESPEJE_I2T,
     "c39_uf": valor("C39") * (1.0 - TOL_ELECTROLITICO_FRAC) * 1e6,
@@ -559,13 +628,42 @@ P_BASE: dict[str, float] = {
 
 
 def _guarda_u18(p: dict[str, float]) -> None:
-    r = u18_peor(V_C_SMBJ26CA_V, p["r64_ohm"])
+    r = u18_peor(V_C_SMBJ33CA_V, p["r64_ohm"])
     assert r["v_in_v"] <= V_IN_MAX_U18_V, (
-        f"U18 IN sube a {r['v_in_v']:.2f} V > {V_IN_MAX_U18_V:.0f} V con D1 en {V_C_SMBJ26CA_V} V")
-    c = u18_peor(V_BR_MAX_SMBJ26CA_V, p["r64_ohm"])
+        f"U18 IN sube a {r['v_in_v']:.2f} V > {V_IN_MAX_U18_V:.0f} V con D1 en {V_C_SMBJ33CA_V} V")
+    c = u18_peor(V_BR_MAX_SMBJ33CA_V, p["r64_ohm"])
     assert c["p_z_w"] <= P_D_BZT52_W, (
         f"D2 disipa {c['p_z_w'] * 1e3:.0f} mW continuos > {P_D_BZT52_W * 1e3:.0f} mW "
-        f"con la entrada en {V_BR_MAX_SMBJ26CA_V} V")
+        f"con la entrada en {V_BR_MAX_SMBJ33CA_V} V")
+
+
+def _guarda_d1(p: dict[str, float]) -> None:
+    """D1 no conduce con el ladrillo en OVP, y todo lo que cuelga de +24V_RAW
+    aguanta lo que D1 deja pasar."""
+    assert p["v_rwm_d1_v"] > p["v_ladrillo_max_v"], (
+        f"D1 conduce en servicio: V_RWM {p['v_rwm_d1_v']:.1f} V <= {p['v_ladrillo_max_v']:.1f} V del "
+        f"ladrillo en su borde alto")
+    assert p["v_br_min_d1_v"] > p["v_ovp_te90_max_v"], (
+        f"D1 conduce con el TE90 en OVP: V_BR minimo {p['v_br_min_d1_v']:.1f} V <= "
+        f"OVP maximo del ladrillo {p['v_ovp_te90_max_v']:.1f} V (ae-TE90-datasheet.pdf p. 2)")
+    assert p["v_br_min_d1_v"] > p["v_ovp_u16_max_v"], (
+        f"D1 conduce antes de que U16 corte: V_BR minimo {p['v_br_min_d1_v']:.1f} V <= "
+        f"OVP maximo de U16 {p['v_ovp_u16_max_v']:.2f} V")
+    for nombre, limite in (("C10", p["c10_v"]), ("VS de U15", p["vs_u15_v"]), ("IN de U16", p["in_u16_v"]),
+                           ("VDS de Q2", p["vds_q2_v"]), ("VDS de Q7", p["vds_q7_v"])):
+        assert p["v_c_d1_v"] <= limite, (
+            f"{nombre} aguanta {limite:.0f} V y D1 deja pasar {p['v_c_d1_v']:.1f} V (V_C)")
+    assert p["vz_max_d20_v"] < p["vgs_max_q7_v"], (
+        f"VGS de Q7: D20 sube a {p['vz_max_d20_v']:.1f} V y la puerta aguanta {p['vgs_max_q7_v']:.0f} V")
+
+
+def _guarda_d10_sobra(p: dict[str, float]) -> None:
+    """D10 no conduce en ningun caso modelado: el pico de U1 sin el queda por
+    debajo de su V_BR MINIMO. Es lo que permite dejarlo sin montar."""
+    r = escalon_lc(v_fallo_v=36.0, con_tvs=False)
+    assert r["v_pico_v"] < p["v_br_min_d10_v"], (
+        f"D10 conduciria: U1 llega a {r['v_pico_v']:.2f} V sin el y su V_BR minimo es "
+        f"{p['v_br_min_d10_v']:.1f} V")
 
 
 def _guarda_puerta_scr(p: dict[str, float]) -> None:
@@ -595,7 +693,6 @@ def _guarda_u1_rk4(p: dict[str, float]) -> None:
         t_corte_s=p["t_corte_us"] * 1e-6,
         sensa_antes_del_lc=True,
         con_efuse=True,
-        con_tvs=True,
         t_disparo_rapido_s=p["t_disparo_rapido_us"] * 1e-6,
         i_disparo_rapido_a=p["i_disparo_rapido_a"],
     )
@@ -629,7 +726,7 @@ def leer_csv() -> list[dict[str, str]]:
 
 
 def demo() -> int:
-    print("check_absmax v5: modelo RK4 de #334 (TPS26631 + SMBJ16A) y crowbars D-F6\n")
+    print("check_absmax v5: modelo RK4 de #334 (TPS26631; D10 SMBJ16A sin montar), D1 SMBJ33CA y crowbars D-F6\n")
     tabla = leer_csv()
     filas_bom = filas()
 
@@ -637,9 +734,14 @@ def demo() -> int:
         f"L2 es {filas_bom['L2']['mpn']} y la curva L-I del modelo es de la {MPN_L2}")
     assert abs(CURVA_L2_A_UH[0][1] * 1e-6 - valor("L2")) <= 0.05 * valor("L2"), (
         "la curva de L2 no arranca en el valor de la BOM")
+    assert filas_bom["D1"]["mpn"] == MPN_D1, (
+        f"D1 es {filas_bom['D1']['mpn']} y las cifras del modelo son de la {MPN_D1}")
+    assert filas_bom["Q2"]["mpn"] == filas_bom["Q7"]["mpn"] == MPN_Q2_Q7, (
+        f"Q2 es {filas_bom['Q2']['mpn']} y Q7 {filas_bom['Q7']['mpn']}; los limites del modelo son del {MPN_Q2_Q7}")
     con_tope = escalon_lc(v_fallo_v=36.0)
     banco = escalon_lc(v_fallo_v=36.0, peor_caso=False)
     sin_tope = escalon_lc(v_fallo_v=36.0, con_efuse=False, con_tvs=False)
+    con_d10 = escalon_lc(v_fallo_v=36.0, con_tvs=True, v_br_tvs_v=V_BR_MIN_SMBJ16A_V)
     sin_rapido = escalon_lc(v_fallo_v=36.0, con_tvs=False, con_disparo_rapido=False)
     post_lc = escalon_lc(v_fallo_v=36.0, sensa_antes_del_lc=False, con_tvs=False,
                          con_disparo_rapido=False)
@@ -653,7 +755,14 @@ def demo() -> int:
     print(f"    [verde] peor caso (sano max, sin carga, L2/C3/C1 -20 %): pico = "
           f"{con_tope['v_pico_v']:.2f} V <= {V_ABSMAX_U1_V:.1f} V; L2 llega a "
           f"{con_tope['i_max_a']:.1f} A (curva hasta {CURVA_L2_A_UH[-1][0]:.0f} A); U19 abre a "
-          f"{con_tope['t_abre_us']:.1f} us (energia TVS {con_tope['energia_tvs_mj']:.2f} mJ)")
+          f"{con_tope['t_abre_us']:.1f} us (D10 {'montado' if D10_MONTADO else 'SIN MONTAR'}: "
+          f"energia TVS {con_tope['energia_tvs_mj']:.2f} mJ)")
+    _guarda_d10_sobra(dict(P_BASE))
+    assert abs(con_d10["v_pico_v"] - con_tope["v_pico_v"]) <= 0.005, (
+        "montar D10 mueve el pico de U1: el modelo ya no dice que sobra")
+    print(f"    [verde] D10 sobra: pico {con_tope['v_pico_v']:.2f} V < V_BR minimo del SMBJ16A "
+          f"{V_BR_MIN_SMBJ16A_V:.1f} V (con D10 montado y su V_BR minimo el pico es el mismo, "
+          f"{con_d10['v_pico_v']:.2f} V y {con_d10['energia_tvs_mj']:.2f} mJ)")
     print(f"    banco (15,50 V, rama cargada, piezas centrales): pico = {banco['v_pico_v']:.2f} V")
     # Un mutante es rojo si U1 pasa de 20 V o si L2 sale de su curva: fuera de
     # ella el modelo sostiene la inductancia de 12 A y su pico se queda corto.
@@ -701,12 +810,29 @@ def demo() -> int:
 
     print("\n  4. U18 (TPS709) tras R64 + D2:")
     _guarda_u18(dict(P_BASE))
-    pico_u18 = u18_peor(V_C_SMBJ26CA_V)
-    cont_u18 = u18_peor(V_BR_MAX_SMBJ26CA_V)
-    print(f"    [verde] con D1 en {V_C_SMBJ26CA_V} V: U18 IN = {pico_u18['v_in_v']:.2f} V "
+    pico_u18 = u18_peor(V_C_SMBJ33CA_V)
+    cont_u18 = u18_peor(V_BR_MAX_SMBJ33CA_V)
+    print(f"    [verde] con D1 en {V_C_SMBJ33CA_V} V: U18 IN = {pico_u18['v_in_v']:.2f} V "
           f"<= {V_IN_MAX_U18_V:.0f} V (D2 {filas_bom['D2']['value']}, R64 {valor('R64'):.0f} ohm)")
-    print(f"    [verde] a {V_BR_MAX_SMBJ26CA_V} V sostenidos: D2 disipa "
+    print(f"    [verde] a {V_BR_MAX_SMBJ33CA_V} V sostenidos: D2 disipa "
           f"{cont_u18['p_z_w'] * 1e3:.0f} mW <= {P_D_BZT52_W * 1e3:.0f} mW")
+
+    print("\n  4b. D1 (SMBJ33CA) y lo que cuelga de +24V_RAW:")
+    _guarda_d1(dict(P_BASE))
+    ovp_u16 = v_ovp_u16_v()
+    print(f"    [verde] V_RWM de D1 {V_RWM_SMBJ33CA_V:.1f} V > {V_LADRILLO_MAX_V:.1f} V del ladrillo en servicio; "
+          f"V_BR minimo {V_BR_MIN_SMBJ33CA_V:.1f} V > OVP maximo del TE90 "
+          f"{V_OVP_MAX_TE90_V:.1f} V (margen +{V_BR_MIN_SMBJ33CA_V - V_OVP_MAX_TE90_V:.1f} V) y > OVP de U16 "
+          f"{v_ovp_u16_v(False):.2f} V nominal, {ovp_u16:.2f} V en el borde alto "
+          f"(margen +{V_BR_MIN_SMBJ33CA_V - ovp_u16:.2f} V)")
+    for nombre, limite in (("C10 (bom.csv)", tension_v("C10")), ("VS del LM74502 (U15)", V_ABSMAX_VS_LM74502_V),
+                           ("IN del TPS26631 (U16)", V_ABSMAX_IN_TPS2663_V),
+                           ("VDS de Q2", V_DS_MAX_CSD18534_V), ("VDS de Q7", V_DS_MAX_CSD18534_V)):
+        print(f"    [verde] {nombre:<22} aguanta {limite:>5.1f} V >= V_C de D1 {V_C_SMBJ33CA_V:.1f} V "
+              f"(margen +{limite - V_C_SMBJ33CA_V:.1f} V)")
+    vz_d20 = ZENER_BZT52[filas_bom["D20"]["value"]][0]
+    print(f"    [verde] VGS de Q7: D20 ({filas_bom['D20']['value']}) fija V_Z max {vz_d20:.1f} V < "
+          f"{V_GS_MAX_CSD18534_V:.0f} V de VGS max (margen +{V_GS_MAX_CSD18534_V - vz_d20:.1f} V)")
 
     print("\n  5. D-F6 por dentro (puerta y fusible):")
     _guarda_puerta_scr(dict(P_BASE))
@@ -739,6 +865,10 @@ def demo() -> int:
             assert abs(float(f["v_pico_sin_tope_v"]) - sin_tope["v_pico_v"]) <= 0.05, (
                 f"absmax.csv dice {f['v_pico_sin_tope_v']} V sin tope en U1 y el modelo "
                 f"da {sin_tope['v_pico_v']:.2f} V: actualiza la fila")
+        if clave == "U18 ":
+            assert abs(float(f["v_pico_sin_tope_v"]) - V_C_SMBJ33CA_V) <= 0.05, (
+                f"absmax.csv dice {f['v_pico_sin_tope_v']} V sin R64 + D2 en U18 y D1 deja pasar "
+                f"{V_C_SMBJ33CA_V} V: actualiza la fila")
         assert abs(float(f["v_pico_con_tope_v"]) - esperados[clave]) <= 0.05, (
             f"absmax.csv dice {f['v_pico_con_tope_v']} V en {f['victima']} y el modelo "
             f"da {esperados[clave]:.2f} V: actualiza la fila")
@@ -760,7 +890,27 @@ def demo() -> int:
     ih_max = borde_rojo(_guarda_enganche_scr, dict(P_BASE), "i_mantenimiento_scr_a",
                         0.040, 5.0, "el crowbar se suelta")
     r64_v = borde_rojo(_guarda_u18, dict(P_BASE), "r64_ohm", valor("R64"), 1.0, "U18 IN")
-    r64_p = borde_rojo(_guarda_u18, dict(P_BASE), "r64_ohm", valor("R64"), 250.0, "D2 disipa")
+    # 700: por debajo de ~340 ohm salta antes "U18 IN" (D1 deja pasar 53,3 V) y el
+    # canario de D2 no veria su propio aserto.
+    r64_p = borde_rojo(_guarda_u18, dict(P_BASE), "r64_ohm", valor("R64"), 700.0, "D2 disipa")
+    # D1: cada aserto de _guarda_d1 tiene su canario, que baja (o sube) el
+    # parametro suyo hasta que salta POR SU texto y dice donde.
+    d1_rwm = borde_rojo(_guarda_d1, dict(P_BASE), "v_rwm_d1_v", V_RWM_SMBJ33CA_V, 10.0,
+                        "D1 conduce en servicio")
+    d1_te90 = borde_rojo(_guarda_d1, dict(P_BASE), "v_br_min_d1_v", V_BR_MIN_SMBJ33CA_V, 20.0,
+                         "D1 conduce con el TE90 en OVP")
+    d1_u16 = borde_rojo(_guarda_d1, dict(P_BASE), "v_ovp_u16_max_v", v_ovp_u16_v(), 60.0,
+                        "D1 conduce antes de que U16 corte")
+    lim_d1 = {n: borde_rojo(_guarda_d1, dict(P_BASE), clave, P_BASE[clave], 10.0, texto)
+              for n, clave, texto in (("C10", "c10_v", "C10 aguanta"),
+                                       ("VS de U15", "vs_u15_v", "VS de U15 aguanta"),
+                                       ("IN de U16", "in_u16_v", "IN de U16 aguanta"),
+                                       ("VDS de Q2", "vds_q2_v", "VDS de Q2 aguanta"),
+                                       ("VDS de Q7", "vds_q7_v", "VDS de Q7 aguanta"))}
+    vgs_q7 = borde_rojo(_guarda_d1, dict(P_BASE), "vz_max_d20_v", P_BASE["vz_max_d20_v"], 40.0,
+                        "VGS de Q7")
+    d10_vbr = borde_rojo(_guarda_d10_sobra, dict(P_BASE), "v_br_min_d10_v", V_BR_MIN_SMBJ16A_V, 10.0,
+                         "D10 conduciria")
     igt = borde_rojo(_guarda_puerta_scr, dict(P_BASE), "i_gt_max_a", I_GT_MAX_BT151_A, 1.0,
                      "puerta corta")
     despeje = borde_rojo(_guarda_i2t, dict(P_BASE), "factor_despeje_i2t", FACTOR_DESPEJE_I2T,
@@ -776,6 +926,14 @@ def demo() -> int:
           f"(el BT151-500R pide <= 0,04 A)")
     print(f"  canario U18: R64 < {r64_v:.0f} ohm lleva U18 IN por encima de 30 V, y "
           f"R64 < {r64_p:.0f} ohm quema D2")
+    print(f"  canario D1: con un V_RWM <= {d1_rwm:.1f} V conduciria con el ladrillo en su borde alto, con un "
+          f"V_BR minimo <= {d1_te90:.1f} V conduce con el TE90 en OVP, y con el OVP "
+          f"de U16 por encima de {d1_u16:.1f} V conduce antes de que U16 corte")
+    print("  canario D1: lo que aguanta cada pieza de +24V_RAW antes de que V_C de D1 la pase: "
+          + ", ".join(f"{n} {v:.1f} V" for n, v in lim_d1.items()))
+    print(f"  canario Q7: con un D20 de V_Z max >= {vgs_q7:.1f} V la puerta pasa de VGS max")
+    print(f"  canario D10: con un V_BR minimo de D10 <= {d10_vbr:.2f} V conduciria con el pico de U1 "
+          f"({con_tope['v_pico_v']:.2f} V), y habria que montarlo")
     print(f"  canario D-F6: con I_GT > {igt * 1e3:.0f} mA algun PNP no llega a la puerta")
     print(f"  canario D-F6: un despeje > {despeje:.0f} x la fusion pasaria el I2t del SCR")
     print(f"  canario #491: +5V_AUX aguanta la fuga de PS3 hasta {t_fuga:.1f} us de retardo "

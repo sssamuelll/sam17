@@ -34,7 +34,8 @@ lados salen de dos descripciones distintas del mismo circuito:
   convertidor (`focos_de_calor()`): cada carga a su tension, el shunt por
   I^2 R, cada LDO por (Vin - Vout) * Iout + Vin * Ignd con la Ignd de SU hoja,
   cada DC-DC por Pout * (1/eta - 1) con la Pout que le piden sus piezas, y la
-  cadena de entrada (conector, MOSFET de polaridad, eFuse) por I^2 R.
+  cadena de entrada (conector, MOSFET de polaridad, el de su retorno Q7, eFuse)
+  por I^2 R.
 Solo coinciden si cada convertidor declara exactamente lo que cuelga de el: una
 pieza que falta en un lado, una Ignd que no llega a la corriente de su rama o
 una perdida mal formulada los separan, y `_guarda_balance_energia` salta. Lo
@@ -160,8 +161,16 @@ R_BUCLE_CONECTOR_OHM = 2.0 * (R_CONTACTO_PIN_OHM / N_PINES_PARALELO)
 # externo de 15 mohm max.
 R_ON_EFUSE_ENTRADA_OHM = 0.053
 R_ON_POLARIDAD_OHM = 0.015
+# Q7, el MOSFET del RETORNO (P7 (d), H-V5-INVERSION): el mismo CSD18534Q5A que
+# Q2, en serie por el otro polo, y con la misma base de arriba: 15 mohm max.
+# La hoja da 7,8 mohm tipico y 9,8 mohm max a VGS = 10 V y 25 C
+# (csd18534q5a.pdf p. 3), y su puerta queda entre 12 y 15,6 V (D20, R85).
+R_ON_RETORNO_OHM = 0.015
+# Lo que medidas.csv le exige en el banco a Q7 a plena carga: V(GND24 - RET24_RAW).
+CAIDA_RETORNO_MAX_V = 0.060
 # Todo eso vive en la caja: su I^2 R es calor del cajon, no del cordon.
-R_ENTRADA_CAJA_OHM = R_BUCLE_CONECTOR_OHM + R_ON_POLARIDAD_OHM + R_ON_EFUSE_ENTRADA_OHM
+R_ENTRADA_CAJA_OHM = (R_BUCLE_CONECTOR_OHM + R_ON_POLARIDAD_OHM + R_ON_RETORNO_OHM
+                      + R_ON_EFUSE_ENTRADA_OHM)
 # El cordon de diseno: 16 AWG de 2 m, cobre a 20 C.
 OHM_POR_M_CORDON = 0.0132
 LARGO_CORDON_M = 2.0
@@ -303,11 +312,13 @@ def r_cordon_ohm(ohm_por_m: float = OHM_POR_M_CORDON,
     return 2.0 * ohm_por_m * largo_m
 
 
-def _corriente_a(p_dcdc_w: float, ohm_por_m: float, largo_m: float) -> float:
+def _corriente_a(p_dcdc_w: float, ohm_por_m: float, largo_m: float,
+                 r_entrada_ohm: float | None = None) -> float:
     """Una carga de potencia constante detras de toda la resistencia serie, con
     el ladrillo en el borde bajo de su ventana: V * I - R * I^2 = P, la raiz
     pequena."""
-    r = r_cordon_ohm(ohm_por_m, largo_m) + R_ENTRADA_CAJA_OHM
+    r = r_cordon_ohm(ohm_por_m, largo_m) + (R_ENTRADA_CAJA_OHM if r_entrada_ohm is None
+                                            else r_entrada_ohm)
     v = V_LADRILLO_MIN
     return (v - math.sqrt(v * v - 4.0 * r * p_dcdc_w)) / (2.0 * r)
 
@@ -439,6 +450,23 @@ def perdida_entrada_w() -> float:
     return corriente_del_cordon_a() ** 2 * R_ENTRADA_CAJA_OHM
 
 
+def caida_retorno_v(i_a: float | None = None) -> float:
+    """V(GND24 - RET24_RAW): lo que cae en Q7 con la corriente del cordon."""
+    return (corriente_del_cordon_a() if i_a is None else i_a) * R_ON_RETORNO_OHM
+
+
+def coste_de_q7() -> dict[str, float]:
+    """Lo que Q7 le cuesta a la entrada, contra la misma cadena sin el: caida en
+    Q7, calor en el, calor extra del cajon y la tension que llega a los DC-DC."""
+    r_sin = R_ENTRADA_CAJA_OHM - R_ON_RETORNO_OHM
+    i = corriente_del_cordon_a()
+    i_sin = _corriente_a(entrada_dcdc_w(), OHM_POR_M_CORDON, LARGO_CORDON_M, r_sin)
+    v_sin = V_LADRILLO_MIN - i_sin * (r_cordon_ohm() + r_sin)
+    return {"caida_v": caida_retorno_v(i), "calor_w": i * i * R_ON_RETORNO_OHM,
+            "calor_cajon_extra_w": (i * i * R_ENTRADA_CAJA_OHM) - (i_sin * i_sin * r_sin),
+            "v_dcdc_con_v": tension_minima_en_dcdc_v(), "v_dcdc_sin_v": v_sin}
+
+
 def quema_pre_regulador_w(reg: str, *, v_nom: float = V_CRUDO_CASCADA,
                           tol: float = TOL_CRUDO) -> float:
     """Lo que U1 o U2 disipa con el THN en `v_nom * (1 + tol)`."""
@@ -513,6 +541,14 @@ def _guarda_balance_energia(p: dict[str, float]) -> None:
         f"cordon mete {electrico:.6f} W en la caja")
 
 
+def _guarda_caida_retorno(p: dict[str, float]) -> None:
+    """Q7 cae menos de lo que medidas.csv le exige en el banco a plena carga."""
+    caida = caida_retorno_v(p["i_retorno_a"])
+    assert caida < CAIDA_RETORNO_MAX_V, (
+        f"caida en Q7 (retorno): {caida * 1000:.1f} mV con {p['i_retorno_a']:.3f} A >= "
+        f"{CAIDA_RETORNO_MAX_V * 1000:.0f} mV que pide medidas.csv")
+
+
 def _guarda_ventana_entrada_dcdc(p: dict[str, float]) -> None:
     """D-V2/D-V5: la tension minima tras cordon, conector y eFuse arranca todo."""
     v_llega = tension_minima_en_dcdc_v()
@@ -545,6 +581,14 @@ def _autocomprobacion() -> None:
     for nombre_ladrillo, w_45c in LADRILLOS_45C_W.items():
         assert w_45c >= salida_ladrillo_w(), (
             f"{nombre_ladrillo} da {w_45c:.1f} W a 45 C < {salida_ladrillo_w():.2f} W")
+
+    # 4b. Q7 (retorno): su caida a plena carga queda por debajo de lo que pide
+    #     medidas.csv, y el aserto muerde: con mas corriente que el cordon se pasa.
+    p_q7 = dict(P_BASE)
+    p_q7["i_retorno_a"] = corriente_del_cordon_a()
+    _guarda_caida_retorno(p_q7)
+    borde_rojo(_guarda_caida_retorno, p_q7, "i_retorno_a", corriente_del_cordon_a(), 20.0,
+               "caida en Q7 (retorno)")
 
     # 5. La ventana de 24 V cierra con holgura sobre el arranque de los DC-DC.
     _guarda_ventana_entrada_dcdc(dict(P_BASE))
@@ -594,10 +638,15 @@ def demo() -> int:
             print(f"      {pieza:<46} {w:>7.3f} W")
         print(f"      {'conversion del DC-DC':<46} "
               f"{sum(focos.values()) * (1/eta[nombre] - 1):>7.3f} W")
-    print(f"    {'cadena de entrada (Kycon + LM74502 + TPS26631)':<48} "
+    print(f"    {'cadena de entrada (Kycon + LM74502 + Q7 + TPS26631)':<52} "
           f"{perdida_entrada_w():>7.3f} W")
-    print(f"    {'total, calor_del_cajon_w()':<48} {calor_del_cajon_w():>7.3f} W")
-    print(f"    {'lo que el cordon mete en la caja':<48} {potencia_que_entra_w():>7.3f} W")
+    print(f"    {'total, calor_del_cajon_w()':<52} {calor_del_cajon_w():>7.3f} W")
+    print(f"    {'lo que el cordon mete en la caja':<52} {potencia_que_entra_w():>7.3f} W")
+    q7 = coste_de_q7()
+    print(f"    Q7 (retorno, {R_ON_RETORNO_OHM * 1000:.0f} mohm): cae {q7['caida_v'] * 1000:.1f} mV "
+          f"a {corriente_del_cordon_a():.3f} A (medidas.csv pide < {CAIDA_RETORNO_MAX_V * 1000:.0f} mV), "
+          f"quema {q7['calor_w']:.3f} W,\n    +{q7['calor_cajon_extra_w']:.3f} W de calor extra en el cajon; "
+          f"a los DC-DC llegan {q7['v_dcdc_con_v']:.3f} V en vez de {q7['v_dcdc_sin_v']:.3f} V sin Q7")
 
     print("\n  el ladrillo y los candidatos a 45 C:")
     print(f"    tension                        {V_LADRILLO:>7.1f} V   (D-V2, firmada; "
@@ -662,8 +711,8 @@ def demo() -> int:
               f"{ctot*1000:>14.0f} mV")
     v_min_dcdc = tension_minima_en_dcdc_v()
     print(f"    Con ladrillo al -5 % ({V_LADRILLO_MIN:.1f} V), cordon 16 AWG "
-          f"de 2 m, conector Kycon (30 mohm bucle 2p/polo),\n    LM74502 (15 mohm) "
-          f"y TPS26631 (53 mohm), llegan {v_min_dcdc:.2f} V a los DC-DC contra "
+          f"de 2 m, conector Kycon (30 mohm bucle 2p/polo),\n    LM74502 (15 mohm), "
+          f"Q7 del retorno (15 mohm) y TPS26631 (53 mohm), llegan {v_min_dcdc:.2f} V a los DC-DC contra "
           f"{V_ARRANQUE_DCDC_MAX_V:.1f} V max de arranque\n    "
           f"(holgura +{v_min_dcdc - V_ARRANQUE_DCDC_MAX_V:.2f} V).")
 

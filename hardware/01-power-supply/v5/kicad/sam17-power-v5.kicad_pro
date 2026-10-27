@@ -339,6 +339,10 @@
       },
       {
         "netclass": "Potencia",
+        "pattern": "RET24_RAW"
+      },
+      {
+        "netclass": "Potencia",
         "pattern": "\\+24V_PROT"
       },
       {

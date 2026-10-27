@@ -39,6 +39,12 @@ LAS DECISIONES QUE CORRIGEN #474 (cada una con su motivo junto a su bloque):
   M5  SHDN de U16 con pull-down (R83) y FLT de U19 al MSP430 (R84, P1.2).
   #334 U19 sin UVLO (R82 a IN_SYS) y con Schottky de rueda libre (D19).
   D-F6 R_GK = 100 ohm: el dV/dt de 200 V/us del BT151 se garantiza con 100.
+  M5  Q7 en el RETORNO (P7 (d), H-V5-INVERSION): Q2 solo bloqueaba la polaridad
+      por el lado positivo y J1.2 iba directo a GND24. Ahora J1.2 es RET24_RAW,
+      el drenador de Q7; su fuente es GND24 y D1 cuelga de J1 (+24V_RAW y
+      RET24_RAW) para que la corriente de un transitorio vuelva sin cruzar Q7.
+  M5  D1 = SMBJ33CA (junta de piezas v5 sec. 3.8, #494): su V_BR minimo queda
+      por encima del OVP del TE90 y del de U16, y R64 sube a 1.2k.
 """
 from __future__ import annotations
 
@@ -116,12 +122,14 @@ def dos(ref: str, sym: str, bloque: str, red1: str, red2: str) -> None:
 
 def entrada_m5() -> None:
     b = "M5"
-    P("J1", "J2P", b, {"1": "+24V_RAW", "2": "GND24"})
+    P("J1", "J2P", b, {"1": "+24V_RAW", "2": "RET24_RAW"})
     P("TP1", "TP", b, {"1": "+24V_RAW"})
     P("TP2", "TP", b, {"1": "GND24"})
-    # D1 BIDIRECCIONAL (SMBJ26CA): con el ladrillo al reves un unidireccional
-    # conduce en directa y se come la corriente de limite del ladrillo.
-    dos("D1", "TVS2", b, "+24V_RAW", "GND24")
+    # D1 BIDIRECCIONAL (SMBJ33CA): con el ladrillo al reves un unidireccional
+    # conduce en directa y se come la corriente de limite del ladrillo. Va a
+    # los dos lados de J1 (+24V_RAW y RET24_RAW), no a GND24: el transitorio
+    # que recorta vuelve por J1 sin pasar por Q7.
+    dos("D1", "TVS2", b, "+24V_RAW", "RET24_RAW")
     # Proteccion de polaridad con UN MOSFET: fuente en la entrada, drenador a
     # la carga. Su diodo de cuerpo conduce en directa al arrancar y bloquea con
     # -24 V. SRC y VS del LM74502 a la entrada (lm74502.pdf p. 1, "External
@@ -133,7 +141,15 @@ def entrada_m5() -> None:
                             "2": "GND24", "6": "GATE_Q2", "8": "+24V_RAW",
                             "4": "VCAP_U15", "3": None})
     dos("C9", "C", b, "VCAP_U15", "+24V_RAW")     # C_VCAP entre VCAP y VS (p. 1)
-    dos("C10", "C", b, "+24V_RAW", "GND24")       # 100 nF en VS (Table 5-1)
+    dos("C10", "C", b, "+24V_RAW", "GND24")       # 100 nF en VS (Table 5-1), de 100 V: D1 recorta a 53.3 V
+    # Proteccion de polaridad del RETORNO (P7 (d)): MOSFET de canal N con el
+    # drenador en RET24_RAW (J1.2) y la fuente en GND24. En normal su diodo de
+    # cuerpo conduce y la puerta, tirada a +24V_RAW por R85 y recortada por D20
+    # (VGS 12..15.6 V), lo enriquece; con el ladrillo al reves bloquea.
+    P("Q7", "CSD18534", b, {"1": "GND24", "2": "GND24", "3": "GND24",
+                            "4": "G_Q7", "5": "RET24_RAW"})
+    dos("R85", "R", b, "+24V_RAW", "G_Q7")
+    dos("D20", "DZ", b, "G_Q7", "GND24")          # K en la puerta, A en GND24
     # eFuse de entrada. MODE al aire = enclava tras sobrecarga (tps2663.pdf
     # Table 8-1): los reintentos los decide el MSP430 por SHDN (M5).
     P("U16", "TPS26631", b, {
@@ -154,7 +170,7 @@ def entrada_m5() -> None:
     dos("R13", "R", b, "UVLO_U16", "OVP_U16")
     dos("R14", "R", b, "OVP_U16", "GND24")
     dos("C11", "C", b, "DVDT_U16", "GND24")       # 1.775 uA * 25 / 22 nF = 2 V/ms
-    # LDO del supervisor. 1k + zener de 24 V: D1 deja pasar hasta 42 V en un
+    # LDO del supervisor. 1.2k + zener de 24 V: D1 deja pasar hasta 53.3 V en un
     # transitorio y el TPS709 funciona hasta 30 V (32 V absoluto, tps709.pdf
     # p. 4). El BZT52C30 de antes llega a 32 V a solo 2 mA (diodes_bzt52.pdf
     # p. 2): ni un miliamperio de margen. check_absmax.py calcula U18 IN.
@@ -534,7 +550,7 @@ _libs: set = set()
 
 LARGO_STUB = g(4)
 BLOQUES = (
-    ("M5", "Entrada 24 V, polaridad (LM74502 + CSD18534Q5A), eFuse U16 y supervisor M5"),
+    ("M5", "Entrada 24 V, polaridad (LM74502 + 2 x CSD18534Q5A, +24 V y retorno), eFuse U16 y supervisor M5"),
     ("DCDC", "Convertidores: THN 30 (+-12 rack), URB (+5 digital M1), 3 x THN 20 (+5 rack, +-15.5)"),
     ("LC", "Tope M3 (#334): TPS26631 + filtro LC 22 uH / 47 uF / 0.68 ohm + 220 uF + SMBJ16A"),
     ("DF4", "Detector D-F4: LM393 + TL431, umbral 14.5 V con histeresis"),

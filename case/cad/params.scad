@@ -1764,7 +1764,7 @@ valle_margen    = 6;   // historico; la banda del valle ya no se perfora
 // TPS26631). Eran 72.61 con la cascada a 650 mA/riel (D-F1 la baja a 450 el
 // 2026-10-23), y 64.58 sin la Ignd de U1/U2 ni de los LT3045/LT3094, sin el
 // +5V_AUX de PS3 y sin la cadena de entrada.
-potencia_disipada = 65.31; // W, TODO el cajon: lo que baja por el cordon (fuente v5)
+potencia_disipada = 65.44; // W, TODO el cajon: lo que baja por el cordon (fuente v5, con Q7 en el retorno)
 // Techo de salto sobre ambiente. 15 K era el criterio de siempre para caja de
 // electronica lineal con electroliticos dentro: a partir de ahi la vida del
 // condensador se parte por dos cada 10 K y deja de ser un detalle.

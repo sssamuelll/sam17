@@ -177,12 +177,36 @@ def _puntos() -> list[Punto]:
                "(ladrillo en hiccup)",
                lo=ladrillo_budget.V_LADRILLO_MIN,
                hi=ladrillo_budget.V_LADRILLO * (1.0 + ladrillo_budget.TOL_LADRILLO)))
+    # El retorno por Q7 (P7 (d), H-V5-INVERSION). Esta prueba se hace con una
+    # fuente de banco y no con el ladrillo: el ladrillo al reves en J1 es
+    # justo lo que Q2 y Q7 tienen que aguantar.
+    p.append(P("1", "inversion_J1_corriente_chasis_tierra", "uA",
+               "H-V5-INVERSION / P7 (d): fuente de banco de 24 V con el negativo a tierra y los polos "
+               "AL REVES en J1 (J1.1 a su negativo, J1.2 a su positivo), J5 puesto y un amperimetro entre "
+               "chasis y tierra: lo que deja pasar Q7 apagado (IDSS 1 uA a 48 V, csd18534q5a.pdf p. 3)",
+               hi=10.0))
+    p.append(P("1", "inversion_J1_U16_no_arranca", "si/no",
+               "H-V5-INVERSION / P7 (d): en la misma prueba, U16 no arranca (+24V_PROT y +24V_SW "
+               "se quedan en 0 V y D18 no enciende)",
+               literal="si"))
     p.append(P("1", "tension_ladrillo_vacio", "V",
                "T09 / L04: salida continua nominal del ladrillo 24 V en vacio",
                predicho=24.0, tol=0.48))
     p.append(P("1", "caida_LM74502_ideal_diode", "mV",
                "M5 / L04: caida directa del controlador de diodo ideal + FET inverso",
                hi=50.0))
+    p.append(P("1", "caida_Q7_retorno_plena_carga", "mV",
+               "H-V5-INVERSION / P7 (d): V(GND24 - RET24_RAW) con el cordon a plena carga declarada "
+               f"({ladrillo_budget.corriente_del_cordon_a():.2f} A x "
+               f"{ladrillo_budget.R_ON_RETORNO_OHM * 1000:.0f} mohm = "
+               f"{ladrillo_budget.caida_retorno_v() * 1000:.0f} mV, ladrillo_budget)",
+               hi=ladrillo_budget.CAIDA_RETORNO_MAX_V * 1000.0))
+    vz_d20 = check_absmax.ZENER_BZT52[check_absmax.filas()["D20"]["value"]][0]
+    p.append(P("1", "VGS_Q7_normal", "V",
+               "H-V5-INVERSION / P7 (d): G_Q7 menos GND24 en marcha, con D20 y R85: sobre los 12 V "
+               "(el RDS(on) de la hoja es a 10 V, csd18534q5a.pdf p. 3) y bajo el V_Z max de D20 "
+               "(check_absmax.py, diodes_bzt52.pdf p. 2)",
+               lo=12.0, hi=vz_d20))
     # Resistencia y no caida: la caida depende de la corriente del momento.
     # tps2663.pdf p. 7, 0,6 A <= I <= 6 A: 19 mohm min (-40..125 C) y 45 mohm
     # max a 85 C, lo que cubre cualquier banco a temperatura de sala.

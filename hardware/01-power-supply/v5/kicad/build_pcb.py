@@ -43,6 +43,13 @@ GND24 y GNDA se tocan SOLO en NT1, entre PS5 y PS3 (decision firmada en la
 revision de #474). Con los cinco convertidores aislados (#491) no lleva
 corriente de carga: solo los retornos de lo que cruza entre dominios.
 
+EL RETORNO DEL LADRILLO PASA POR Q7 (P7 (d), H-V5-INVERSION). J1.2 ya no es
+GND24 sino RET24_RAW, una ISLA de cobre en F.Cu que lleva J1.2, D1.2 y el
+drenador de Q7; la fuente de Q7 es GND24. El cobre de la isla sale de los
+vertidos de GND24 por holgura, y D1 cuelga de J1 (no de GND24) para que un
+transitorio vuelva por J1 sin cruzar Q7. Va como cobre fijo (COBRE), del
+mismo ancho que el camino de +24V_RAW: pasan los mismos 2.9 A.
+
 EL COBRE DE POTENCIA NO LO RUTEA FREEROUTING. Por la entrada de 24 V pasan
 ~2.9 A (ladrillo_budget.py: 65.3 W de cajon, cordon a 2.88 A en su peor caso) y por +5V_DIG hasta
 2.9 A (DIGITAL_A, el maximo a TJ = 125 C). Una pista de 0.5 mm en 1 oz se
@@ -108,7 +115,7 @@ POTENCIA = 0.5
 # +24V_LDO (el MSP430) y el amortiguador del LC (C1_NEG/C2_NEG) van en Default:
 # a 0.5 mm no entraban en los pines de 0.5 mm de paso de los INA226 y el ADS1115.
 REDES_POTENCIA = (
-    "+24V_RAW", "+24V_PROT", "+24V_SW", "+12V_RAW_RACK", "-12V_RAW_RACK",
+    "+24V_RAW", "RET24_RAW", "+24V_PROT", "+24V_SW", "+12V_RAW_RACK", "-12V_RAW_RACK",
     "+12V_FUSED_RACK", "+12V_RACK", "-12V_RACK", "+15V5_RAW", "+15V5_EFUSE", "+15V5_LC",
     "+15V5_FILT", "-15V5_RAW", "-15V5_LC", "-15V5_FILT", "+13V1", "-12V9", "+5V_RAW_RACK",
     "+5V_FUSED_RACK", "+5V_RACK", "+5V_RAW_DIG", "+5V_DIG", "OUT_U4", "OUT_U5",
@@ -129,8 +136,12 @@ ANCLAS = {
     # C39 (1000 uF) frena la fuga de PS3 (#491): pegado a su +Vout (PS3.3).
     "C39": (82.0, 112.0, 0),
     # Entrada y M5 (GND24). J1 -> Q2 -> U16 en linea recta a la altura de
-    # PS5, con D1 colgando del cobre de +24V_RAW y U15 debajo de la puerta de Q2.
-    "J1": (7.5, 75.0, 90), "D1": (14.5, 81.0, 270), "Q2": (21.0, 75.0, 0),
+    # PS5, con U15 debajo de la puerta de Q2. El retorno sube por encima de J1:
+    # Q7 (rot 270: drenador abajo, fuente y puerta arriba) justo sobre J1.2, y
+    # D1 (rot 90: pad 1 = +24V_RAW abajo, pad 2 = RET24_RAW arriba) a su lado,
+    # con R85 y D20 de la puerta de Q7 mas alla.
+    "J1": (7.5, 75.0, 90), "Q7": (7.6, 64.5, 270), "D1": (15.0, 68.15, 90),
+    "R85": (19.0, 68.0, 90), "D20": (22.5, 65.0, 90), "Q2": (21.0, 75.0, 0),
     "U15": (19.5, 81.0, 0), "U16": (34.0, 75.0, 0), "C14": (41.0, 121.0, 90),
     "U18": (20.0, 103.0, 0), "U17": (24.0, 120.0, 0), "SW1": (12.0, 134.0, 0),
     "J10": (34.0, 137.0, 90),
@@ -161,7 +172,7 @@ REGIONES = {
           (162.0, 105.5, W, H)],
 }
 
-REDES_P = {"GND24", "+24V_RAW", "+24V_PROT", "+24V_SW", "+24V_LDO", "VCAP_U15", "GATE_Q2",
+REDES_P = {"GND24", "+24V_RAW", "RET24_RAW", "G_Q7", "+24V_PROT", "+24V_SW", "+24V_LDO", "VCAP_U15", "GATE_Q2",
            "UVLO_U16", "OVP_U16", "DVDT_U16", "ILIM_U16", "SHDN_M5", "FLT_M5", "+3V3_MCU",
            "MCU_RST", "MCU_TEST", "SW_RESET", "LED_CTRL", "LED_ANODE"}
 REDES_D = {"GNDD", "+5V_RAW_DIG", "+5V_DIG", "+3V3_DIG", "SDA_D", "SCL_D", "GATE_SCR4",
@@ -172,9 +183,18 @@ REDES_D = {"GNDD", "+5V_RAW_DIG", "+5V_DIG", "+3V3_DIG", "SDA_D", "SCL_D", "GATE
 # ANCLAS de arriba, con >= 0.3 mm a cualquier pad de otra red: si se mueve
 # un ancla de la entrada, de M1 o de U1/U2, hay que mover su cobre.
 COBRE = [
-    # +24V_RAW: J1.1 -> fuentes de Q2 (pads 1-3), con D1.1 encima
+    # +24V_RAW: J1.1 -> fuentes de Q2 (pads 1-3), y de ahi hacia arriba al pad
+    # 1 de D1 (el ultimo rectangulo se mete dentro del anterior)
     ("+24V_RAW", "F.Cu", (5.6, 74.1, 15.0, 79.4)),
     ("+24V_RAW", "F.Cu", (13.0, 72.6, 18.55, 76.3)),
+    ("+24V_RAW", "F.Cu", (13.9, 70.0, 16.1, 73.1)),
+    # RET24_RAW: J1.2 -> drenador de Q7 (pad 5) -> D1.2. La isla no toca GND24
+    # en F.Cu: lo unico que hay entre ella y GND24 es Q7.
+    ("RET24_RAW", "F.Cu", (6.4, 66.6, 8.8, 72.6)),
+    ("RET24_RAW", "F.Cu", (8.4, 64.8, 14.6, 67.3)),
+    # GND24: las tres fuentes de Q7 (pads 1-3) juntas, para que los 2.9 A del
+    # retorno no dependan de tres tramos de 0.4 mm hasta sus vias
+    ("GND24", "F.Cu", (6.4, 60.3, 10.0, 62.1)),
     # +24V_PROT: drenador de Q2 -> U16 pads 1-3 (IN)
     ("+24V_PROT", "F.Cu", (19.9, 71.4, 31.95, 73.5)),
     ("+24V_PROT", "F.Cu", (19.9, 71.4, 24.3, 77.1)),
