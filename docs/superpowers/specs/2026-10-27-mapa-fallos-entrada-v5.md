@@ -15,8 +15,9 @@ corto contra el retorno ·
 `hardware/01-power-supply/v5/`: `bom.csv`, `bom-chasis.csv`, la netlist
 `kicad/sam17-power-v5.net`, `check_absmax.py`, `check_arnes.py`,
 `ladrillo_budget.py`, `recuperacion_budget.py` y `medidas.csv` ·
-**No toca**: el papel v5, el pliego, la placa, la BOM ni los guiones; las
-decisiones de hoy se escriben en el papel v5 aparte
+**Va con**: la fila `H-V5-CORTO` de v5 §9.2 y la banda de `U16` con el 1 %
+de `R11` en `recuperacion_budget.py` (§4.2) · **No toca**: la placa ni el
+valor de ninguna pieza
 
 ---
 
@@ -48,10 +49,10 @@ decisiones de hoy se escriben en el papel v5 aparte
    Ni `J5`, ni su hilo al chasis, ni `NT1` tienen una cifra de corriente en
    el repo, y el hilo no está en ninguna BOM. En un corto franco, `Q7` pierde
    la puerta y la corriente pasa por su diodo.
-6. **Dos cifras que traía la pregunta no son lo que parecían.** Los 2,4 W no
+6. **Dos cifras de los papeles no son lo que parecían.** Los 2,4 W no
    son la media del hiccup: son la I²R de un cordón de 16 AWG y 2 m llevando
    6,75 A continuos (§4.1). Y la banda de `U16` no cuenta el 1 % de `R11`: con
-   él, el techo son 4,864 A, a 11 mA del disparo típico del ladrillo y no a
+   él, el techo son 4,866 A, a 9 mA del disparo típico del ladrillo y no a
    60 (§4.2).
 
 ## 2. El recorrido y quién corta en él
@@ -73,7 +74,7 @@ retorno: PS*.−Vin, C14, C10 … ── GND24 ── fuente de Q7
 | TE90, sobrecarga | hiccup desde el 130–180 % de 3,75 A | **4,875–6,75 A, típicos a 25 °C** («All specifications are typical at nominal input, full load, at 25°C ambient unless noted») | `ae-TE90-datasheet.pdf` p. 2; 3,75 A en p. 5 |
 | TE90, cortocircuito | «Hiccup mode, auto-recovery» | ni pico, ni encendido, ni apagado | p. 2 |
 | TE90, temperatura | «Will shutdown upon an overtemperature condition, auto-recovery» | ni umbral ni tiempo | p. 2 |
-| `U16` (TPS26631), límite | 1 × I_OL: el 2 × solo existe con PGOOD alto, y `PGTH` va a `GND24` (netlist; junta §3.7) | 4,185–4,815 A con 4,02 kΩ exactos; **4,144–4,864 A** con `R11` al ±1 % (§4.2) | `tps2663.pdf` p. 7 y p. 23 |
+| `U16` (TPS26631), límite | 1 × I_OL: el 2 × solo existe con PGOOD alto, y `PGTH` va a `GND24` (netlist; junta §3.7) | 4,185–4,815 A con 4,02 kΩ exactos; **4,146–4,866 A** con `R11` al ±1 % (§4.2) | `tps2663.pdf` p. 7 y p. 23 |
 | `U16`, disparo rápido | abre y vuelve a entrar limitando | 3 × I_OL = 12,4–14,6 A, abre en 2,2–4,5 µs; por encima de 45 A, en 1 µs | p. 7 y p. 9 |
 | `U16`, duración | limita hasta `tCL_PLIM` y se enclava (`MODE` al aire); la TSD, a 165 °C, puede cortar antes | 129–202 ms | p. 9, p. 8, p. 22–23 y Tabla 8-1 en p. 28 |
 | M5 (`U17`, MSP430) | un intento y tres reintentos con 1 s de espera, y abandono; solo `SW1` (≥ 2 s) rearma | 4 pulsos | `recuperacion_budget.py:158–163`; `medidas.csv` paso 2c |
@@ -130,9 +131,9 @@ el apagón, si pilla un intento en prueba (junta §3.7).
 
 | Fallo | Qué lo limita | Corriente y duración | Energía o potencia | Qué lo aguanta, y si su hoja lo cubre | Dueño |
 |---|---|---|---|---|---|
-| **E1** `+24V_SW`, franco + a −: el cobre, `C14` en corto, la entrada de cualquier convertidor | `U16`: disparo rápido, después 1 × I_OL hasta `tCL_PLIM`, y se enclava. M5: 4 pulsos con 1 s, y abandona | pico: decenas de amperios durante microsegundos (por encima de 45 A abre en 1 µs; entre 12,4–14,6 A y 45 A, en ≤ 4,5 µs); después 4,144–4,864 A durante ≤ 202 ms; cuatro veces | en `U16`, ≤ 25,2 V × 4,864 A × 0,202 s = **24,8 J** por pulso, ≤ 99 J los cuatro; en la falta, casi nada más `C14`: 31,8 mJ | `U16`: su TSD lo saca antes de los 202 ms si se calienta (p. 22–23). `Q2`/`Q7`: 45 A durante 1 µs contra 229 A pulsados (p. 1) y ≤ 4,864² × 15 mΩ = 0,35 W en canal. Receptáculo: 4,864 A < 7,5 A por pin. Arnés: 4,864² × 0,202 = 4,8 A²s por pulso. El TE90 no dispara si su umbral real a 45 °C pasa de 4,864 A (`H-MF-SELECTIVIDAD`); si dispara, el pulso se acorta y M5 cuenta igual el colapso («corto con colapso de V_in: 4 pulsos exactos y ABANDONADO persistente», autoprueba de `recuperacion_budget.py`) | nuestro, **cubierto** |
-| **E2** `+24V_SW`, parcial | **nada** mientras la falta más la carga no pase del límite de `U16`; por encima, como E1 | hasta 4,144 A sin disparar en cualquier pieza, y hasta 4,864 A en una de banda alta; sin tiempo | hasta **99–117 W** en la falta (24 V × 4,144–4,864 A) con la carga en cero, menos lo que se lleve la carga | — | **nuestro**: el umbral es nuestro, y `U16` no distingue una falta de una carga |
-| **E3** + de `+24V_SW` contra chasis | `U16`, como E1; vuelve por `J5` → `NT1` → `Q7` | ≤ 4,864 A ≤ 202 ms, 4 pulsos | — | `J5`, su hilo y `NT1` siguen sin cifra (`H-MF-CHASIS`), pero aquí la cota es la de `U16` | nuestro |
+| **E1** `+24V_SW`, franco + a −: el cobre, `C14` en corto, la entrada de cualquier convertidor | `U16`: disparo rápido, después 1 × I_OL hasta `tCL_PLIM`, y se enclava. M5: 4 pulsos con 1 s, y abandona | pico: decenas de amperios durante microsegundos (por encima de 45 A abre en 1 µs; entre 12,4–14,6 A y 45 A, en ≤ 4,5 µs); después 4,146–4,866 A durante ≤ 202 ms; cuatro veces | en `U16`, ≤ 25,2 V × 4,866 A × 0,202 s = **24,8 J** por pulso, ≤ 99 J los cuatro; en la falta, casi nada más `C14`: 31,8 mJ | `U16`: su TSD lo saca antes de los 202 ms si se calienta (p. 22–23). `Q2`/`Q7`: 45 A durante 1 µs contra 229 A pulsados (p. 1) y ≤ 4,866² × 15 mΩ = 0,35 W en canal. Receptáculo: 4,866 A < 7,5 A por pin. Arnés: 4,866² × 0,202 = 4,8 A²s por pulso. El TE90 no dispara si su umbral real a 45 °C pasa de 4,866 A (`H-MF-SELECTIVIDAD`); si dispara, el pulso se acorta y M5 cuenta igual el colapso («corto con colapso de V_in: 4 pulsos exactos y ABANDONADO persistente», autoprueba de `recuperacion_budget.py`) | nuestro, **cubierto** |
+| **E2** `+24V_SW`, parcial | **nada** mientras la falta más la carga no pase del límite de `U16`; por encima, como E1 | hasta 4,146 A sin disparar en cualquier pieza, y hasta 4,866 A en una de banda alta; sin tiempo | hasta **99–117 W** en la falta (24 V × 4,146–4,866 A) con la carga en cero, menos lo que se lleve la carga | — | **nuestro**: el umbral es nuestro, y `U16` no distingue una falta de una carga |
+| **E3** + de `+24V_SW` contra chasis | `U16`, como E1; vuelve por `J5` → `NT1` → `Q7` | ≤ 4,866 A ≤ 202 ms, 4 pulsos | — | `J5`, su hilo y `NT1` siguen sin cifra (`H-MF-CHASIS`), pero aquí la cota es la de `U16` | nuestro |
 | **E4** Un convertidor que falla en corto a su entrada | como E1 si es franco y como E2 si es parcial | | | TRACO recomienda un fusible lento por módulo, 6 A en el THN 30 y 4 A en el THN 20, «The need of an external fuse has to be assessed in the final application» (`traco_thn30wi.pdf` y `traco_thn20wi.pdf` p. 2). La placa no lleva ninguno y `U16` hace ese trabajo contra el franco. Contra un parcial por debajo de 4 A tampoco abriría ese fusible | nuestro |
 
 **Al quitar el corto.** `U16` sigue enclavado (Tabla 8-1, p. 28); tras los
@@ -145,7 +146,7 @@ cuatro pulsos M5 lo deja abandonado, y solo `SW1` lo rearma
 |---|---|---|---|
 | Puerta de `Q2` o de `Q7` en corto, incluido `D20` | no hay corriente de falta, pero la carga pasa por el diodo del MOSFET | ≤ 1 V × 2,889 A = 2,9 W (V_SD máx. a 14 A, `csd18534q5a.pdf` p. 3; la corriente del cordón en su peor caso, `ladrillo_budget.py`); a 50 °C/W (p. 3) son 145 K sobre el aire, por encima de los 150 °C de unión (p. 1) con cualquier aire del cajón | nuestro; `H-MF-PIEZAS`. Nada lo ve en servicio: solo el banco, una vez (`medidas.csv` paso 1, caída de `Q7` ≤ 60 mV) |
 
-## 4. Las cifras que traía la pregunta
+## 4. Las cifras de los papeles, revisadas
 
 ### 4.1 Los 2,4 W del corto franco
 
@@ -170,22 +171,25 @@ del hiccup: P = R_cordón × (1/T) ∫ i² dt. Pide la forma del pulso, que es
 ### 4.2 La banda de `U16`
 
 4,185–4,815 A es la fila de `tps2663.pdf` p. 7 para R_ILIM = 4,02 kΩ exactos.
-`R11` es E96 al 1 % (`recuperacion_budget.py:13`; `0805W8F4021T5E` en
-`bom.csv`), e I_OL va como 1/R_ILIM (ec. 5, p. 22):
+`R11` es E96 al 1 % (`0805W8F4021T5E` en `bom.csv`), e I_OL va como
+1/R_ILIM (ec. 5, p. 22):
 
 ```text
-4,185 A / 1,01 = 4,144 A        4,815 A / 0,99 = 4,864 A
+18,1 / 4,02 = 4,5025 A nominal (la fila de la p. 7 lo redondea a 4,5)
+× 0,93 / 1,01 = 4,146 A         × 1,07 / 0,99 = 4,866 A
 margen al disparo típico del TE90:  4,875 − 4,815 = 60 mA (1,2 %)  sin R11
-                                    4,875 − 4,864 = 11 mA (0,2 %)  con R11
+                                    4,875 − 4,866 =  9 mA (0,2 %)  con R11
 ```
 
 Y eso antes del coeficiente térmico de `R11`, que no tiene hoja en el repo.
-`recuperacion_budget.py` (`corriente_limite_tps26631_a`) y la junta §3.7
-(«4,82 A en lo alto de su banda») usan la banda sin `R11`. No se corrige
-aquí: es `H-MF-R11`. El mapa no cambia de veredicto, porque la selectividad
-ya colgaba de que AE confirme su umbral a 45 °C (pregunta 12). El suelo sigue
-holgado: 4,144 / 2,889 = 1,43 veces la corriente del cordón en su peor caso,
-contra el 1,3 que pide el guion.
+`recuperacion_budget.py` (`corriente_limite_tps26631_a`) usaba la banda sin
+`R11`, y la junta §3.7 también («4,82 A en lo alto de su banda»). La función
+ya la cuenta (`TOL_R_ILIM_FRAC`, también para `R34` en `U19`); su aserto de
+selectividad sigue en verde, y con un 1,2 % de tolerancia sale rojo. El
+pico de `U1` en el #334 no cambia (17,40 V). El mapa no cambia de veredicto,
+porque la selectividad ya colgaba de que AE confirme su umbral a 45 °C
+(pregunta 12). El suelo sigue holgado: 4,146 / 2,889 = 1,435 veces la
+corriente del cordón en su peor caso, contra el 1,3 que pide el guion.
 
 ### 4.3 Las demás
 
@@ -205,7 +209,7 @@ temperatura. Con los 0,0132 Ω/m del guion (`ladrillo_budget.py:175`, cobre a
 | Caso | Corriente y tiempo | Lo que le pasa al arnés | Veredicto |
 |---|---|---|---|
 | Servicio | 2,889 A continuos (`ladrillo_budget.py`, peor caso del cordón) | 0,11 W/m por conductor | sobra |
-| Corto detrás de `U16` (E1) | ≤ 4,864 A durante ≤ 202 ms, 4 pulsos | 4,8 A²s por pulso | sobra |
+| Corto detrás de `U16` (E1) | ≤ 4,866 A durante ≤ 202 ms, 4 pulsos | 4,8 A²s por pulso | sobra |
 | Corto parcial delante de `U16`, que no dispara el TE90 | hasta 6,75 A típicos, sin tiempo | 6,75² × 0,0132 = **0,60 W/m** por conductor; 0,36 W en los 0,6 m de cobre | **aguanta, ESTIMADO** (abajo) |
 | Corto franco delante de `U16` | pulsos del hiccup | sin pico ni ciclo de trabajo no hay I²t ni media | **HUECO** (`H-MF-HICCUP`) |
 
@@ -254,7 +258,7 @@ un parcial por debajo de su umbral no dispara. Es el resto de
 hoy no mueve, porque esas piezas son nuestras.
 
 El árbol ya descarta una salida: **un fusible en `X1` no lo resuelve.**
-Tendría que dejar pasar el límite de `U16`, hasta 4,864 A durante 202 ms y
+Tendría que dejar pasar el límite de `U16`, hasta 4,866 A durante 202 ms y
 cuatro veces (junta §3.8 lo dijo para el fusible delante de `D1`), y un
 fusible que aguanta eso no abre con un parcial por debajo de su nominal: a
 4,5 A son 108 W en la falta. La salida que casa con la decisión de hoy es
@@ -266,13 +270,13 @@ disparar. Eso es una decisión de Samuel, no una consecuencia de este mapa.
 
 | HUECO | Qué falta | Quién lo contesta | Qué filas mueve |
 |---|---|---|---|
-| `H-MF-HICCUP` | pico, tiempo encendido y tiempo apagado del hiccup con un corto franco en el extremo del cordón; resistencia del cordón de la opción 49 | **AE**: la pregunta de hoy; pliego preguntas 15 y 19 | A1, B1, C1, C3 franco, D1; §4.1 |
-| `H-MF-SOSTENIDA` | la mayor corriente que sostiene sin disparar, a 45 °C, y cuánto tiempo antes de que actúe su OTP | **AE**: la pregunta de hoy | A2, B2, C2, C3, D2; §5 |
-| `H-MF-PS` | clase PS/LPS de la salida. Ni el informe CB (IEC 60950-1, `ae-TE90-CB-cert.pdf`) ni el certificado DEMKO (`ae-TE90-DEMKO-EN62368.pdf`) la dan | **AE**: la pregunta de hoy | de ella depende qué le exige 62368-1 al tramo nuestro delante de `U16` y a la caja; la norma no está en el repo |
-| `H-MF-SELECTIVIDAD` | disparo mínimo garantizado de la sobrecarga a 45 °C, contra 4,864 A | **AE**: pregunta 12, enviada el 2026-10-25, caso P-258801 | E1 |
+| `H-MF-HICCUP` | pico, tiempo encendido y tiempo apagado del hiccup con un corto franco en el extremo del cordón; resistencia del cordón de la opción 49 | **AE**, en el seguimiento del caso P-258801; pliego preguntas 15 y 19 | A1, B1, C1, C3 franco, D1; §4.1 |
+| `H-MF-SOSTENIDA` | la mayor corriente que sostiene sin disparar, a 45 °C, y cuánto tiempo antes de que actúe su OTP | **AE**, en el seguimiento del caso P-258801 | A2, B2, C2, C3, D2; §5 |
+| `H-MF-PS` | clase PS/LPS de la salida. Ni el informe CB (IEC 60950-1, `ae-TE90-CB-cert.pdf`) ni el certificado DEMKO (`ae-TE90-DEMKO-EN62368.pdf`) la dan | **AE**, en el seguimiento del caso P-258801 | de ella depende qué le exige 62368-1 al tramo nuestro delante de `U16` y a la caja; la norma no está en el repo |
+| `H-MF-SELECTIVIDAD` | disparo mínimo garantizado de la sobrecarga a 45 °C, contra 4,866 A | **AE**: pregunta 12, enviada el 2026-10-25, caso P-258801 | E1 |
 | `H-MF-ARNES` | referencia del cable de `X1` a `J1`, con clase de aislamiento y su ampacidad con el aire del cajón; su I²t; la hoja de `J1` | diseño | C1, C2; §5 |
 | `H-MF-CHASIS` | corriente admisible de `J5`; el hilo de `J5` al chasis, que no está en `bom-chasis.csv`; el cobre de `NT1`; qué piezas metálicas son chasis (la escuadra del enchufe, la base) | diseño, junto con `H-V5-PE` | A3, B3, C3, C4, D3, E3 |
-| `H-MF-R11` | la banda de `U16` con la tolerancia y el coeficiente térmico de `R11`, en `recuperacion_budget.py` | diseño | E1; §4.2 |
+| `H-MF-R11` | ~~la banda de `U16` con la tolerancia de `R11`~~ **contada en `recuperacion_budget.py` (§4.2)**; falta su coeficiente térmico, sin hoja de UniOhm en el repo | diseño | E1; §4.2 |
 | `H-MF-RECEPTACULO` | temperatura del `KPJX-PM-4S` a 6,75 A con el aire a 62,6 °C, contra sus 75 °C | medida | B2; §5 |
 | `H-MF-PIEZAS` | la potencia de `R64` con la rama del MSP430 en corto (sin hoja); `Q2`/`Q7` conduciendo por el diodo sin que nada lo vea en servicio | diseño | D4; §3.3 |
 | sin nombre, no bloquea | capacidad interna de entrada de los THN y del URB | TRACO, Mornsun | la devolución de §2 y la energía de E1 en la falta: por encima de 31,8 mJ, sin cambiar ningún veredicto |
