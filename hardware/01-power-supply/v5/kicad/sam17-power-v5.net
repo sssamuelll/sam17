@@ -1,8 +1,8 @@
 (export
 	(version "E")
 	(design
-		(source "D:\\Desktop\\projects\\sam17-cadena\\hardware\\01-power-supply\\v5\\kicad\\sam17-power-v5.kicad_sch")
-		(date "2026-10-27T08:34:41")
+		(source "D:\\Desktop\\projects\\sam17-r36\\hardware\\01-power-supply\\v5\\kicad\\sam17-power-v5.kicad_sch")
+		(date "2026-10-27T18:40:59")
 		(tool "Eeschema 10.0.3")
 		(sheet
 			(number "1")
@@ -7957,13 +7957,13 @@
 		)
 		(comp
 			(ref "R36")
-			(value "3.9k 0.1%")
+			(value "3.74k 0.1%")
 			(footprint "Resistor_SMD:R_0805_2012Metric")
 			(fields
 				(field
-					(name "LCSC") "C865471")
+					(name "LCSC") "C865467")
 				(field
-					(name "MPN") "RT0805BRD073K9L")
+					(name "MPN") "RT0805BRD073K74L")
 				(field
 					(name "Footprint") "Resistor_SMD:R_0805_2012Metric")
 				(field
@@ -7980,11 +7980,11 @@
 			)
 			(property
 				(name "LCSC")
-				(value "C865471")
+				(value "C865467")
 			)
 			(property
 				(name "MPN")
-				(value "RT0805BRD073K9L")
+				(value "RT0805BRD073K74L")
 			)
 			(property
 				(name "Sheetname")
@@ -19620,7 +19620,7 @@
 		(net
 			(code "80")
 			(name "RET24_RAW")
-			(class "Default")
+			(class "Potencia")
 			(node
 				(ref "D1")
 				(pin "2")

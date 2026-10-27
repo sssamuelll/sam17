@@ -15,13 +15,14 @@ del censo D-V4 (`2026-09-08-censo-dv4-resolucion.md`) y los issues **#334** y
        maximo absoluto de entrada es **+-20,0 V**.
      - El eFuse **TI TPS26631** (`U19`) va **antes del filtro LC, sensando del
        lado del modulo**, y corta por lo PRIMERO que llegue (`tps2663.pdf`):
-         * OVP: `V(OVPR) = 1,176 .. 1,224 V` (p. 6; disparo nominal `16,55 V`,
-           borde bajo `16,19 V` > maximo sano `16,01 V`, borde alto `16,92 V`),
+         * OVP: `V(OVPR) = 1,176 .. 1,224 V` (p. 6; disparo nominal `17,21 V`,
+           borde bajo `16,83 V` > maximo sano `16,01 V`, borde alto `17,59 V`),
            corte en `<= 14 us` (p. 8);
          * contra un alivio de carga del THN, HUECO (`_guarda_ovp_sobreimpulso`): el
            sobreimpulso tipico (`~0,19 V`, `traco_thn20wi_characteristic_curves.pdf`
-           p. 8) cabe con lo que la hoja garantiza y no en la envolvente de `2,5 %` de
-           `margen_budget.py`; TRACO no da maximo;
+           p. 8) cabe en los `0,82 V` de la envolvente de `2,5 %` de
+           `margen_budget.py`; con `R36` = 3,9 kohm eran `0,18 V` y no cabia. TRACO no
+           da maximo;
          * disparo rapido: `3 x I(OL)` en el TPS26631 (p. 7), con `I(OL)` de
            `R34` y su +-10 % (`recuperacion_budget.py`), respuesta `<= 4,5 us`
            (p. 9, soft short); por encima de `I(SCP) = 45 A`, `<= 1 us` (p. 9).
@@ -688,11 +689,13 @@ def _guarda_d1(p: dict[str, float]) -> None:
 
 
 def _guarda_d10_sobra(p: dict[str, float]) -> None:
-    """D10 no conduce en ningun caso modelado: el pico de U1 sin el queda por
-    debajo de su V_BR MINIMO. Es lo que permite dejarlo sin montar."""
+    """D10 no conduce en ningun caso modelado: ni el pico de U1 sin el ni, en
+    continua, el borde alto del OVP de U19 (un THN atascado justo debajo) llegan
+    a su V_BR MINIMO. Es lo que permite dejarlo sin montar."""
     r = escalon_lc(v_fallo_v=36.0, con_tvs=False)
-    assert r["v_pico_v"] < p["v_br_min_d10_v"], (
-        f"D10 conduciria: U1 llega a {r['v_pico_v']:.2f} V sin el y su V_BR minimo es "
+    v_u1 = max(r["v_pico_v"], p["v_disparo_u1_v"])
+    assert v_u1 < p["v_br_min_d10_v"], (
+        f"D10 conduciria: U1 llega a {v_u1:.2f} V sin el y su V_BR minimo es "
         f"{p['v_br_min_d10_v']:.1f} V")
 
 
@@ -800,6 +803,9 @@ def demo() -> int:
     assert filas_bom["Q2"]["mpn"] == filas_bom["Q7"]["mpn"] == MPN_Q2_Q7, (
         f"Q2 es {filas_bom['Q2']['mpn']} y Q7 {filas_bom['Q7']['mpn']}; los limites del modelo son del {MPN_Q2_Q7}")
     con_tope = escalon_lc(v_fallo_v=36.0)
+    # Lo peor que ve U1 (y la cascada si U1 esta en corto): el pico de #334, o en
+    # continua el borde alto del OVP de U19, con un THN atascado justo debajo.
+    v_peor_u1 = max(con_tope["v_pico_v"], V_DISPARO_MAX_U1_V)
     banco = escalon_lc(v_fallo_v=36.0, peor_caso=False)
     sin_tope = escalon_lc(v_fallo_v=36.0, con_efuse=False, con_tvs=False)
     con_d10 = escalon_lc(v_fallo_v=36.0, con_tvs=True, v_br_tvs_v=V_BR_MIN_SMBJ16A_V)
@@ -821,7 +827,8 @@ def demo() -> int:
     _guarda_d10_sobra(dict(P_BASE))
     assert abs(con_d10["v_pico_v"] - con_tope["v_pico_v"]) <= 0.005, (
         "montar D10 mueve el pico de U1: el modelo ya no dice que sobra")
-    print(f"    [verde] D10 sobra: pico {con_tope['v_pico_v']:.2f} V < V_BR minimo del SMBJ16A "
+    print(f"    [verde] D10 sobra: U1 ve {v_peor_u1:.2f} V como mucho (pico {con_tope['v_pico_v']:.2f} V, "
+          f"borde alto del OVP {V_DISPARO_MAX_U1_V:.2f} V) < V_BR minimo del SMBJ16A "
           f"{V_BR_MIN_SMBJ16A_V:.1f} V (con D10 montado y su V_BR minimo el pico es el mismo, "
           f"{con_d10['v_pico_v']:.2f} V y {con_d10['energia_tvs_mj']:.2f} mJ)")
     print(f"    banco (15,50 V, rama cargada, piezas centrales): pico = {banco['v_pico_v']:.2f} V")
@@ -923,9 +930,9 @@ def demo() -> int:
     print("\n  6. Matriz completa de absmax.csv (cada fila contra su modelo):")
     v_max_u2 = 1.220 * (1 + (valor("R7") + valor("RV3")) / valor("R8"))   # lt3015-rev-b.pdf p. 1
     esperados = {
-        "U1 ": con_tope["v_pico_v"],
+        "U1 ": v_peor_u1,
         "U2 ": V_OVP_MAX_THN20_V,
-        "U4,U5 ": con_tope["v_pico_v"],
+        "U4,U5 ": v_peor_u1,
         "U6,U7 ": v_max_u2,
         "U18 ": pico_u18["v_in_v"],
         "Cerebro digital +5V": V_OVP_MAX_URB_V,
@@ -1030,8 +1037,8 @@ def demo() -> int:
     print("  canario D1: lo que aguanta cada pieza de +24V_RAW antes de que V_C de D1 la pase: "
           + ", ".join(f"{n} {v:.1f} V" for n, v in lim_d1.items()))
     print(f"  canario Q7: con un D20 de V_Z max >= {vgs_q7:.1f} V la puerta pasa de VGS max")
-    print(f"  canario D10: con un V_BR minimo de D10 <= {d10_vbr:.2f} V conduciria con el pico de U1 "
-          f"({con_tope['v_pico_v']:.2f} V), y habria que montarlo")
+    print(f"  canario D10: con un V_BR minimo de D10 <= {d10_vbr:.2f} V conduciria con lo peor que ve U1 "
+          f"({v_peor_u1:.2f} V), y habria que montarlo")
     print(f"  canario D-F6: con I_GT > {igt * 1e3:.0f} mA algun PNP no llega a la puerta")
     print(f"  canario D-F6: un despeje > {despeje:.0f} x la fusion pasaria el I2t del SCR")
     print(f"  canario #491: +5V_AUX aguanta la fuga de PS3 hasta {t_fuga:.1f} us de retardo "
@@ -1041,7 +1048,7 @@ def demo() -> int:
     print("\n  FUERA DE CONTRATO (fallo simple, #475):")
     print(f"    - fallo doble THN- en OVP + U2 en corto: U6/U7 verian {V_OVP_MAX_THN20_V:.1f} V "
           f"contra 22 V; se acepta sin TVS ni tope")
-    print(f"    - fallo doble THN+ en OVP + U1 en corto: {con_tope['v_pico_v']:.2f} V en la cascada, "
+    print(f"    - fallo doble THN+ en OVP + U1 en corto: {v_peor_u1:.2f} V en la cascada, "
           f"cubierto por M3 (fila U4,U5), no por requisito")
 
     print("\n  REQUISITO al modulo 2 (T19, junta de piezas v5 sec. 4.5): el +5 V digital no lleva "
