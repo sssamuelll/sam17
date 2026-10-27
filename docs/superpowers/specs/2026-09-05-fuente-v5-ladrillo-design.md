@@ -861,6 +861,15 @@ de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 > `H-V5-CONECTOR` (#488) y `H-V5-RETENCION`. Siguen siendo condición para
 > fabricar el panel.
 
+> **ENMIENDA (2026-10-27, tercera firma de Samuel).** `H-V5-PE` tampoco
+> bloquea el cobre. Lo que le toca a la placa ya está en ella: `J5`, el único
+> puente de `GNDA` al chasis, y `NT1`, la única unión de `GND24` y `GNDA`. Lo
+> que falta vive fuera: el convertidor aislado de la pantalla (#480), el
+> espárrago del chasis y el hilo de `J5` hasta él (#424, hito 6), y el ensayo
+> del conjunto, que pide la placa construida (primera enmienda). La fila sigue
+> abierta con su mapa, su evidencia y su ensayo, y sigue siendo condición para
+> fabricar la pantalla y el chasis.
+
 | HUECO | Qué falta | Dueño |
 |---|---|---|
 | `H-V2-ENTRADA` | ventana garantizada del ladrillo y de los DC-DC, con las caídas del cordón dentro | **fabricante** |
@@ -878,7 +887,7 @@ de cómo el propio contrato del 08-09 formula cada pregunta — *al fabricante*,
 | `H-V5-RECONEXION` | ~~rearranque con energía residual o rebote~~ **derivado 08-09 de `H-V2-RECUPERACION` (§9.3)**; falta separar un rebote de un intento legítimo | diseño |
 | `H-V5-CORTO` | corto entre conductores o contra chasis, incluido el tramo de cable expuesto. **Decidido 2026-10-27 (firma de Samuel): el cordón cautivo, aguas arriba de nuestro zócalo, es del ladrillo certificado, y le toca a su certificación.** ~~Un corto franco en hiccup son unos 2,4 W~~ **(corregido el mismo día: esos 2,4 W son la I²R del cordón de escenario, 16 AWG y 2 m, con 6,75 A continuos; no son el hiccup, cuyo pico no se publica, ni el cordón del TE90; [mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) §4.1)**; uno parcial por debajo del disparo de sobrecarga son de 117 a 162 W (4,875–6,75 A, típicos) sin disparar nada. A AE se le preguntan el hiccup (encendido, apagado y pico), la corriente máxima sin disparo y la clasificación PS/LPS de la salida. ~~Falta el mapa de fallos de nuestro tramo, del zócalo a `U16`~~ **El [mapa de fallos](2026-10-27-mapa-fallos-entrada-v5.md) (2026-10-27) cierra la parte de papel: delante de `U16` nada nuestro para un corto parcial y no hay abandono, y detrás lo cubren `U16` y M5 (§6). Quedan sus HUECOS `H-MF-*` (§7) y dos ensayos de banco (§8)**. **Decidido 2026-10-27 (firma de Samuel): nuestro tramo delante de `U16` (`X1`, el arnés de 0,3 m, `J1` y el cobre hasta `U16`) se trata como el cordón: lo protege solo el ladrillo certificado, y sus piezas se dimensionan para la corriente más alta que el ladrillo sostiene sin disparar (`H-MF-SOSTENIDA`, pregunta 5 a AE en el caso P-258801).** Un fusible ahí no ayuda: el que aguante el límite de `U16` (hasta 4,87 A durante 202 ms, en cada uno de los 4 pulsos de un abandono, `recuperacion_budget.py`) no abre a tiempo un corto parcial por debajo del disparo del ladrillo, 9 mA más arriba | diseño |
 | `H-V5-INCOMPATIBLE` | ~~qué adaptadores cubre el contrato~~ **decidido 08-09: contrato exclusivo (§9.3)**; faltan las referencias admitidas y su acreditación | ~~**Samuel** +~~ diseño |
-| `H-V5-PE` | **relevo de D-F5**: ~~quién da el camino de modo común~~ **M2 lo asigna fuera, con el ladrillo, y une chasis al retorno DC (firma 2026-09-08, §9)**; faltan mapa, evidencia y ensayo, preservando GNDD por M1; **HUECO abierto**. **2026-10-27 (firma de Samuel): no cambia la placa.** El encuentro de `GNDD` y `GNDA` en la pantalla se resuelve en #480 con un convertidor aislado en la pantalla (§8, punto 2); el chasis, su unión al retorno y la entrada del cordón, en #424 (hito 6). Con el SAM17 en clase III, el espárrago de #424 es la unión M2 del chasis al retorno DC, no un borne de PE | diseño + medida |
+| `H-V5-PE` | **relevo de D-F5**: ~~quién da el camino de modo común~~ **M2 lo asigna fuera, con el ladrillo, y une chasis al retorno DC (firma 2026-09-08, §9)**; faltan mapa, evidencia y ensayo, preservando GNDD por M1; **HUECO abierto**. **2026-10-27 (firma de Samuel): no cambia la placa.** El encuentro de `GNDD` y `GNDA` en la pantalla se resuelve en #480 con un convertidor aislado en la pantalla (§8, punto 2); el chasis, su unión al retorno y la entrada del cordón, en #424 (hito 6). Con el SAM17 en clase III, el espárrago de #424 es la unión M2 del chasis al retorno DC, no un borne de PE. **No bloquea el cobre de la placa (tercera enmienda de arriba): `J5` y `NT1` ya están en ella; sigue en #480, #424 y el bring-up** | diseño + medida |
 
 **Tres de estas filas no son independientes:** `H-V5-CALIENTE` tiene que
 coincidir con `H-V2-TRANSITORIOS` y `H-V2-RESERVA`, y `H-V5-RECONEXION` ~~sigue
