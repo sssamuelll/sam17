@@ -250,6 +250,18 @@ la trasera, muertos esa misma noche, ya no existen.)
    el taller pueda cambiar por su cuenta. **Lo mismo la escuadra del enchufe,
    6082-T6 de 2 mm, doblada a R2 (1 t)** (`radio_doblez_escuadra`, #130).
 
+**La escuadra del enchufe no se manda a cotizar antes del banco del enchufe**
+(firmado el 2026-10-27, #130). Un KPJX-PM-4S y una KPPX-4P, con recortes de
+aluminio de **1, 1.5 y 2 mm** taladrados a **Ø10**: se enchufa la clavija en
+cada uno, se comprueba que el bloqueo engancha y no se suelta tirando del
+cordón, y se mide con un dinamómetro de mano la fuerza de inserción y la de
+extracción. Contesta dos HUECO de `guarda_enchufe()`: la profundidad de acople
+(con la placa de 2, la cara de enganche de las rampas queda de 0 a 0.5 más
+allá de la cara del enchufe, leída a escala) y la fuerza, que el cálculo de
+flexión de la placa supone en 30 N. **Si 2 mm no engancha y 1 mm sí**, la
+placa lleva un avellanado de **Ø13.2 × 1.0** por su cara de fuera alrededor del
+taladro de la nariz, y entra en el DXF y en el modelo antes de pedir.
+
 El techo de esta tanda **no lleva ranuras**. Se eliminan 16 operaciones del
 blank y no aparece ningún proceso nuevo de chapa. Por eso no se añade una
 pregunta: basta cotizar el desarrollo vigente y sus pliegues.

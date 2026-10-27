@@ -4064,11 +4064,16 @@ def guarda_enchufe(p: dict[str, float]) -> None:
         f"la fuerza de insercion y la retencion del bloqueo de la KPPX-4P sin cifrar: la hoja "
         f"de la clavija no las publica. La placa es un voladizo de {m['h']:.1f} sobre el pie, y "
         f"con {p['kppx_fuerza_est']:g} N SUPUESTOS flecta {m['flecha']:.2f} mm a {m['sigma']:.0f} "
-        f"MPa (ESTIMADO): no hay criterio de flecha admisible. Se mide con la clavija puesta")
+        f"MPa (ESTIMADO): no hay criterio de flecha admisible. Se mide con la clavija puesta, "
+        f"con un dinamometro de mano, en el banco del enchufe (RFQ, B)")
     _HUECOS.append(
         f"la nariz de la clavija ({p['kppx_nariz_largo']:g}) cruza la placa de {t:g} y entra "
         f"{p['kppx_nariz_largo'] - t:g} en el enchufe: ni la hoja del KPJX ni la del KPPX dan la "
-        f"profundidad de acople que el bloqueo necesita")
+        f"profundidad de acople que el bloqueo necesita. Leida a escala (KPPX-4P Rev. A17, "
+        f"ESTIMADO), la cara de enganche de las rampas queda a 2.0..2.5 del hombro: con la "
+        f"placa de {t:g}, de 0 a 0.5 mas alla de la cara del enchufe. Se mide en banco antes de "
+        f"pedir la escuadra (RFQ, B): un par KPJX-PM-4S / KPPX-4P sobre recortes de 1, 1.5 y 2; "
+        f"si 2 no engancha y 1 si, la placa lleva el avellanado")
     _HUECOS.append(
         f"el doblez de la escuadra es a radio {p['radio_doblez_escuadra']:g} = 1 t en 6082-T6, "
         f"y a ese radio puede fisurar (ESTIMADO, sin tabla en el repo). Se pregunta al taller (RFQ, B)")

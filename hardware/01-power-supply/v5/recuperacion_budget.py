@@ -24,11 +24,13 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
        con `R11 = 4,02 kohm` el `1,5 x` aguanta el cordon nominal hasta
        `2,79 A`: con la cascada a 650 mA/riel eran `2,98 A` y la puerta
        estuvo en `1,40 x`.
-     - A diferencia del TPS26630, el TPS26631 deja pasar hasta `2 x I_OL`
-       durante `tCB(dly) = 25,5 ms` (con PGOOD alto) antes de regular a `I_OL`,
-       y su comparador rapido corta a `3 x I_OL` (`tps2663.pdf` p. 7, 23): ese
-       pico, `2 x 4,815 = 9,63 A`, tambien cabe en los `7,5 A/pin` del
-       conector Kycon.
+     - El pulso de `2 x I_OL` del TPS26631 solo se activa con PGOOD alto
+       (`tps2663.pdf` p. 23), y en la placa `PGTH` (pin 16) va a `GND24`, que
+       lo deshabilita (p. 19): PGOOD no sube nunca. Con `MODE` al aire, `U16`
+       limita a `1 x I_OL` durante `tCL_PLIM(dly)`, hasta `202 ms` (p. 9), y
+       despues enclava (Tabla 8-1, p. 28). El guion lee `PGTH` y `MODE` de la
+       netlist: si cambian, sale rojo, porque vuelven el pulso contra el
+       conector y otro temporizador.
      - El de riel `U19` limita con `R34`: su minimo tiene que pasar la rama
        `U1` con la carga en su techo (`ladrillo_budget.corriente_thn_a`). A
        ~1 A la hoja da `+-10 %` (30 kohm) y `+-8 %` (9 kohm): se toma el 10.
@@ -47,11 +49,17 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
        `T_CONFIRMA_SANO_S`; si el MCU muere antes (el corto tumba la entrada),
        al volver a arrancar encuentra el PENDIENTE y lo cuenta como fallido. El
        firmware nunca sabe de antemano si un pulso va a fallar.
+     - Sano no es gratis: al confirmar, el intento queda EN PRUEBA en la FRAM
+       hasta `T_REARME_SANO_S` de marcha. Si la entrada cae antes (el
+       ladrillo en hiccup por una sobrecarga que llega despues de confirmar,
+       con `U16` limitando), al volver lo cuenta como fallido. Sin eso, diez
+       arranques confirmados con un apagon detras eran diez pulsos y ningun
+       intento gastado.
      - Supervisor de alimentacion `SVS` integrado (`1,71..1,99 V`, p. 20).
      - Si al arrancar el `CRC16` de la FRAM no es valido, entra directamente en
        estado `ABANDONADO` (fallo seguro).
 
-  3. **Politica verificada por maquina de estados + 5 mutantes de autoprueba:**
+  3. **Politica verificada por maquina de estados + 7 mutantes de autoprueba:**
      - `N_REINTENTOS = 3` (4 pulsos de intento en total: 1 inicial + 3 reintentos).
      - `T_ESPERA_REINTENTO_S = 1,0 s` entre intentos.
      - `T_FILTRO_REBOTE_S = 0,100 s` (100 ms): desconexiones o rebotes del
@@ -82,8 +90,10 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
      - Los crowbars de rack (D-F6) no tienen camino al MCU (#476): si su
        convertidor los suelta y cuanto se calienta el SCR se mide en el
        bring-up (`check_bringup.py`, paso 8, `crowbar_*`).
-     - Desenchufar durante los `T_CONFIRMA_SANO_S` de un intento lo cuenta como
-       fallido: desde el MCU no se distingue de un corto que tumba la entrada.
+     - Desenchufar antes de `T_REARME_SANO_S` de marcha lo cuenta como
+       fallido: desde el MCU no se distingue de un corto ni de un hiccup del
+       ladrillo que tumban la entrada. Cuatro arranques seguidos de menos de
+       60 s abandonan, y se sueltan con el boton.
 """
 from __future__ import annotations
 
@@ -97,6 +107,9 @@ if DIR not in sys.path:
     sys.path.insert(0, DIR)
 
 from bom_valores import valor  # noqa: E402
+
+sys.path.insert(0, os.path.join(DIR, "kicad"))
+from check_netlist import leer, red_de  # noqa: E402
 
 
 def _ladrillo():
@@ -139,7 +152,7 @@ GAIN_DVDT_MIN = 23.5                      # tps2663.pdf p. 7
 TOL_C_X7R_FRAC = 0.10                     # C11/C13: X7R "K" (+-10 %)
 T_ARRANQUE_THN_MAX_S = 30e-3              # traco_thn20wi.pdf p. 2: start-up 30 ms max
 T_UVLO_FLT_MAX_S = 700e-6                 # tps2663.pdf p. 8: UVLO -> FLT alto
-T_CB_MAX_S = 31e-3                        # tps2663.pdf p. 8: tCB(dly) a 2 x I_OL
+T_CL_PLIM_MAX_S = 202e-3                  # tps2663.pdf p. 9: tCL_PLIM(dly) max, 1 x I_OL y enclava (p. 28)
 
 # --- Parametros temporales de la maquina de estados -------------------------
 N_REINTENTOS = 3                          # 1 intento inicial + 3 reintentos = 4 pulsos
@@ -149,7 +162,7 @@ T_FILTRO_REBOTE_S = 0.100
 T_REARME_SANO_S = 60.0
 T_BOTON_REARME_S = 2.0
 T_IGNORA_FLT_U19_S = 0.100
-T_CONFIRMA_SANO_S = 0.200
+T_CONFIRMA_SANO_S = 0.225                 # cubre la rampa de U16 mas tCL_PLIM (_autocomprobacion, 3)
 
 
 def ventana_entrada_v() -> dict[str, float]:
@@ -182,8 +195,9 @@ def corriente_limite_tps26631_a(ref: str = "R11",
     return nom * (1.0 - tol), nom, nom * (1.0 + tol)
 
 
-def _crc16_ccitt(intentos: int, pendiente: bool, abandonado: bool) -> int:
-    datos = bytes([intentos & 0xFF, 1 if pendiente else 0, 1 if abandonado else 0])
+def _crc16_ccitt(intentos: int, pendiente: bool, abandonado: bool, en_prueba: bool) -> int:
+    datos = bytes([intentos & 0xFF, 1 if pendiente else 0, 1 if abandonado else 0,
+                   1 if en_prueba else 0])
     crc = 0xFFFF
     for b in datos:
         crc ^= b << 8
@@ -200,16 +214,19 @@ class ImagenFRAM:
     intentos_gastados: int = 0
     pendiente: bool = False
     abandonado: bool = False
-    crc: int = _crc16_ccitt(0, False, False)
+    en_prueba: bool = False
+    crc: int = _crc16_ccitt(0, False, False, False)
 
-    def escribir(self, intentos: int, pendiente: bool, abandonado: bool) -> None:
+    def escribir(self, intentos: int, pendiente: bool, abandonado: bool, en_prueba: bool) -> None:
         self.intentos_gastados = intentos
         self.pendiente = pendiente
         self.abandonado = abandonado
-        self.crc = _crc16_ccitt(intentos, pendiente, abandonado)
+        self.en_prueba = en_prueba
+        self.crc = _crc16_ccitt(intentos, pendiente, abandonado, en_prueba)
 
     def es_valida(self) -> bool:
-        return self.crc == _crc16_ccitt(self.intentos_gastados, self.pendiente, self.abandonado)
+        return self.crc == _crc16_ccitt(self.intentos_gastados, self.pendiente,
+                                        self.abandonado, self.en_prueba)
 
 
 class VigilanteM5:
@@ -225,7 +242,8 @@ class VigilanteM5:
                  flt_u19_gasta_intento: bool = True,
                  exige_crc_valido: bool = True,
                  ignora_flt_u19_en_arranque: bool = True,
-                 reinicia_ventana_tras_uvlo: bool = True) -> None:
+                 reinicia_ventana_tras_uvlo: bool = True,
+                 cuenta_colapso_tras_confirmar: bool = True) -> None:
         self.fram = fram if fram is not None else ImagenFRAM()
         self.persiste_en_fram = persiste_en_fram
         self.filtra_rebote = filtra_rebote
@@ -233,12 +251,14 @@ class VigilanteM5:
         self.exige_crc_valido = exige_crc_valido
         self.ignora_flt_u19_en_arranque = ignora_flt_u19_en_arranque
         self.reinicia_ventana_tras_uvlo = reinicia_ventana_tras_uvlo
+        self.cuenta_colapso_tras_confirmar = cuenta_colapso_tras_confirmar
         self.ahora_s = 0.0
         self.t_cierre_s = 0.0
 
         self.intentos_ram = 0
         self.pendiente_ram = False
         self.abandonado_ram = False
+        self.en_prueba_ram = False
         self.efuse_habilitado = False
         self.pulsos_emitidos = 0
         self.tiempo_sano_acumulado_s = 0.0
@@ -251,24 +271,30 @@ class VigilanteM5:
             self.intentos_ram = N_PULSOS_MAX
             self.pendiente_ram = False
             self.abandonado_ram = True
+            self.en_prueba_ram = False
             return
         if not self.persiste_en_fram:
             self.intentos_ram, self.pendiente_ram, self.abandonado_ram = 0, False, False
+            self.en_prueba_ram = False
             return
         self.intentos_ram = self.fram.intentos_gastados
         self.pendiente_ram = self.fram.pendiente
         self.abandonado_ram = self.fram.abandonado
-        if self.pendiente_ram:
-            # El ultimo pulso no llego a confirmarse: la entrada cayo con el.
+        self.en_prueba_ram = self.fram.en_prueba
+        if self.pendiente_ram or self.en_prueba_ram:
+            # El ultimo pulso no llego a confirmarse, o se confirmo y la entrada
+            # cayo antes del rearme sano: las dos cosas gastan el intento.
             self.intentos_ram += 1
             self.pendiente_ram = False
+            self.en_prueba_ram = False
             if self.intentos_ram >= N_PULSOS_MAX:
                 self.abandonado_ram = True
             self._sincronizar_fram()
 
     def _sincronizar_fram(self) -> None:
         if self.persiste_en_fram:
-            self.fram.escribir(self.intentos_ram, self.pendiente_ram, self.abandonado_ram)
+            self.fram.escribir(self.intentos_ram, self.pendiente_ram, self.abandonado_ram,
+                               self.en_prueba_ram)
 
     def _en_ventana(self, v_in: float) -> bool:
         v = ventana_entrada_v()
@@ -306,8 +332,10 @@ class VigilanteM5:
         self.t_cierre_s = self.ahora_s
 
         if fallo is None:
-            # Viva y sin FLT pasados T_CONFIRMA_SANO_S: el intento no gasta cupo.
+            # Viva y sin FLT pasados T_CONFIRMA_SANO_S: queda EN PRUEBA hasta el
+            # rearme sano; un apagon antes de eso gasta el intento al volver.
             self.pendiente_ram = False
+            self.en_prueba_ram = self.cuenta_colapso_tras_confirmar
             self._sincronizar_fram()
             return True
 
@@ -318,6 +346,7 @@ class VigilanteM5:
             self.apagon_de_entrada()
             return False
         self.pendiente_ram = False
+        self.en_prueba_ram = False
         self.intentos_ram += 1
         if self.intentos_ram >= N_PULSOS_MAX:
             self.abandonado_ram = True
@@ -347,6 +376,7 @@ class VigilanteM5:
         self.efuse_habilitado = False
         self.tiempo_sano_acumulado_s = 0.0
         self.pendiente_ram = False
+        self.en_prueba_ram = False
         if self.flt_u19_gasta_intento:
             self.intentos_ram += 1
             if self.intentos_ram >= N_PULSOS_MAX:
@@ -363,6 +393,7 @@ class VigilanteM5:
         self.tiempo_sano_acumulado_s += duracion_s
         if self.tiempo_sano_acumulado_s >= T_REARME_SANO_S:
             self.intentos_ram = 0
+            self.en_prueba_ram = False
             self._sincronizar_fram()
 
     def pulsar_boton_rearme(self, duracion_s: float, *, v_in: float = 24.0) -> bool:
@@ -370,6 +401,7 @@ class VigilanteM5:
             self.intentos_ram = 0
             self.pendiente_ram = False
             self.abandonado_ram = False
+            self.en_prueba_ram = False
             self._sincronizar_fram()
             return True
         return False
@@ -438,6 +470,24 @@ def _verifica_politica(cls_kwargs: dict) -> None:
         "un bajon de entrada gasto un intento: el FLT de U19 del rearranque de U16 "
         "cayo fuera de la ventana")
 
+    # Propiedad 7: un apagon que llega despues de confirmar sano, y antes del
+    # rearme, gasta el intento: diez arranques asi dan 4 pulsos y ABANDONADO.
+    # Pasado el rearme, el apagon no gasta nada.
+    v7 = VigilanteM5(**cls_kwargs)
+    for _ in range(10):
+        if v7.intento_energizar(v_in=24.0):
+            v7.marcha_sana(1.0)
+            v7.apagon_de_entrada()
+    assert v7.pulsos_emitidos == N_PULSOS_MAX and v7.abandonado_ram, (
+        f"apagon tras confirmar sano: {v7.pulsos_emitidos} pulsos sin abandonar; "
+        "el ladrillo en hiccup despues de confirmar no gasta cupo")
+    v7b = VigilanteM5(**cls_kwargs)
+    v7b.intento_energizar(v_in=24.0)
+    v7b.marcha_sana(T_REARME_SANO_S)
+    v7b.apagon_de_entrada()
+    assert v7b.intentos_ram == 0 and not v7b.abandonado_ram, (
+        "un apagon tras el rearme sano gasto un intento")
+
 
 def _autocomprobacion() -> None:
     # 1. La banda de ILIM del TPS26631 cabe entre el ladrillo y la carga: por
@@ -461,10 +511,16 @@ def _autocomprobacion() -> None:
         f"({I_RIEL_U19_A:.3f} A): U19 cortaria el riel con la carga de diseno")
     assert i_max < I_MAX_CONECTOR_POR_POLO_A, (
         f"banda alta de ILIM ({i_max:.2f} A) supera el conector ({I_MAX_CONECTOR_POR_POLO_A:.1f} A)")
-    # El TPS26631 deja pasar hasta 2 x I_OL durante 25,5 ms antes de regular
-    # (tps2663.pdf p. 7, 23): tambien ese pico tiene que caber en el conector.
-    assert 2 * i_max < I_MAX_CONECTOR_POR_POLO_A, (
-        f"pico de 2 x ILIM ({2 * i_max:.2f} A) supera el conector ({I_MAX_CONECTOR_POR_POLO_A:.1f} A)")
+    # El pulso de 2 x I_OL solo se activa con PGOOD alto (tps2663.pdf p. 23) y
+    # PGTH a masa lo deshabilita (p. 19); con MODE al aire, U16 limita a 1 x
+    # I_OL durante tCL_PLIM y enclava (Tabla 8-1, p. 28). Asi el tope de U16 es
+    # el de arriba, y su temporizador el de T_CL_PLIM_MAX_S.
+    nets = leer()
+    assert red_de(nets, "U16.16") == "GND24", (
+        "PGTH de U16 ya no va a GND24: PGOOD puede subir, y vuelven el pulso de 2 x I_OL "
+        "contra el conector y el tCB de 31 ms (tps2663.pdf p. 9, 23)")
+    assert red_de(nets, "U16.12") is None, (
+        "MODE de U16 ya no esta al aire: cambia lo que hace al agotar tCL_PLIM (Tabla 8-1, p. 28)")
 
     # 2. La ventana de la placa: arranca con el ladrillo en su minimo y el
     #    cordon cargado, y corta antes de que los DC-DC pasen de 36 V.
@@ -484,13 +540,15 @@ def _autocomprobacion() -> None:
     assert T_IGNORA_FLT_U19_S >= arranque_cadena_max_s(), (
         f"el FLT de U19 puede seguir bajo {arranque_cadena_max_s() * 1e3:.1f} ms tras cerrar "
         f"U16 y el MCU solo lo ignora {T_IGNORA_FLT_U19_S * 1e3:.0f} ms")
-    assert T_CONFIRMA_SANO_S >= _rampa_s("C11", v["sobretension"]) + T_CB_MAX_S, (
-        "T_CONFIRMA_SANO_S no cubre la rampa de U16 mas su tCB")
+    t_enclava = _rampa_s("C11", v["sobretension"]) + T_CL_PLIM_MAX_S
+    assert T_CONFIRMA_SANO_S >= t_enclava, (
+        f"T_CONFIRMA_SANO_S ({T_CONFIRMA_SANO_S * 1e3:.0f} ms) no cubre la rampa de U16 mas su "
+        f"tCL_PLIM ({t_enclava * 1e3:.1f} ms): un enclavamiento de U16 caeria fuera del intento")
 
-    # 4. La realizacion nominal pasa las 6 propiedades.
+    # 4. La realizacion nominal pasa las 7 propiedades.
     _verifica_politica({})
 
-    # 5. Los 6 mutantes DEBEN fallar (prueba de que la bateria tiene dientes).
+    # 5. Los 7 mutantes DEBEN fallar (prueba de que la bateria tiene dientes).
     mutantes = (
         {"persiste_en_fram": False},
         {"filtra_rebote": False},
@@ -498,6 +556,7 @@ def _autocomprobacion() -> None:
         {"exige_crc_valido": False},
         {"ignora_flt_u19_en_arranque": False},
         {"reinicia_ventana_tras_uvlo": False},
+        {"cuenta_colapso_tras_confirmar": False},
     )
     for m in mutantes:
         try:
@@ -536,14 +595,16 @@ def demo() -> int:
     print(f"    3,75 KB FRAM, {CICLOS_FRAM_MIN:.0e} ciclos, SVS <= {SVS_MSP430_MAX_V:.2f} V")
     print(f"    cupo: {N_REINTENTOS} reintentos ({N_PULSOS_MAX} pulsos max), "
           f"espera {T_ESPERA_REINTENTO_S:.1f} s, filtro de rebote {T_FILTRO_REBOTE_S*1000:.0f} ms")
-    print(f"    intento confirmado sano a los {T_CONFIRMA_SANO_S * 1e3:.0f} ms; FLT de U19 "
+    t_enclava = _rampa_s("C11", v["sobretension"]) + T_CL_PLIM_MAX_S
+    print(f"    intento confirmado sano a los {T_CONFIRMA_SANO_S * 1e3:.0f} ms (rampa de U16 + "
+          f"tCL_PLIM <= {t_enclava * 1e3:.1f} ms), y en prueba hasta el rearme; FLT de U19 "
           f"ignorado {T_IGNORA_FLT_U19_S * 1e3:.0f} ms (arranque de la cadena <= "
           f"{arranque_cadena_max_s() * 1e3:.1f} ms)")
     print(f"    rearme sano tras {T_REARME_SANO_S:.0f} s; rearme de abandono solo por "
           f"boton dedicado >= {T_BOTON_REARME_S:.1f} s\n")
 
     _autocomprobacion()
-    print("  3. Autoprueba de maquina de estados y 6 mutantes:")
+    print("  3. Autoprueba de maquina de estados y 7 mutantes:")
     print("    [verde] corto con colapso de V_in: 4 pulsos exactos y ABANDONADO persistente")
     print("    [verde] rebotes de < 100 ms: 0 intentos gastados")
     print("    [verde] fallo de riel (FLT de U19 por P1.2): gasta un intento; persistente, "
@@ -551,8 +612,11 @@ def demo() -> int:
     print("    [verde] FRAM con CRC16 corrupto: arranca en ABANDONADO (fallo seguro)")
     print("    [verde] FLT de U19 durante su arranque: no abandona")
     print("    [verde] bajon de entrada con U16 cerrando solo: 0 intentos gastados")
-    print("    [verde] los 6 mutantes (sin FRAM, sin antirrebote, abandono al 1er FLT de U19, "
-          "sin CRC, sin ventana de arranque, ventana sin reiniciar tras UVLO) saltan\n")
+    print("    [verde] apagon tras confirmar sano y antes del rearme: gasta intento; "
+          "10 arranques asi, 4 pulsos y ABANDONADO")
+    print("    [verde] los 7 mutantes (sin FRAM, sin antirrebote, abandono al 1er FLT de U19, "
+          "sin CRC, sin ventana de arranque, ventana sin reiniciar tras UVLO, sano sin "
+          "prueba) saltan\n")
 
     print("OK: recuperacion_budget.py v5")
     return 0
