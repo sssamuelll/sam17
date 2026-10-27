@@ -11,7 +11,7 @@ en serie en la rama positiva antes del filtro LC (M3, #334).
 Este guion incorpora:
 1. `#343`: la corriente de masa maxima del `LT1963A` (`U1`, D-F8) a plena carga
    sobre temperatura (`Iq_max = 120 mA` a 1,5 A, `lt1963a-rev-g-2021-02.pdf`
-   p. 5), que sube la corriente por el filtro LC positivo a `0,770 A`
+   p. 5), que sube la corriente por el filtro LC positivo a `0,570 A`
    (`0,450 + 0,120 A`), y la del `LT3015` (`U2`, D-F9, `Iq_max = 70 mA`,
    `lt3015-rev-b.pdf` p. 4), que deja la rama negativa en `0,520 A`.
 2. La caida adicional del eFuse `TPS26631` en la rama positiva (`RON_max =
@@ -21,6 +21,9 @@ Este guion incorpora:
    +-0,5 % max, coeficiente termico +-0,02 %/K max y rizado 100 mVp-p max (se
    conserva la envolvente combinada de +-2,5 % de `ladrillo_budget.py` tras el
    recorte por Trim, que es mas exigente que la suma de hoja).
+4. La DCR de la bobina de cada rama (`L2` en `U1`, `L3` en `U2`): la pieza se
+   lee de `bom.csv` y su DCR maxima de su hoja. Los 30 mohm heredados de la v4
+   no eran cota de ninguna bobina montada (`SRP1265A-220M`: 37,0 mohm max).
 """
 from __future__ import annotations
 
@@ -36,6 +39,9 @@ TOOLS = os.path.join(DIR, "..", "..", "tools")
 if TOOLS not in sys.path:
     sys.path.append(TOOLS)
 from canario import borde_rojo  # noqa: E402  (la biseccion de los canarios vive en UN sitio)
+if DIR not in sys.path:
+    sys.path.insert(0, DIR)
+from bom_valores import filas  # noqa: E402
 
 _spec_mb4 = importlib.util.spec_from_file_location(
     "_v4_margen_budget", os.path.join(V4, "margen_budget.py"))
@@ -56,7 +62,10 @@ I_CARGA_A = mb4.RIEL_MA / 1000.0      # 0,450 A (D-F1, re-declarada 2026-10-23)
 IQ_U1_MAX_A = mb4.IQ_U1_MAX_A         # 0,120 A (lt1963a-rev-g-2021-02.pdf p. 5)
 IQ_U2_MAX_A = mb4.IQ_U2_MAX_A         # 0,070 A (lt3015-rev-b.pdf p. 5)
 
-R_DCR_BOBINA_OHM = mb4.DCR_OHM             # 0,030 ohm (22 uH)
+# La bobina de cada rama sale de bom.csv; su DCR maxima, de su hoja. Una pieza
+# sin entrada aqui pone rojo el guion en vez de calcular con una DCR ajena.
+DCR_MAX_OHM = {"SRP1265A-220M": 0.037}     # bourns_srp1265a.pdf p. 1: 37,0 mohm max
+BOBINA_DE = {"U1": "L2", "U2": "L3"}
 R_DCR_FERRITA_OHM = mb4.R_FERRITA_DC_OHM   # 0,050 ohm (perla 600 ohm @ 100 MHz)
 R_ON_EFUSE_U1_OHM = 0.053                  # TI TPS26631 RON max (tps2663.pdf p. 7)
 
@@ -64,8 +73,16 @@ ESTIMADOS = (
     "TOL_CRUDO_V5=2,5 %: envolvente conservadora para el THN 20-2413WI recortado "
     "a 15,5 V con resistencias de 0,1 % (la hoja da +-1 % base + +-0,2 % linea + "
     "+-0,5 % carga = +-1,7 % sin Trim, traco_thn20wi.pdf p. 2)",
-    "R_DCR_BOBINA_OHM=30 mohm y R_DCR_FERRITA_OHM=50 mohm: cotas de pasivos del LC",
+    "R_DCR_FERRITA_OHM=50 mohm: cota de la perla del LC",
 )
+
+
+def dcr_bobina_ohm(reg: str) -> float:
+    """DCR maxima de hoja de la bobina que bom.csv monta en la rama de `reg`."""
+    ref = BOBINA_DE[reg]
+    mpn = filas()[ref]["mpn"]
+    assert mpn in DCR_MAX_OHM, f"{ref} es {mpn} y margen_budget no tiene su DCR maxima de hoja"
+    return DCR_MAX_OHM[mpn]
 
 
 def corriente_rama_a(reg: str) -> float:
@@ -84,7 +101,7 @@ def resistencia_serie_rama_ohm(reg: str, *, r_efuse_u1: float = R_ON_EFUSE_U1_OH
     hay eFuse en serie porque el `LT3015` aguanta +-33 V de entrada (`lt3015-rev-b.pdf`
     p. 2) frente a los -24,6 V maximos de OVP del THN.
     """
-    r_base = R_DCR_BOBINA_OHM + R_DCR_FERRITA_OHM
+    r_base = dcr_bobina_ohm(reg) + R_DCR_FERRITA_OHM
     if reg == "U1":
         return r_base + r_efuse_u1
     if reg == "U2":
