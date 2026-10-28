@@ -459,7 +459,8 @@ instrumento:** a 125 µs la CPU de la Nucleo (64 MHz, sin cachés) no da para el
 maestro y el esclavo juntos, el hilo se queda sin CPU y el binario no puede
 publicar ni una fila (#428, spec D5.1, enmienda del 16-10). A 1 ms el hilo
 conserva más de la mitad de la CPU y `atrasos` casi no sube (uno en 316 000
-giros el 16-10). **La fila vale para 1 kHz.** Cada hora, cuatro líneas, y una de carga cada minuto:
+giros el 16-10). **La fila vale para 1 kHz.** (Con `--features transporte-tic,reloj-hub`
+corre a 8 kHz por el tic: es el soak de 144 h de abajo.) Cada hora, cuatro líneas, y una de carga cada minuto:
 
 ```
 firmware=<rev>
@@ -538,6 +539,36 @@ de Samuel.
 presupuesto de CPU, no del módulo) cayeron todos entre las 10:18 y las 15:20 del 16-10, y
 las 18 horas siguientes no tuvieron ninguno. No se conoce la causa; no se trazó.
 `hilo_libre_permil` se quedó en 540 todos los minutos.
+
+**Medido: el soak de 144 h a 8 kHz por el tic, del 2026-10-21 al 27** (firmware `417afe0`,
+`--features transporte-tic,reloj-hub`: núcleo a 800 MHz con las dos cachés, SCK a 6,25 MHz
+—se pidieron 10—, retardo de 4 cuartos). Desde una Raspberry Pi con `corredor_pi.sh`, de
+12:36:18 a 11:37:39 del 27-10, un solo `probe-rs` sin reenganches; ranura 0 en SPI5, el
+esclavo en SPI4. La fila de `resistencia_j2.csv` es la de la hora 144:
+
+```
+0,SPI5,25,hw,6.250,144,4147199999,0,0,0,2026-10-27,NUCLEO-N657X0-Q
+```
+
+Hubo 145 filas, de la hora 0 a la 144 y sin saltos. **Cero plazos vencidos, cero EOT tardíos
+y cero subidas malas en 4 147 199 999 giros** (8 000 por segundo, exactos). En cada hora, los
+testigos del tic (`tics_tardios`, `periodos_saltados`, `subidas_perdidas`, `ranuras_muertas`,
+`recuperaciones`, `escaladas_gpdma` y los demás) valen cero; `latencia_plan_max_us` se
+quedó en 7, y el maestro dijo `atrasos=0`, `inestable=false` y `muda=false` las 145 veces.
+Por la regla de tres, la tasa queda por debajo de 7,2e-10 por transferencia al 95 %: 0,125
+por hora de instrumento con las seis ranuras y 0,9986 en las 8 h del horizonte.
+
+**Es la primera fila que cuenta para el horizonte** (la de 24 h es de 1 kHz y la puerta no
+la suma): `recuperacion_j2_budget.py` pasa de «faltan 143,8 h» a dar la resistencia por
+cubierta. **Con poco margen**: hacían falta 4,141e9 giros y hay 4,147e9, un 0,14 % más.
+Con otro horizonte u otra confianza, esta fila no alcanza.
+
+**Lo que la fila no dice.** (1) Es **una** ranura: las seis se extrapolan por transferencia,
+y la puerta supone que no se estorban entre sí; el banco no ejerce seis ISR, seis DMA y un
+solo tic a la vez. (2) No ejecutó D4: cero recuperaciones, así que la fila no prueba que la
+recuperación ande bajo el soak (eso lo hace `tic_estres`, de más abajo). (3) No ejerce la
+razón de relojes del hub (#380, sin cerrar). (4) El esclavo del banco devuelve un patrón fijo
+y no el CRC del sobre, como dice la cabecera de `resistencia_j2.rs`.
 
 ### (4) `plazos_j2` — el osciloscopio
 
