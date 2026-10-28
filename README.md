@@ -1,23 +1,39 @@
-# SAM17
+<p align="center">
+  <img src="case/renders/sam17-persiana.png" width="900" alt="SAM17: a three-row console with louvred black sides, the 3U instrument panel on top, a slim utility row in the middle and a 3U Eurorack row below">
+</p>
 
-**SAM17 is a 16-voice analog synthesizer that patches like a modular and
-recalls like a polysynth.** It has sixteen complete analog voices, an FM
-matrix between all sixteen oscillators, an 8-in/8-out patch bay routed through
-an analog crosspoint, and an STM32N657 brain running Rust firmware, all in a
-three-row console on Eurorack rails. The whole design is open: hardware under
-CERN-OHL-S v2, firmware under GPL-3.0-or-later, documentation under
-CC BY-SA 4.0.
+<h1 align="center">SAM17</h1>
+
+<p align="center"><strong>A 16-voice analog synthesizer that patches like a modular and recalls like a polysynth.</strong></p>
+
+<p align="center">
+  16 complete analog voices &nbsp;·&nbsp; FM matrix 16×16 &nbsp;·&nbsp; 8-in/8-out patch bay &nbsp;·&nbsp; STM32N657 brain running Rust &nbsp;·&nbsp; three rows on Eurorack rails<br>
+  hardware CERN-OHL-S v2 &nbsp;·&nbsp; firmware GPL-3.0-or-later &nbsp;·&nbsp; documentation CC BY-SA 4.0
+</p>
+
+<p align="center">
+  <a href="docs/superpowers/specs">Specs</a> &nbsp;·&nbsp;
+  <a href="hardware">Hardware</a> &nbsp;·&nbsp;
+  <a href="software/nucleo">Firmware</a> &nbsp;·&nbsp;
+  <a href="case">Case</a> &nbsp;·&nbsp;
+  <a href="https://github.com/sssamuelll/sam17/milestones">Milestones</a>
+</p>
+
+> [!IMPORTANT]
+> **There is no finished unit yet.** The render above is the console as it
+> stands in the OpenSCAD model in [`case/`](case); nothing in it exists yet.
+> What exists physically today, of this design, is the STM32N657 evaluation
+> board on the bench, with the firmware running on it. The voice board is
+> specified but not yet drawn. The power supply board is routed and its parts
+> are signed, but it is not yet cleared for fabrication. The first complete
+> instrument is due in May 2027. Details, with dates, under
+> [Status](#status-october-2026).
 
 It began as Samuel Ballesteros's electronic engineering thesis at Universidad
 Yacambú, Venezuela, in 2020, a monophonic modular in seven modules. In 2022 the
 Goethe-Institut Venezuela selected it for its programme *Pensar la Música
-Electrónica en Venezuela*. Since then it has been redesigned, in Nürnberg, as
-the sixteen-voice instrument this repository describes. **There is no finished
-unit yet.** The firmware runs on the STM32N657 evaluation board, the voice
-board is specified but not yet drawn, the power supply board is routed and its
-parts are signed but it is not yet cleared for fabrication, and the first
-complete instrument is due in May 2027.
-Details, with dates, under [Status](#status-october-2026).
+Electrónica en Venezuela*. Since then it has been redesigned, in Germany, as
+the sixteen-voice instrument this repository describes.
 
 The working language of the project is Spanish: specs, budgets and design
 notes are written in Spanish. This README is in English because it is the
@@ -93,6 +109,13 @@ flowchart LR
   only by the manufacturers. Eleven hold up the board, and three only the rear
   panel, the chassis and the display. Tests that need the built board run in
   its bring-up. The test kit runs from a bench supply.
+
+<p align="center">
+  <img src="case/renders/sam17-persiana-noche.png" width="900" alt="SAM17 at night, seen from the side: the amber glow inside shows through the 44 bars of the louvre">
+</p>
+
+*At night, with a light inside for the render. Each side is a louvre of 44
+bars, and it is where the instrument breathes.*
 
 ## Status, October 2026
 
