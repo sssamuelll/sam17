@@ -196,6 +196,12 @@ def _puntos() -> list[Punto]:
                "sec. 9.3 / recuperacion_budget: en la misma prueba, los intentos gastados en la FRAM "
                "de U17, leidos por J10 antes y despues (J10 suelto mientras esta al reves), no cambian",
                literal="si"))
+    p.append(P("1", "corriente_contacto_chasis_a_tierra_pe_abierto", "uA",
+               "T17 / H-V2-AISLAMIENTO (AE P-258801, 2026-10-28): corriente de contacto entre "
+               "chasis y tierra de red con el PE del ladrillo abierto (informe CB IEC 62368-1: "
+               f"{check_telemetria.I_CONTACTO_TE90_CB_FALTA_UA:g} uA medidos a 264 VAC/60 Hz, "
+               f"limite ES1 <= {check_telemetria.I_CONTACTO_ES1_FALTA_MAX_UA:g} uA)",
+               hi=check_telemetria.I_CONTACTO_ES1_FALTA_MAX_UA))
     p.append(P("1", "tension_ladrillo_vacio", "V",
                "T09 / L04: salida continua nominal del ladrillo 24 V en vacio",
                predicho=24.0, tol=0.48))

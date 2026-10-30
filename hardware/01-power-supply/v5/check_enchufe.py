@@ -21,10 +21,11 @@ Los condensadores del nodo salen de la netlist, no de este texto
 es la `VCAP` de `U15`, colgada de `SRC`, y `U16` queda detras del diodo de
 cuerpo de `Q2`, en `+24V_PROT`, sin condensador y apagado en el arranque.
 
-  * `C_b`, la capacidad de salida del TE90: HUECO, se le pregunto a AE. Se
-    barre de 1 uF a fuente ideal, y la guarda mira todo el barrido. Una `C_b`
-    finita baja la C del lazo y se descarga durante el pulso: alivia, y por
-    encima de 10 uF el resultado casi no se mueve.
+  * `C_b`, la capacidad de salida del TE90: 2510 uF en sus bornes, contestado
+    por AE el 2026-10-28 (caso P-258801, `H-V2-RESERVA`). Se mantiene el barrido
+    de sensibilidad de 1 uF a 2510 uF y fuente ideal: una `C_b` finita baja la C
+    del lazo y se descarga durante el pulso, y en 2510 uF ya coincide con la
+    fuente ideal.
   * L del lazo: linea bifilar de hilos redondos, `L' = (mu0/pi) acosh(D/d)`,
     la inductancia externa por metro. La interna se va con el efecto piel a la
     frecuencia del timbre, y quitarla sube la corriente: pesimista. `d` sale
@@ -116,8 +117,10 @@ LARGO_CORDON_MIN_M = 1.0
 # con la temperatura, y su hoja no esta en el arbol. -50 %..+10 % (la K del
 # MPN de Yageo es +-10 %).
 TOL_C10 = (-0.50, 0.10)
-# HUECO: la capacidad de salida del TE90 (pregunta a AE). None = fuente ideal.
-C_LADRILLO_F = (1e-6, 10e-6, 100e-6, 1000e-6, None)
+# Capacidad de salida del TE90: 2510 uF en sus bornes (AE, caso P-258801,
+# 2026-10-28). Se barre de 1 uF a 2510 uF y None = fuente ideal.
+C_TE90_SALIDA_F = 2510e-6
+C_LADRILLO_F = (1e-6, 10e-6, 100e-6, 1000e-6, C_TE90_SALIDA_F, None)
 # ESTIMADO: velocidad de la onda en el cordon, 0,6 c (aislamiento de PVC; mas
 # lenta da una longitud de onda mas corta, el lado pesimista).
 V_ONDA_CORDON_M_S = 0.6 * 299_792_458.0
@@ -137,8 +140,6 @@ ESTIMADOS = (
     "velocidad de la onda en el cordon 0,6 c, solo para ver si el modelo concentrado vale",
 )
 HUECOS = (
-    "C de salida del TE90: no esta en ae-TE90-datasheet.pdf, se le pregunto a AE. "
-    "Se barre de 1 uF a fuente ideal; por encima de 10 uF el resultado casi no se mueve (tabla 3)",
     "cordon del TE90: largo, calibre y construccion no estan en su hoja (H-V5-CALIBRE)",
 )
 
@@ -378,7 +379,7 @@ def demo() -> int:
           f"(P_PK {p_pk_w(peor_e['t_p_s']):.0f} W al {rebaja:.0%} con el aire del cajon a "
           f"{P_BASE['t_aire_c']:.1f} C; {_rincon(peor_e)})")
 
-    print(f"\n  3. Sensibilidad a C_b (HUECO), a {v_ovp:.1f} V, lo peor de cada fila:")
+    print(f"\n  3. Sensibilidad a C_b (TE90 = {C_TE90_SALIDA_F * 1e6:.0f} uF, AE P-258801), a {v_ovp:.1f} V, lo peor de cada fila:")
     for cb in C_LADRILLO_F:
         r = [x for x in guarda if x["c_b_f"] == cb]
         print(f"       {_c_b(cb):<14} pico {_peor(r, 'v_pico_v')['v_pico_v']:6.2f} V | "
@@ -422,7 +423,6 @@ def demo() -> int:
     print(f"    - el cordon como linea de transmision: el lazo mide {lb.LARGO_CORDON_M + arnes:.1f} m y "
           f"lambda/10 del timbre mas rapido son {lam_10:.0f} m, asi que la L concentrada vale; el frente de "
           "ns del contacto si viaja como onda, y C10 lo ve como un corto")
-    print("    - la C de salida del TE90 (HUECO): barrida, de 1 uF a fuente ideal (tabla 3)")
     print("    - la inductancia interna del TE90 y su filtro de salida: no se cuentan; menos L es mas "
           "corriente y mas pico, pero no mas energia")
     print("    - la curva V-I de D1 entre V_BR y V_C: la hoja da dos puntos y el modelo la recta; V_BR y V_C "
