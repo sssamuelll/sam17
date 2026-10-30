@@ -324,6 +324,13 @@ def _puntos() -> list[Punto]:
     p.append(P("2c", "pulsador_reset_desbloquea", "si/no",
                "M5: el pulsador manual de reset en la placa limpia el enclavamiento",
                literal="si"))
+    _, _, i_lim_u16_max = recuperacion_budget.corriente_limite_tps26631_a()
+    p.append(P("2c", "te90_sostiene_ilim_u16_45C", "si/no",
+               f"#493 / H-MF-SELECTIVIDAD (AE P-258801, 2026-10-28): a 45 C (90 y 264 VAC), "
+               f"el TE90A2449F01 sostiene >= {i_lim_u16_max:.3f} A (techo de ILIM de U16) "
+               f"durante >= {recuperacion_budget.T_CONFIRMA_SANO_S * 1000:.0f} ms sin entrar "
+               "en hiccup antes de que U16 enclave",
+               literal="si"))
 
     # --- Pasos 3 a 5: Cascada ultra-bajo ruido ---------------------------
     for tp, senal, nom, tol in (

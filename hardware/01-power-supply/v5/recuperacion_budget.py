@@ -19,7 +19,10 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
        sobrecarga va del 130 al 180 % de `3,75 A` (`ae-TE90-datasheet.pdf`
        p. 2 y p. 5), asi que `U16` corta antes de que el ladrillo entre en
        hiccup si su maximo queda bajo `4,875 A`, tipico a 25 C (nota de la
-       p. 2). Por abajo, `1,50 x` la corriente del cordon a 24 V nominales
+       p. 2; AE confirmo el 2026-10-28 en P-258801 que el umbral no baja con
+       el derating, pero que no dispone de datos a 45 C y debe verificarse
+       entre 90 y 264 VAC a 45 C: `check_bringup.py`, paso 2c,
+       `te90_sostiene_ilim_u16_45C`). Por abajo, `1,50 x` la corriente del cordon a 24 V nominales
        (`2,69 A`) y `1,30 x` la de su peor caso (`2,89 A`,
        `ladrillo_budget.py`); el minimo de la banda les da `1,54 x` y
        `1,44 x`. La banda abarca `1,17 x`, asi que con `R11 = 4,02 kohm` el
@@ -94,6 +97,13 @@ sec. 9.2) con piezas versionadas en `docs/reference/datasheets/`:
      - Los crowbars de rack (D-F6) no tienen camino al MCU (#476): si su
        convertidor los suelta y cuanto se calienta el SCR se mide en el
        bring-up (`check_bringup.py`, paso 8, `crowbar_*`).
+     - La selectividad entre `U16` (`4,866 A` max con `R11 = 4,02 kohm` al
+       1 %) y el OCP del `TE90A2449F01` (`4,875 A` en el 130 % de `3,75 A`)
+       usa la cifra de hoja a 25 C (`ae-TE90-datasheet.pdf` p. 2). AE
+       confirmo el 2026-10-28 (caso P-258801) que el umbral de OCP no baja
+       con la curva de derating, pero que no dispone de datos a 45 C y que
+       debe verificarse entre 90 y 264 VAC a 45 C (`check_bringup.py`, paso
+       2c, `te90_sostiene_ilim_u16_45C`, #493).
      - Desenchufar antes de `T_REARME_SANO_S` de marcha lo cuenta como
        fallido: desde el MCU no se distingue de un corto ni de un hiccup del
        ladrillo que tumban la entrada. Cuatro arranques seguidos de menos de

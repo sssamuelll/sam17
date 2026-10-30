@@ -58,6 +58,7 @@ paso,magnitud,unidad,criterio,predicho,tolerancia,medido,placa,fecha,fuente
 2c,shdn_U16_con_MCU_en_reset_v,V,<= 0.8,,,,,,"R83: SHDN de U16 con el MSP430 en reset, por debajo de V(SHUTF) (tps2663.pdf p. 7)"
 2c,persistencia_latch_en_fram,si/no,= si,,,,,,M5: el estado de enclavamiento sobrevive a desconexion de la alimentacion
 2c,pulsador_reset_desbloquea,si/no,= si,,,,,,M5: el pulsador manual de reset en la placa limpia el enclavamiento
+2c,te90_sostiene_ilim_u16_45C,si/no,= si,,,,,,"#493 / H-MF-SELECTIVIDAD (AE P-258801, 2026-10-28): a 45 C (90 y 264 VAC), el TE90A2449F01 sostiene >= 4.866 A (techo de ILIM de U16) durante >= 225 ms sin entrar en hiccup antes de que U16 enclave"
 3,TP7_+13V1_sin_carga,V,12.95 .. 13.25,13.1,0.15,,,,Tension sin carga en punto de prueba TP7 (+13.1 V +- 0.15 V)
 3,TP8_-12V9_sin_carga,V,-13.05 .. -12.75,-12.9,0.15,,,,Tension sin carga en punto de prueba TP8 (-12.9 V +- 0.15 V)
 3,TP3_+12V_sin_carga,V,11.95 .. 12.05,12,0.05,,,,Tension sin carga en punto de prueba TP3 (+12 V +- 0.05 V)
