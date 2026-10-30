@@ -1653,22 +1653,38 @@ unsafe fn JPEG() {
 /// Una interrupcion que acapara la CPU un rato, para los binarios de estres: `VENC`, que ningun otro
 /// modulo atiende, con la prioridad que se le pida. A P2 es un USB o una pantalla que retiene al
 /// planificador (P3) y a la recuperacion (P4); a P3, trabajo del planificador que no pega al
-/// resto del banco (el esclavo del banco es una tarea de P2).
+/// resto del banco (el esclavo del banco es una tarea de P2); a P0, por encima del tic, lo que
+/// R-H1 prohibe en el instrumento, para provocar un tic tardio (`tic_tardio`).
 #[cfg(feature = "inyeccion")]
 pub mod acapara {
-    use core::sync::atomic::{AtomicU32, Ordering};
+    use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
     use cortex_m::peripheral::{DWT, NVIC};
-    use embassy_stm32::interrupt;
     use embassy_stm32::interrupt::{InterruptExt, Priority};
+    use embassy_stm32::{interrupt, pac};
 
     static CICLOS: AtomicU32 = AtomicU32::new(0);
     static EN_VENCIDA: AtomicU32 = AtomicU32::new(0);
+    static TRAS_LA_ACTUALIZACION: AtomicBool = AtomicBool::new(false);
 
     #[interrupt]
     unsafe fn VENC() {
-        let t0 = DWT::cycle_count();
+        let mut t0 = DWT::cycle_count();
         let n = CICLOS.load(Ordering::Relaxed);
+        if TRAS_LA_ACTUALIZACION.swap(false, Ordering::Relaxed) {
+            // El golpe cuenta desde la actualizacion del tic, no desde aqui: espera a que `TIM7`
+            // la marque y descuenta lo que su contador ya avanzo desde ella.
+            let tim = pac::TIM7;
+            while !tim.sr().read().uif() {}
+            let ahora = DWT::cycle_count();
+            let cuentas = u32::from(tim.cnt().read().cnt());
+            #[cfg(feature = "tic-fino")]
+            let cuentas_us = super::CUENTAS_POR_US.load(Ordering::Relaxed);
+            #[cfg(not(feature = "tic-fino"))]
+            let cuentas_us = 1;
+            let ciclos_por_cuenta = super::CICLOS_POR_US.load(Ordering::Relaxed) / cuentas_us;
+            t0 = ahora.wrapping_sub(cuentas * ciclos_por_cuenta);
+        }
         while DWT::cycle_count().wrapping_sub(t0) < n {}
     }
 
@@ -1685,6 +1701,18 @@ pub mod acapara {
             us * super::CICLOS_POR_US.load(Ordering::Relaxed),
             Ordering::Relaxed,
         );
+        NVIC::pend(interrupt::VENC);
+    }
+
+    /// Un tic tardio (papel v3, §5.2 j): hace pendiente un golpe que espera a la proxima
+    /// actualizacion del tic y retiene la CPU hasta `us` microsegundos despues de ella. Con
+    /// `arranca(P0)`, el tic entra `us` tarde; con mas de un periodo, funde actualizaciones.
+    pub fn tic_tardio(us: u32) {
+        CICLOS.store(
+            us * super::CICLOS_POR_US.load(Ordering::Relaxed),
+            Ordering::Relaxed,
+        );
+        TRAS_LA_ACTUALIZACION.store(true, Ordering::Relaxed);
         NVIC::pend(interrupt::VENC);
     }
 
