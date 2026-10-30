@@ -275,8 +275,9 @@ pub struct Ranura<'d> {
     cfg2: pac::spi::regs::Cfg2,
     /// El reset por RCC de este periferico: [`resetear_por_rcc`] con su `T`.
     resetear: fn(),
-    /// SCK, MOSI, MISO y NSS; `None` en una ranura [`Ranura::sin_pines`].
-    _pines: Option<[Flex<'d>; 4]>,
+    _sck: Flex<'d>,
+    /// MOSI, MISO y NSS; `None` en una ranura [`Ranura::solo_sck`].
+    _resto: Option<[Flex<'d>; 3]>,
 }
 
 impl<'d> Ranura<'d> {
@@ -324,16 +325,13 @@ impl<'d> Ranura<'d> {
         Rx: CanalGpdma1 + spi::RxDma<T>,
     {
         // `Flex::new` no toca el pin: el AF5 se escribe en `construir`, en el mismo sitio de siempre.
-        let pines = [
-            Flex::new(sck),
-            Flex::new(mosi),
-            Flex::new(miso),
-            Flex::new(nss),
-        ];
+        let resto = [Flex::new(mosi), Flex::new(miso), Flex::new(nss)];
         Self::construir::<T, Tx, Rx>(
             indice,
             regs,
-            Some(pines),
+            Flex::new(sck),
+            5,
+            Some(resto),
             tx,
             rx,
             irq_tx,
@@ -343,14 +341,20 @@ impl<'d> Ranura<'d> {
         )
     }
 
-    /// La misma ranura **sin pines**, para el banco de seis maestros (`ranuras-6`): la Nucleo no
-    /// saca seis SPI enteros (EN-PLACA, montaje del 11-09). El SPI cloca, los dos canales del
-    /// GPDMA1 mueven la trama y el tic la atiende como a cualquiera, pero ningun pin sale en AF5:
-    /// la subida no viene de nadie y el juez la da por mala, como en las de relleno.
+    /// La misma ranura **con el SCK y nada mas**, para el banco de seis maestros (`ranuras-6`): la
+    /// Nucleo no saca seis SPI enteros (EN-PLACA, montaje del 11-09). El SPI cloca, los dos canales
+    /// del GPDMA1 mueven la trama y el tic la atiende como a cualquiera; la subida no viene de nadie
+    /// y el juez la da por mala, como en las de relleno.
+    ///
+    /// **El SCK no se puede quitar.** Sin ningun pin en AF, el canal de transmision mueve los 25
+    /// bytes, el de recepcion no recibe ninguno (`BNDT` se queda en 25) y el `EOT` no llega: medido
+    /// en placa el 2026-10-30 (`d7cba23`), todas las tramas de las cinco ranuras vencieron. Que el
+    /// receptor tome el reloj de vuelta del pin es la lectura de ese resultado, no una cita del RM.
     #[allow(clippy::too_many_arguments)]
-    pub fn sin_pines<T, Tx, Rx>(
+    pub fn solo_sck<T, Sck, Tx, Rx>(
         indice: usize,
         regs: pac::spi::Spi,
+        sck: Peri<'d, Sck>,
         tx: Peri<'d, Tx>,
         rx: Peri<'d, Rx>,
         irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
@@ -360,17 +364,33 @@ impl<'d> Ranura<'d> {
     ) -> Ranura<'d>
     where
         T: spi::Instance,
+        Sck: spi::SckPin<T>,
         Tx: CanalGpdma1 + spi::TxDma<T>,
         Rx: CanalGpdma1 + spi::RxDma<T>,
     {
-        Self::construir::<T, Tx, Rx>(indice, regs, None, tx, rx, irq_tx, irq_rx, rcc_peri, cfg)
+        let af = sck.af_num();
+        Self::construir::<T, Tx, Rx>(
+            indice,
+            regs,
+            Flex::new(sck),
+            af,
+            None,
+            tx,
+            rx,
+            irq_tx,
+            irq_rx,
+            rcc_peri,
+            cfg,
+        )
     }
 
     #[allow(clippy::too_many_arguments)]
     fn construir<T, Tx, Rx>(
         indice: usize,
         regs: pac::spi::Spi,
-        mut pines: Option<[Flex<'d>; 4]>,
+        mut sck: Flex<'d>,
+        sck_af: u8,
+        mut resto: Option<[Flex<'d>; 3]>,
         tx: Peri<'d, Tx>,
         rx: Peri<'d, Rx>,
         irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
@@ -412,8 +432,8 @@ impl<'d> Ranura<'d> {
         // `pin_trait_impl!(spi::SckPin, SPI5, PE15, 5u8)`), y DS14791 Rev 10
         // Tabla 18. `VeryHigh` porque el enlace sube a 34,5 MHz (spec D8).
         let salida = AfType::output(OutputType::PushPull, VELOCIDAD_PINES);
-        if let Some([sck, mosi, miso, nss]) = &mut pines {
-            sck.set_as_af_unchecked(5, salida);
+        sck.set_as_af_unchecked(sck_af, salida);
+        if let Some([mosi, miso, nss]) = &mut resto {
             mosi.set_as_af_unchecked(5, salida);
             nss.set_as_af_unchecked(5, salida);
             miso.set_as_af_unchecked(5, AfType::input(Pull::None));
@@ -583,7 +603,8 @@ impl<'d> Ranura<'d> {
             cfg1,
             cfg2,
             resetear: resetear_por_rcc::<T>,
-            _pines: pines,
+            _sck: sck,
+            _resto: resto,
         }
     }
 

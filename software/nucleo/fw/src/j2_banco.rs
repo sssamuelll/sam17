@@ -241,16 +241,32 @@ pub fn maestro_de_relleno_3(
     )
 }
 
-/// Las cinco ranuras que `ranuras-6` suma a la del banco, **sin pines** ([`Ranura::sin_pines`]):
-/// seis maestros en los seis SPI de `SPI_DE_RANURA` y doce canales del GPDMA1, los `2·n` y
-/// `2·n + 1` que programa el tic para la ranura `n`. Ni el SPI4 ni sus canales 2 y 3 quedan para
-/// el esclavo del banco.
+/// Las cinco ranuras que `ranuras-6` suma a la del banco, **con el SCK y nada mas**
+/// ([`Ranura::solo_sck`]): seis maestros en los seis SPI de `SPI_DE_RANURA` y doce canales del
+/// GPDMA1, los `2·n` y `2·n + 1` que programa el tic para la ranura `n`. Ni el SPI4 ni sus canales 2
+/// y 3 quedan para el esclavo del banco.
 ///
 /// Es el sustituto de las seis ranuras reales de §5.2 (b) del papel v3: la Nucleo no saca seis SPI
-/// enteros por los conectores que vienen soldados (EN-PLACA, montaje del 11-09).
+/// enteros por los conectores que vienen soldados (EN-PLACA, montaje del 11-09). Los SCK van a pines
+/// que la placa no conecta a nada mas (UM3417 Rev 3, Tablas 12, 13 y 16) y no se cablean:
+///
+/// | Ranura | SPI | SCK | AF | Conector |
+/// |---|---|---|---|---|
+/// | 1 | SPI4 | PE12 | 5 | CN15-1 |
+/// | 2 | SPI1 | PB9 | 5 | CN15-16 |
+/// | 3 | SPI2 | PF2 | 5 | CN2-4 |
+/// | 4 | SPI3 | PC10 | 6 | CN3-30, Arduino A1 |
+/// | 5 | SPI6 | PC12 | 5 | CN3-36, Arduino A4 |
+///
+/// PE2, el otro SCK de SPI4, no: va cableado al SCK del maestro del banco.
 #[cfg(feature = "ranuras-6")]
 #[allow(clippy::too_many_arguments)]
-pub fn maestros_sin_pines(
+pub fn maestros_solo_sck(
+    sck1: Peri<'static, peripherals::PE12>,
+    sck2: Peri<'static, peripherals::PB9>,
+    sck3: Peri<'static, peripherals::PF2>,
+    sck4: Peri<'static, peripherals::PC10>,
+    sck5: Peri<'static, peripherals::PC12>,
     ch2: Peri<'static, peripherals::GPDMA1_CH2>,
     ch3: Peri<'static, peripherals::GPDMA1_CH3>,
     ch4: Peri<'static, peripherals::GPDMA1_CH4>,
@@ -264,13 +280,14 @@ pub fn maestros_sin_pines(
     rcc: &Peri<'_, peripherals::RCC>,
     cfg: Config,
 ) -> [Ranura<'static>; 5] {
+    use peripherals::{SPI1, SPI2, SPI3, SPI4, SPI6};
     let i = IrqsBanco;
     [
-        Ranura::sin_pines::<peripherals::SPI4, _, _>(1, pac::SPI4, ch2, ch3, i, i, rcc, cfg),
-        Ranura::sin_pines::<peripherals::SPI1, _, _>(2, pac::SPI1, ch4, ch5, i, i, rcc, cfg),
-        Ranura::sin_pines::<peripherals::SPI2, _, _>(3, pac::SPI2, ch6, ch7, i, i, rcc, cfg),
-        Ranura::sin_pines::<peripherals::SPI3, _, _>(4, pac::SPI3, ch8, ch9, i, i, rcc, cfg),
-        Ranura::sin_pines::<peripherals::SPI6, _, _>(5, pac::SPI6, ch10, ch11, i, i, rcc, cfg),
+        Ranura::solo_sck::<SPI4, _, _, _>(1, pac::SPI4, sck1, ch2, ch3, i, i, rcc, cfg),
+        Ranura::solo_sck::<SPI1, _, _, _>(2, pac::SPI1, sck2, ch4, ch5, i, i, rcc, cfg),
+        Ranura::solo_sck::<SPI2, _, _, _>(3, pac::SPI2, sck3, ch6, ch7, i, i, rcc, cfg),
+        Ranura::solo_sck::<SPI3, _, _, _>(4, pac::SPI3, sck4, ch8, ch9, i, i, rcc, cfg),
+        Ranura::solo_sck::<SPI6, _, _, _>(5, pac::SPI6, sck5, ch10, ch11, i, i, rcc, cfg),
     ]
 }
 
@@ -322,7 +339,12 @@ macro_rules! ranuras_de_medida {
             cfg,
         ));
         #[cfg(feature = "ranuras-6")]
-        for (n, r) in (1..).zip($crate::j2_banco::maestros_sin_pines(
+        for (n, r) in (1..).zip($crate::j2_banco::maestros_solo_sck(
+            $p.PE12,
+            $p.PB9,
+            $p.PF2,
+            $p.PC10,
+            $p.PC12,
             $p.GPDMA1_CH2,
             $p.GPDMA1_CH3,
             $p.GPDMA1_CH4,
