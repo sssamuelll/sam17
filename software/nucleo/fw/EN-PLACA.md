@@ -203,10 +203,9 @@ SPI4 tiene PE12 (CN15 pin 1) como SCK alternativo a PE2.
 **El maestro va en SPI5 a propósito:** es la instancia del repro original de
 jake-taf, que después confirmó el cuelgue también en SPI1 (2026-09-03).
 
-**SPI1 no se puede usar en esta placa.** Su único MOSI en el morpho es PC3, que
-la Nucleo cablea a `STLK_UCPD_CC1_C` del ST-LINK (UM3417 Tabla 16), y la Tabla
-19 de puentes no ofrece forma de liberarlo: clocar ahí sería clocar sobre las
-líneas CC del USB-C del depurador. SPI2, SPI3 y SPI6 quedan incompletas en el
+**SPI1 sale entera por el morpho**, con el MOSI en PC3 (CN3 pin 25). Los PC3, PC4,
+PB14 y PB15 de la Tabla 16 del UM3417 son pines del STM32 del ST-LINK, el que
+atiende su USB-C (CN10), no del N657. SPI2, SPI3 y SPI6 quedan incompletas en el
 morpho (a SPI2 le falta el SCK, a SPI3 el MISO, a SPI6 el MOSI y el NSS).
 
 **Con esclavo real, el soak deja de ser media medida.** Un enlace contra el MISO
@@ -598,7 +597,7 @@ eligió porque es —junto a PE1— el único del CN15 que **no aparece en ningu
 tabla del manual**: no está en el mapa Arduino (Tabla 12, p. 30), no es ninguno
 de los ocho del J2, no es PE10 (el plan B de abajo), no es PE12 (el SCK
 alternativo de SPI4) y no toca nada del bring-up —LED LD5 PG10, LD6 PG0, LD7 PG8,
-LD3 PB15; botón B1 PC13; ST-LINK PB14/PB15 y PC3/PC4 (§7.5, §7.6 y Tabla 16)—.
+LD3 PB15; botón B1 PC13 (§7.5 y §7.6)—.
 
 **El esclavo va apagado en esta medida, y el MISO al aire.** El esclavo del banco
 compara contra un `esperado` fijo de 25 bytes, así que los siete largos que no
@@ -695,11 +694,6 @@ régimen de caché del tic (ver «Las filas del tic en `carga_j2.csv`»).
   |---|---|---|---|---|---|---|
   | 2 | SPI1 | PB9 (CN15-16) | PC3 (CN3-25) | PB8 (CN15-14) | PC5 (CN3-15) | CH4, CH5 |
   | 3 | SPI2 | PF2 (CN2-4) | PD7 (CN15-19) | PD6 (CN15-6) | PC1 (CN15-5) | CH6, CH7 |
-
-  **PC3 no está libre:** la Nucleo lo lleva también a `STLK_UCPD_CC1_C`, el CC1 del USB-C del
-  ST-LINK (UM3417 Rev 3, Tabla 16, p. 35; lo dice «El J2 en la Nucleo»), así que la ranura 2
-  cloca su MOSI sobre esa línea en todas las filas de tres ranuras. No se ha visto ningún efecto
-  en la sonda.
 - `ranuras-6`: seis maestros, uno por SPI, con los doce canales del GPDMA1; las cinco ranuras
   que no son la del banco llevan el SCK y nada más. Ver «Seis maestros y doce canales del GPDMA1».
 
@@ -1147,7 +1141,7 @@ El tic no se entera (cero tics tardíos hasta con 3 ms), no se pierde ningún ev
 - **Plazos:** a 70 µs no vence ninguno y a 110 vencen los 200, cada uno con su recuperación: una trama de 25 B a 6,25 MHz cae entre los dos, de acuerdo con los 87–93 µs que §2.8 sacó por simulación (entre medias no se barrió). Los tics fundidos no hacen vencer nada: tras uno que llega 150 o 300 µs tarde quedan 100 o 75 µs hasta la actualización siguiente, y la trama cabe. Lo que hace vencer es el retraso dentro del periodo, no el total.
 - **Límites:** una ranura y sin esclavo, así que los plazos son solo los del maestro; el golpe es una ISR que gira, no un tic que llegue tarde por sí solo (XSPI con la I-cache fría, R-H4, #460); la tolerancia de ±2 periodos contra la pared es ESTIMADA (la foto lee `tics` y la pared una tras otra).
 
-**Seis maestros y doce canales del GPDMA1** (2026-10-30, `carga_j2` en la configuración de la ficha J con `ranuras-6`, firmware `4196bb3`; papel v3, §5.2 b, issue #445). **Seis ranuras reales no caben en la Nucleo, y el criterio se declara inalcanzable:** con CN2 y CN16 sin soldar, el morpho no saca seis SPI enteros (el único MOSI de SPI1 es PC3, el CC1 del ST-LINK; a SPI2 le falta el SCK, a SPI3 el MISO y a SPI6 el MOSI y el NSS; «El J2 en la Nucleo»). **El sustituto:** seis maestros, uno en cada SPI de `SPI_DE_RANURA`, con los doce canales del GPDMA1 que programa el tic (`2·n` y `2·n + 1`), sin esclavo y sin módulo detrás. La ranura 0 es la del banco, SPI5 con sus cuatro pines; las otras cinco llevan **el SCK y nada más** (`j2_banco::maestros_solo_sck`), en pines que la placa no conecta a nada y que no se cablean: PE12 (SPI4), PB9 (SPI1), PF2 (SPI2), PC10 (SPI3, AF6) y PC12 (SPI6).
+**Seis maestros y doce canales del GPDMA1** (2026-10-30, `carga_j2` en la configuración de la ficha J con `ranuras-6`, firmware `4196bb3`; papel v3, §5.2 b, issue #445). **Seis ranuras reales no caben en la Nucleo, y el criterio se declara inalcanzable:** con CN2 y CN16 sin soldar, el morpho no saca seis SPI enteros (a SPI2 le falta el SCK, a SPI3 el MISO y a SPI6 el MOSI y el NSS; «El J2 en la Nucleo»). **El sustituto:** seis maestros, uno en cada SPI de `SPI_DE_RANURA`, con los doce canales del GPDMA1 que programa el tic (`2·n` y `2·n + 1`), sin esclavo y sin módulo detrás. La ranura 0 es la del banco, SPI5 con sus cuatro pines; las otras cinco llevan **el SCK y nada más** (`j2_banco::maestros_solo_sck`), en pines que la placa no conecta a nada y que no se cablean: PE12 (SPI4), PB9 (SPI1), PF2 (SPI2), PC10 (SPI3, AF6) y PC12 (SPI6).
 
 - **Sin el SCK no termina ninguna trama.** La primera corrida (`d7cba23`) no ponía ningún pin en AF: en las cinco ranuras el canal de transmisión movió los 25 bytes, el de recepción no recibió ninguno (`BNDT` en 25, leído con el núcleo parado) y el `EOT` no llegó. Vencieron todas sus tramas, con una recuperación cada dos tics por ranura (600 005 en 240 002 tics), y la ranura 0 giró limpia. Con el SCK en AF giran las seis. Que el receptor tome el reloj de vuelta del pin es la lectura de ese resultado, no una cita del RM.
 - **Lo que cuesta**, en la misma sesión, por la pasada de la salida (ciclos por tic; las dos últimas columnas son la cifra de la ficha J y lo que pesa con seis ranuras a 8 kHz, extrapolado en las filas de tres):
