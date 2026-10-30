@@ -275,10 +275,8 @@ pub struct Ranura<'d> {
     cfg2: pac::spi::regs::Cfg2,
     /// El reset por RCC de este periferico: [`resetear_por_rcc`] con su `T`.
     resetear: fn(),
-    _sck: Flex<'d>,
-    _mosi: Flex<'d>,
-    _miso: Flex<'d>,
-    _nss: Flex<'d>,
+    /// SCK, MOSI, MISO y NSS; `None` en una ranura [`Ranura::sin_pines`].
+    _pines: Option<[Flex<'d>; 4]>,
 }
 
 impl<'d> Ranura<'d> {
@@ -325,6 +323,66 @@ impl<'d> Ranura<'d> {
         Tx: CanalGpdma1 + spi::TxDma<T>,
         Rx: CanalGpdma1 + spi::RxDma<T>,
     {
+        // `Flex::new` no toca el pin: el AF5 se escribe en `construir`, en el mismo sitio de siempre.
+        let pines = [
+            Flex::new(sck),
+            Flex::new(mosi),
+            Flex::new(miso),
+            Flex::new(nss),
+        ];
+        Self::construir::<T, Tx, Rx>(
+            indice,
+            regs,
+            Some(pines),
+            tx,
+            rx,
+            irq_tx,
+            irq_rx,
+            rcc_peri,
+            cfg,
+        )
+    }
+
+    /// La misma ranura **sin pines**, para el banco de seis maestros (`ranuras-6`): la Nucleo no
+    /// saca seis SPI enteros (EN-PLACA, montaje del 11-09). El SPI cloca, los dos canales del
+    /// GPDMA1 mueven la trama y el tic la atiende como a cualquiera, pero ningun pin sale en AF5:
+    /// la subida no viene de nadie y el juez la da por mala, como en las de relleno.
+    #[allow(clippy::too_many_arguments)]
+    pub fn sin_pines<T, Tx, Rx>(
+        indice: usize,
+        regs: pac::spi::Spi,
+        tx: Peri<'d, Tx>,
+        rx: Peri<'d, Rx>,
+        irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
+        irq_rx: impl Binding<Rx::Interrupt, dma::InterruptHandler<Rx>> + 'd,
+        rcc_peri: &Peri<'_, peripherals::RCC>,
+        cfg: Config,
+    ) -> Ranura<'d>
+    where
+        T: spi::Instance,
+        Tx: CanalGpdma1 + spi::TxDma<T>,
+        Rx: CanalGpdma1 + spi::RxDma<T>,
+    {
+        Self::construir::<T, Tx, Rx>(indice, regs, None, tx, rx, irq_tx, irq_rx, rcc_peri, cfg)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn construir<T, Tx, Rx>(
+        indice: usize,
+        regs: pac::spi::Spi,
+        mut pines: Option<[Flex<'d>; 4]>,
+        tx: Peri<'d, Tx>,
+        rx: Peri<'d, Rx>,
+        irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
+        irq_rx: impl Binding<Rx::Interrupt, dma::InterruptHandler<Rx>> + 'd,
+        rcc_peri: &Peri<'_, peripherals::RCC>,
+        cfg: Config,
+    ) -> Ranura<'d>
+    where
+        T: spi::Instance,
+        Tx: CanalGpdma1 + spi::TxDma<T>,
+        Rx: CanalGpdma1 + spi::RxDma<T>,
+    {
         defmt::assert!(indice < RANURAS, "J2: ranura fuera de rango");
         // La ISR alcanza los registros por `SPI_DE_RANURA[R]` y `giro` por
         // `self.regs`. Si los dos no son el mismo bloque, la ISR limpiaria las
@@ -354,14 +412,12 @@ impl<'d> Ranura<'d> {
         // `pin_trait_impl!(spi::SckPin, SPI5, PE15, 5u8)`), y DS14791 Rev 10
         // Tabla 18. `VeryHigh` porque el enlace sube a 34,5 MHz (spec D8).
         let salida = AfType::output(OutputType::PushPull, VELOCIDAD_PINES);
-        let mut sck = Flex::new(sck);
-        let mut mosi = Flex::new(mosi);
-        let mut miso = Flex::new(miso);
-        let mut nss = Flex::new(nss);
-        sck.set_as_af_unchecked(5, salida);
-        mosi.set_as_af_unchecked(5, salida);
-        nss.set_as_af_unchecked(5, salida);
-        miso.set_as_af_unchecked(5, AfType::input(Pull::None));
+        if let Some([sck, mosi, miso, nss]) = &mut pines {
+            sck.set_as_af_unchecked(5, salida);
+            mosi.set_as_af_unchecked(5, salida);
+            nss.set_as_af_unchecked(5, salida);
+            miso.set_as_af_unchecked(5, AfType::input(Pull::None));
+        }
 
         // CFG2, la configuracion fija de D1. `write` deja en cero todo lo que
         // no se nombra: `SSM = 0` (el NSS es del periferico), `COMM = 0` (full
@@ -527,10 +583,7 @@ impl<'d> Ranura<'d> {
             cfg1,
             cfg2,
             resetear: resetear_por_rcc::<T>,
-            _sck: sck,
-            _mosi: mosi,
-            _miso: miso,
-            _nss: nss,
+            _pines: pines,
         }
     }
 

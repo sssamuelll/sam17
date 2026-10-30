@@ -78,10 +78,15 @@ embassy_stm32::bind_interrupts!(
     /// `_generated.rs` de este build: `SPI5`, `EXTI11` y `GPDMA1_CHANNELn` --
     /// **no** `GPDMA1_CHn`, que es el nombre del *periferico*
     /// (`dma_channel_impl!(GPDMA1_CH0, ...::GPDMA1_CHANNEL0)`).
+    /// `SPI4`, `SPI3` y `SPI6` son de las ranuras 1, 4 y 5 de `ranuras-6`, que no tienen pines.
+    /// El esclavo del banco usa SPI4 sin su linea: solo la desenmascara `Ranura::nueva`.
     pub struct IrqsBanco {
         SPI5 => Isr<0>;
+        SPI4 => Isr<1>;
         SPI1 => Isr<2>;
         SPI2 => Isr<3>;
+        SPI3 => Isr<4>;
+        SPI6 => Isr<5>;
         GPDMA1_CHANNEL0 => dma::InterruptHandler<peripherals::GPDMA1_CH0>;
         GPDMA1_CHANNEL1 => dma::InterruptHandler<peripherals::GPDMA1_CH1>;
         GPDMA1_CHANNEL2 => dma::InterruptHandler<peripherals::GPDMA1_CH2>;
@@ -90,6 +95,10 @@ embassy_stm32::bind_interrupts!(
         GPDMA1_CHANNEL5 => dma::InterruptHandler<peripherals::GPDMA1_CH5>;
         GPDMA1_CHANNEL6 => dma::InterruptHandler<peripherals::GPDMA1_CH6>;
         GPDMA1_CHANNEL7 => dma::InterruptHandler<peripherals::GPDMA1_CH7>;
+        GPDMA1_CHANNEL8 => dma::InterruptHandler<peripherals::GPDMA1_CH8>;
+        GPDMA1_CHANNEL9 => dma::InterruptHandler<peripherals::GPDMA1_CH9>;
+        GPDMA1_CHANNEL10 => dma::InterruptHandler<peripherals::GPDMA1_CH10>;
+        GPDMA1_CHANNEL11 => dma::InterruptHandler<peripherals::GPDMA1_CH11>;
         EXTI11 => IsrCs;
     }
 );
@@ -232,9 +241,44 @@ pub fn maestro_de_relleno_3(
     )
 }
 
+/// Las cinco ranuras que `ranuras-6` suma a la del banco, **sin pines** ([`Ranura::sin_pines`]):
+/// seis maestros en los seis SPI de `SPI_DE_RANURA` y doce canales del GPDMA1, los `2·n` y
+/// `2·n + 1` que programa el tic para la ranura `n`. Ni el SPI4 ni sus canales 2 y 3 quedan para
+/// el esclavo del banco.
+///
+/// Es el sustituto de las seis ranuras reales de §5.2 (b) del papel v3: la Nucleo no saca seis SPI
+/// enteros por los conectores que vienen soldados (EN-PLACA, montaje del 11-09).
+#[cfg(feature = "ranuras-6")]
+#[allow(clippy::too_many_arguments)]
+pub fn maestros_sin_pines(
+    ch2: Peri<'static, peripherals::GPDMA1_CH2>,
+    ch3: Peri<'static, peripherals::GPDMA1_CH3>,
+    ch4: Peri<'static, peripherals::GPDMA1_CH4>,
+    ch5: Peri<'static, peripherals::GPDMA1_CH5>,
+    ch6: Peri<'static, peripherals::GPDMA1_CH6>,
+    ch7: Peri<'static, peripherals::GPDMA1_CH7>,
+    ch8: Peri<'static, peripherals::GPDMA1_CH8>,
+    ch9: Peri<'static, peripherals::GPDMA1_CH9>,
+    ch10: Peri<'static, peripherals::GPDMA1_CH10>,
+    ch11: Peri<'static, peripherals::GPDMA1_CH11>,
+    rcc: &Peri<'_, peripherals::RCC>,
+    cfg: Config,
+) -> [Ranura<'static>; 5] {
+    let i = IrqsBanco;
+    [
+        Ranura::sin_pines::<peripherals::SPI4, _, _>(1, pac::SPI4, ch2, ch3, i, i, rcc, cfg),
+        Ranura::sin_pines::<peripherals::SPI1, _, _>(2, pac::SPI1, ch4, ch5, i, i, rcc, cfg),
+        Ranura::sin_pines::<peripherals::SPI2, _, _>(3, pac::SPI2, ch6, ch7, i, i, rcc, cfg),
+        Ranura::sin_pines::<peripherals::SPI3, _, _>(4, pac::SPI3, ch8, ch9, i, i, rcc, cfg),
+        Ranura::sin_pines::<peripherals::SPI6, _, _>(5, pac::SPI6, ch10, ch11, i, i, rcc, cfg),
+    ]
+}
+
 /// Cuantas ranuras giran en los binarios de medida (`carga_j2`, `perfil_pc`): la
-/// del banco y, con `ranuras-2` y `ranuras-3`, las de relleno.
-pub const RANURAS_DE_MEDIDA: u32 = if cfg!(feature = "ranuras-3") {
+/// del banco y, con `ranuras-2`, `ranuras-3` y `ranuras-6`, las de relleno.
+pub const RANURAS_DE_MEDIDA: u32 = if cfg!(feature = "ranuras-6") {
+    6
+} else if cfg!(feature = "ranuras-3") {
     3
 } else if cfg!(feature = "ranuras-2") {
     2
@@ -277,6 +321,24 @@ macro_rules! ranuras_de_medida {
             &$p.RCC,
             cfg,
         ));
+        #[cfg(feature = "ranuras-6")]
+        for (n, r) in (1..).zip($crate::j2_banco::maestros_sin_pines(
+            $p.GPDMA1_CH2,
+            $p.GPDMA1_CH3,
+            $p.GPDMA1_CH4,
+            $p.GPDMA1_CH5,
+            $p.GPDMA1_CH6,
+            $p.GPDMA1_CH7,
+            $p.GPDMA1_CH8,
+            $p.GPDMA1_CH9,
+            $p.GPDMA1_CH10,
+            $p.GPDMA1_CH11,
+            &$p.RCC,
+            cfg,
+        )) {
+            ranuras[n] = Some(r);
+        }
+        #[cfg(not(feature = "ranuras-6"))]
         if $crate::j2_banco::RANURAS_DE_MEDIDA >= 2 {
             ranuras[2] = Some($crate::j2_banco::maestro_de_relleno_2(
                 $p.PB9,
@@ -289,6 +351,7 @@ macro_rules! ranuras_de_medida {
                 cfg,
             ));
         }
+        #[cfg(not(feature = "ranuras-6"))]
         if $crate::j2_banco::RANURAS_DE_MEDIDA >= 3 {
             ranuras[3] = Some($crate::j2_banco::maestro_de_relleno_3(
                 $p.PF2,

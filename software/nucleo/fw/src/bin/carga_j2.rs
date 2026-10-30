@@ -17,7 +17,8 @@
 //! del giro y lo que sobra para el hilo.
 //!
 //! Con `--features ranuras-2` o `ranuras-3` giran ademas una o dos ranuras de
-//! relleno (SPI1 y SPI2, sin modulo detras; pines en `j2_banco`): el coste por
+//! relleno (SPI1 y SPI2, sin modulo detras; pines en `j2_banco`), y con `ranuras-6`
+//! cinco, sin pines (`j2_banco::maestros_sin_pines`): el coste por
 //! giro es el total entre todos los giros de todas las ranuras, y asi se ve que
 //! parte es de cada ranura y cual se reparte (la ISR del reloj, la entrada del
 //! ejecutor). Con `ranuras-3` a 64 MHz el periodo sube a 2 ms para que ninguna

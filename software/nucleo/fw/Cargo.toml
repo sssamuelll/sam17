@@ -171,6 +171,9 @@ sin-esclavo = []
 # La fase C de `tic_recupera`: la escalada del GPDMA1 con las vecinas en vuelo.
 escalada = []
 ranuras-3 = ["ranuras-2"]
+# Seis maestros, uno por SPI, y doce canales del GPDMA1 (§5.2 b del papel v3): las cinco ranuras que
+# no son la del banco van sin pines (`j2_banco::maestros_sin_pines`), y SPI1 y SPI2 tambien. Sin esclavo.
+ranuras-6 = ["ranuras-3"]
 # La I-cache y la D-cache encendidas en `perfil_pc`, sin la region MPU de los buferes del
 # DMA (R-MJ7): es de exploracion, como la pasada `-sin-mpu` de `carga_j2`.
 caches = []

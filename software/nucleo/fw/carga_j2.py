@@ -3,7 +3,7 @@
 
     python carga_j2.py            # compila, corre las pasadas y muestra la fila
     python carga_j2.py --hub      # lo mismo con el nucleo a 800 MHz (feature reloj-hub)
-    python carga_j2.py --ranuras 3   # con tres ranuras girando (2 o 3; pines en j2_banco)
+    python carga_j2.py --ranuras 3   # con tres ranuras girando (2 o 3, pines en j2_banco; 6, sin pines)
     python carga_j2.py --isr      # el transporte por ISR de j2_isr, la cota sin ejecutor
     python carga_j2.py --tic      # el transporte por tic en la configuracion de la ficha J
     python carga_j2.py --anota    # ademas la anade a carga_j2.csv
@@ -363,8 +363,8 @@ def main() -> None:
         features.append("transporte-isr")
     if "--ranuras" in sys.argv:
         n = sys.argv[sys.argv.index("--ranuras") + 1]
-        if n not in ("2", "3"):
-            raise SystemExit("--ranuras admite 2 o 3 (la 1 es la de siempre)")
+        if n not in ("2", "3", "6"):
+            raise SystemExit("--ranuras admite 2, 3 o 6 (la 1 es la de siempre)")
         features.append(f"ranuras-{n}")
     run = subprocess.run(
         ["cargo", "run", "--release", "--features", ",".join(features), "--bin", "carga_j2"],
