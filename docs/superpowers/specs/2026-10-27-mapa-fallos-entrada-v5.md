@@ -1,8 +1,8 @@
 # Mapa de fallos de la entrada v5: del ladrillo a los DC-DC
 
-**Fecha**: 2026-10-27 · **Estado**: mapa de papel de `H-V5-CORTO`
+**Fecha**: 2026-10-27 (actualizado el 2026-10-29 con la primera respuesta de AE del 2026-10-28, caso P-258801) · **Estado**: mapa de papel de `H-V5-CORTO`
 ([v5](2026-09-05-fuente-v5-ladrillo-design.md) §9.2); no firma nada, no elige
-piezas y no da por contestado ningún HUECO de fabricante ·
+piezas y solo cierra en dato de fabricante `H-MF-PS` (**ES1 / PS3**, sin LPS); los demás HUECOS de fabricante siguen abiertos tras la repregunta del 2026-10-29 ·
 **Aplica** las decisiones de Samuel del 2026-10-27: el ladrillo es el
 `TE90A2449F01` certificado (variante A, la salida sin unir a la tierra de red;
 62368-1); un corto en su cordón cautivo, aguas arriba de nuestro receptáculo,
@@ -71,9 +71,9 @@ retorno: PS*.−Vin, C14, C10 … ── GND24 ── fuente de Q7
 
 | Elemento | Qué hace ante un corto | Cifra | Fuente |
 |---|---|---|---|
-| TE90, sobrecarga | hiccup desde el 130–180 % de 3,75 A | **4,875–6,75 A, típicos a 25 °C** («All specifications are typical at nominal input, full load, at 25°C ambient unless noted») | `ae-TE90-datasheet.pdf` p. 2; 3,75 A en p. 5 |
-| TE90, cortocircuito | «Hiccup mode, auto-recovery» | ni pico, ni encendido, ni apagado | p. 2 |
-| TE90, temperatura | «Will shutdown upon an overtemperature condition, auto-recovery» | ni umbral ni tiempo | p. 2 |
+| TE90, sobrecarga | hiccup desde el 130–180 % de 3,75 A | **4,875–6,75 A, típicos a 25 °C** («All specifications are typical at nominal input, full load, at 25°C ambient unless noted»); el 2026-10-28 AE declara **10,3 A** como la mayor corriente sostenida sin disparar («10.3A»; repreguntado el 2026-10-29 si es continua o pico antes del hiccup) | `ae-TE90-datasheet.pdf` p. 2; 3,75 A en p. 5; correo AE caso P-258801 (2026-10-28) |
+| TE90, cortocircuito | «Hiccup mode, auto-recovery» | ni pico, ni encendido, ni apagado (AE contestó solo «Operates in Hiccup mode» el 2026-10-28; repreguntado el 2026-10-29) | p. 2; correo AE caso P-258801 |
+| TE90, temperatura | «Will shutdown upon an overtemperature condition, auto-recovery» | ni umbral ni tiempo (repreguntado el 2026-10-29 a 10,3 A) | p. 2 |
 | `U16` (TPS26631), límite | 1 × I_OL: el 2 × solo existe con PGOOD alto, y `PGTH` va a `GND24` (netlist; junta §3.7) | 4,185–4,815 A con 4,02 kΩ exactos; **4,146–4,866 A** con `R11` al ±1 % (§4.2) | `tps2663.pdf` p. 7 y p. 23 |
 | `U16`, disparo rápido | abre y vuelve a entrar limitando | 3 × I_OL = 12,4–14,6 A, abre en 2,2–4,5 µs; por encima de 45 A, en 1 µs | p. 7 y p. 9 |
 | `U16`, duración | limita hasta `tCL_PLIM` y se enclava (`MODE` al aire); la TSD, a 165 °C, puede cortar antes | 129–202 ms | p. 9, p. 8, p. 22–23 y Tabla 8-1 en p. 28 |
@@ -197,7 +197,7 @@ corriente del cordón en su peor caso, contra el 1,3 que pide el guion.
 |---|---|
 | `tCL_PLIM` 202 ms máx., y enclava | p. 9; `MODE` al aire = «Latch» (p. 8) y «There after Latches OFF» (Tabla 8-1, p. 28). Correcta |
 | 4,875 A de disparo mínimo | 1,30 × 3,75 A (`ae-TE90-datasheet.pdf` p. 2 y p. 5). Correcta, y **típica a 25 °C** (nota de la p. 2) |
-| 117 W en un parcial que no dispara | 24 V × 4,875 A = 117 W. Correcta, pero es el **suelo** de la banda: un ladrillo que dispara al 180 % sostiene 6,75 A, **162 W** (170 W a 25,2 V). Hasta que AE diga la mayor corriente que sostiene sin disparar, el mapa usa la banda entera |
+| 117 W en un parcial que no dispara | 24 V × 4,875 A = 117 W. Correcta, pero es el **suelo** de la banda: un ladrillo que dispara al 180 % sostiene 6,75 A, **162 W** (170 W a 25,2 V). El 2026-10-28 AE declaró **10,3 A** como la mayor corriente sostenida sin disparar («10.3A»; **247 W** a 24 V y **260 W** a 25,2 V si es continua, repreguntado el 2026-10-29) |
 
 ## 5. El arnés contra el peor caso del ladrillo
 
@@ -210,7 +210,7 @@ temperatura. Con los 0,0132 Ω/m del guion (`ladrillo_budget.py:175`, cobre a
 |---|---|---|---|
 | Servicio | 2,889 A continuos (`ladrillo_budget.py`, peor caso del cordón) | 0,11 W/m por conductor | sobra |
 | Corto detrás de `U16` (E1) | ≤ 4,866 A durante ≤ 202 ms, 4 pulsos | 4,8 A²s por pulso | sobra |
-| Corto parcial delante de `U16`, que no dispara el TE90 | hasta 6,75 A típicos, sin tiempo | 6,75² × 0,0132 = **0,60 W/m** por conductor; 0,36 W en los 0,6 m de cobre | **aguanta, ESTIMADO** (abajo) |
+| Corto parcial delante de `U16`, que no dispara el TE90 | hasta 6,75 A típicos de hoja (o **10,3 A** según respuesta de AE del 2026-10-28, repreguntado el 2026-10-29 si es continua o pico), sin tiempo | a 6,75 A: 6,75² × 0,0132 = **0,60 W/m** por conductor (0,36 W en 0,6 m); a 10,3 A: 10,3² × 0,0132 = **1,40 W/m** por conductor (0,84 W en 0,6 m) | **aguanta a 6,75 A, ESTIMADO; a 10,3 A supera los 7,9 A de referencia** (abajo) |
 | Corto franco delante de `U16` | pulsos del hiccup | sin pico ni ciclo de trabajo no hay I²t ni media | **HUECO** (`H-MF-HICCUP`) |
 
 **Por qué ESTIMADO.** La única ampacidad del repo es la que cita la propuesta
@@ -224,18 +224,18 @@ está demostrado:
 - el aire del cajón son 62,6 °C (`derating_budget.py`, «sala de 45 C +
   chimenea pesimista»), y el factor de la tabla a esa temperatura no está en
   el repo;
-- los 6,75 A son típicos, y el máximo real lo dice AE (`H-MF-SOSTENIDA`).
+- los 6,75 A son típicos, y el 2026-10-28 AE contestó **«10.3A»** como la mayor corriente que sostiene sin disparar (con el cordón cautivo dimensionado para ello: «The rating is sufficient»), sin aclarar si 10,3 A es régimen continuo o un pico previo al hiccup ni en cuánto tiempo corta la OTP (`H-MF-SOSTENIDA`, repreguntado el 2026-10-29).
 
 **Lo que va con él.** El receptáculo `KPJX-PM-4S` lleva la misma corriente
 por dos pines por polo: 6,75 A caben en 7,5 A aunque un solo pin la lleve
-entera. En sus cuatro contactos, 4 × 3,375² × 30 mΩ = 1,37 W, y el
+entera, mientras que a **10,3 A** un solo pin quedaría superado (10,3 A > 7,5 A) y el reparto en dos pines por polo (5,15 A por pin, junta §4.1) pasa a ser obligatorio si los 10,3 A son continuos. En sus cuatro contactos, a 6,75 A son 4 × 3,375² × 30 mΩ = 1,37 W (y a 10,3 A con reparto igual, 4 × 5,15² × 30 mΩ = **3,18 W**), y el
 receptáculo trabaja hasta 75 °C (`kycon_KPJX-PM-4S.pdf` p. 1): 12,4 K sobre
-los 62,6 °C del cajón. Si esos 1,37 W caben en 12,4 K se mide
-(`H-MF-RECEPTACULO`). `J1` (MaiXu MX126-5.0-02P, C5188434) no tiene hoja en el
+los 62,6 °C del cajón. Si esos 1,37 W (o 3,18 W a 10,3 A) caben en 12,4 K se mide
+(`H-MF-RECEPTACULO`). En `Q7` (fila C3, corto parcial contra chasis), 10,3 A disipan 10,3² × 15 mΩ = **1,59 W** (frente a 0,68 W a 6,75 A), todavía por debajo de sus 3,1 W (`csd18534q5a.pdf` p. 1). `J1` (MaiXu MX126-5.0-02P, C5188434) no tiene hoja en el
 repo (`H-MF-ARNES`).
 
 **Veredicto.** Con todas las cifras del repo, el arnés sobrevive al peor caso
-sostenido del ladrillo; queda en ESTIMADO hasta que el cable tenga
+típico de hoja (6,75 A); queda en ESTIMADO hasta que AE aclare los 10,3 A (`H-MF-SOSTENIDA`), el cable tenga
 referencia con clase de aislamiento y su ampacidad con el aire del cajón, y
 `J1` su hoja. Contra un corto franco no hay veredicto sin el pulso del hiccup.
 
@@ -243,11 +243,11 @@ referencia con clase de aislamiento y su ampacidad con el aire del cajón, y
 
 | Tramo | Qué lo limita | Potencia en la falta, peor caso | Dueño tras la decisión del 2026-10-27 |
 |---|---|---|---|
-| Cordón cautivo y clavija (A2, B2) | la sobrecarga del TE90 | 117–162 W (123–170 W) | **ladrillo**, bajo su certificación |
-| Receptáculo `X1` (B2) | la sobrecarga del TE90 | 117–162 W (123–170 W) | **nuestro** |
-| Arnés y `J1` (C2) | la sobrecarga del TE90 | 117–162 W (123–170 W) | **nuestro** |
-| De `J1` a la entrada de `U16` (D2) | la sobrecarga del TE90 | 117–162 W (123–170 W) | **nuestro** |
-| + contra chasis delante de `U16`, por `J5`, `NT1` y `Q7` (C3, D3) | la sobrecarga del TE90 | 117–162 W (123–170 W) | **nuestro**, cruzado con `H-V5-PE` |
+| Cordón cautivo y clavija (A2, B2) | la sobrecarga del TE90 | 117–162 W (123–170 W); hasta 247 W (260 W) si sostiene 10,3 A | **ladrillo**, bajo su certificación |
+| Receptáculo `X1` (B2) | la sobrecarga del TE90 | 117–162 W (123–170 W); hasta 247 W (260 W) a 10,3 A | **nuestro** |
+| Arnés y `J1` (C2) | la sobrecarga del TE90 | 117–162 W (123–170 W); hasta 247 W (260 W) a 10,3 A | **nuestro** |
+| De `J1` a la entrada de `U16` (D2) | la sobrecarga del TE90 | 117–162 W (123–170 W); hasta 247 W (260 W) a 10,3 A | **nuestro** |
+| + contra chasis delante de `U16`, por `J5`, `NT1` y `Q7` (C3, D3) | la sobrecarga del TE90 | 117–162 W (123–170 W); hasta 247 W (260 W) a 10,3 A | **nuestro**, cruzado con `H-V5-PE` |
 | Detrás de `U16`, por debajo de su límite (E2, E4) | el límite de `U16` | 99–117 W, menos la carga | **nuestro**: es nuestro umbral |
 
 **Lo que deja la decisión de hoy.** El tramo nuestro delante de `U16` es
@@ -270,10 +270,10 @@ disparar. Eso es una decisión de Samuel, no una consecuencia de este mapa.
 
 | HUECO | Qué falta | Quién lo contesta | Qué filas mueve |
 |---|---|---|---|
-| `H-MF-HICCUP` | pico, tiempo encendido y tiempo apagado del hiccup con un corto franco en el extremo del cordón; resistencia del cordón de la opción 49 | **AE**, en el seguimiento del caso P-258801; pliego preguntas 15 y 19 | A1, B1, C1, C3 franco, D1; §4.1 |
-| `H-MF-SOSTENIDA` | la mayor corriente que sostiene sin disparar, a 45 °C, y cuánto tiempo antes de que actúe su OTP | **AE**, en el seguimiento del caso P-258801 | A2, B2, C2, C3, D2; §5 |
-| `H-MF-PS` | clase PS/LPS de la salida. Ni el informe CB (IEC 60950-1, `ae-TE90-CB-cert.pdf`) ni el certificado DEMKO (`ae-TE90-DEMKO-EN62368.pdf`) la dan | **AE**, en el seguimiento del caso P-258801 | de ella depende qué le exige 62368-1 al tramo nuestro delante de `U16` y a la caja; la norma no está en el repo |
-| `H-MF-SELECTIVIDAD` | disparo mínimo garantizado de la sobrecarga a 45 °C, contra 4,866 A | **AE**: pregunta 12 del pliego, hecha como preguntas 1 y 3 del correo del caso P-258801 | E1 |
+| `H-MF-HICCUP` | pico, tiempo encendido y tiempo apagado del hiccup con un corto franco en el extremo del cordón; resistencia del cordón de la opción 49. **2026-10-28:** AE contestó solo «Operates in Hiccup mode» sin cifras, y dejó sin responder las preguntas del cordón de la opción 49; repreguntado el 2026-10-29 | **AE**, en el seguimiento del caso P-258801; pliego preguntas 15 y 19 | A1, B1, C1, C3 franco, D1; §4.1 |
+| `H-MF-SOSTENIDA` | la mayor corriente que sostiene sin disparar, a 45 °C, y cuánto tiempo antes de que actúe su OTP. **2026-10-28:** AE contestó **«10.3A»** (y que el cordón cautivo es suficiente: «The rating is sufficient»), sin dar tiempo de OTP ni aclarar cómo se relaciona 10,3 A con el 130–180 % (4,875–6,75 A típicos) de la hoja; repreguntado el 2026-10-29 si 10,3 A es continua o pico antes del hiccup y cuándo actúa la OTP | **AE**, en el seguimiento del caso P-258801 | A2, B2, C2, C3, D2; §5 |
+| `H-MF-PS` | ~~clase PS/LPS de la salida. Ni el informe CB (IEC 60950-1, `ae-TE90-CB-cert.pdf`) ni el certificado DEMKO (`ae-TE90-DEMKO-EN62368.pdf`) la dan~~ **Contestada por AE el 2026-10-28 (caso P-258801, captura del informe CB IEC 62368-1):** la salida es **`ES1 : Secondary output circuits`** y **`PS3 : Output circuits`** (> 100 W; «Limited power source (Annex Q): This is not applicable»). Queda en diseño qué exige IEC 62368-1 Cláusula 6 al tramo nuestro delante de `U16` y a la envolvente por ser un circuito PS3 sin LPS aguas arriba | ~~**AE**~~ **diseño** (dato de AE recibido el 2026-10-28) | de ella depende qué le exige 62368-1 al tramo nuestro delante de `U16` y a la caja; la norma no está en el repo |
+| `H-MF-SELECTIVIDAD` | disparo mínimo garantizado de la sobrecarga a 45 °C, contra 4,866 A. **2026-10-28:** AE confirmó que el umbral de OCP no baja con el derating («The OCP threshold remains unchanged, regardless of the derating curve»), pero declaró que **no tiene datos a 45 °C** («There is no data available for the 45°C condition. OCP must be re-verified within the 90–264 V range under 45°C conditions») y que sostener 4,82 A durante 202 ms «It is possible. However, it would be advisable to include a margin when setting the OCP threshold—for example, 140% (5.25A)». Sin garantía del fabricante a 45 °C, pasa a verificación en banco a 45 °C (90–264 VAC) o ajuste de `R11` | **AE** (contestó sin datos a 45 °C el 2026-10-28) + **diseño / medida** | E1 |
 | `H-MF-ARNES` | referencia del cable de `X1` a `J1`, con clase de aislamiento y su ampacidad con el aire del cajón; su I²t; la hoja de `J1`. Criterio, firmado el 2026-10-27 (`H-V5-CORTO`): `X1`, el cable y `J1` se dimensionan para la corriente de `H-MF-SOSTENIDA` | diseño | C1, C2; §5 |
 | `H-MF-CHASIS` | corriente admisible de `J5`; el hilo de `J5` al chasis, que no está en `bom-chasis.csv`; el cobre de `NT1`; qué piezas metálicas son chasis (la escuadra del enchufe, la base). Criterio, firmado el 2026-10-27 (`H-V5-CORTO`): la unión al chasis se dimensiona para la corriente de `H-MF-SOSTENIDA` | diseño, junto con `H-V5-PE` | A3, B3, C3, C4, D3, E3 |
 | `H-MF-R11` | ~~la banda de `U16` con la tolerancia de `R11`~~ **contada en `recuperacion_budget.py` (§4.2)**; falta su coeficiente térmico, sin hoja de UniOhm en el repo | diseño | E1; §4.2 |
