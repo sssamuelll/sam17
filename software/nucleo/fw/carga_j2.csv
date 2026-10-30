@@ -8,3 +8,5 @@ fecha,firmware,placa,f_cpu_hz,cache,ciclos_por_giro,hilo_libre_permil,ranuras,pe
 2026-10-20,646a97a,NUCLEO-N657X0-Q,800000000,icache+dcache-mpu,2419,,3,125,tic,fria,2321
 2026-10-20,bba1b35,NUCLEO-N657X0-Q,800000000,icache+dcache-mpu,2331,,3,125,tic,caliente,2285
 2026-10-20,bba1b35,NUCLEO-N657X0-Q,800000000,icache+dcache-mpu,2398,,3,125,tic,fria,2300
+2026-10-30,4196bb3,NUCLEO-N657X0-Q,800000000,icache+dcache-mpu,2221,,6,125,tic,caliente,2198
+2026-10-30,4196bb3,NUCLEO-N657X0-Q,800000000,icache+dcache-mpu,2281,,6,125,tic,fria,2232

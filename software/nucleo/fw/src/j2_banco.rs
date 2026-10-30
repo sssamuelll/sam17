@@ -185,7 +185,8 @@ pub fn maestro_del_banco(
 /// | MISO | PB8 | CN15-14 |
 /// | NSS | PC5 | CN3-15 |
 ///
-/// Es solo para el banco de carga: no hay nada cableado ahi.
+/// Es solo para el banco de carga: no hay nada cableado ahi. **PC3 no esta libre**: la Nucleo lo
+/// lleva tambien al CC1 del USB-C del ST-LINK (`STLK_UCPD_CC1_C`, UM3417 Rev 3, Tabla 16, p. 35).
 #[allow(clippy::too_many_arguments)]
 pub fn maestro_de_relleno_2(
     sck: Peri<'static, peripherals::PB9>,
