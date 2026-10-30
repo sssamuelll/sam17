@@ -2,7 +2,7 @@
 
 > Documentación funcional: [`docs/modules/01-power-supply.md`](../../docs/modules/01-power-supply.md).
 
-> **Estado (2026-10-25): la fuente que se construye es la v5.** Esta carpeta
+> **Estado (2026-10-30): la fuente que se construye es la v5.** Esta carpeta
 > raíz es la v1, y todo lo que sigue debajo del banner la describe a ella.
 >
 > | Versión | Qué es | Estado |
@@ -14,12 +14,14 @@
 > | [v5](v5/) | ladrillo externo de 24 V; dentro, la conversión DC-DC y la cascada | D-V1..D-V5 firmadas el 2026-09-08 ([spec](../../docs/superpowers/specs/2026-09-05-fuente-v5-ladrillo-design.md)) |
 >
 > La placa de la v5 está ruteada en 4 capas con el DRC en cero
-> ([`v5/fab/`](v5/fab/README.md)), pero todavía no autoriza cobre: los
-> HUECOS de su §9.2 (quedan 15 de 16) son la condición de fabricación, varios los contesta solo
-> el fabricante, y la
-> [propuesta de piezas](../../docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
-> sigue sin firmar. El bring-up es la hoja de 104 medidas de
-> [`v5/check_bringup.py`](v5/check_bringup.py).
+> ([`v5/fab/`](v5/fab/README.md)) y sus
+> [piezas](../../docs/superpowers/specs/2026-10-22-fuente-v5-piezas-propuesta.md)
+> quedaron firmadas el 26 y 27 de octubre
+> ([junta](../../docs/superpowers/specs/2026-10-25-junta-fuente-v5-piezas.md)).
+> Todavía no autoriza cobre: de los 16 HUECOS de su §9.2 quedan 13 abiertos tras
+> la primera respuesta de Advanced Energy del 28 de octubre (10 bloquean la
+> placa y 3 solo el panel trasero, el chasis y la pantalla). El bring-up es la
+> hoja de 108 puntos de [`v5/check_bringup.py`](v5/check_bringup.py).
 
 ## Resumen
 
