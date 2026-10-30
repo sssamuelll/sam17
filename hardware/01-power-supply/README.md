@@ -21,7 +21,7 @@
 > Todavía no autoriza cobre: de los 16 HUECOS de su §9.2 quedan 13 abiertos tras
 > la primera respuesta de Advanced Energy del 28 de octubre (10 bloquean la
 > placa y 3 solo el panel trasero, el chasis y la pantalla). El bring-up es la
-> hoja de 108 puntos de [`v5/check_bringup.py`](v5/check_bringup.py).
+> hoja de 109 puntos de [`v5/check_bringup.py`](v5/check_bringup.py).
 
 ## Resumen
 

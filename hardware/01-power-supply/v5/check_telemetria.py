@@ -108,6 +108,12 @@ TMP_DIR = {tuple(f.split()[:3]): int(f.split()[3], 16) for f in """
 # GND2 5, SCL2 6, SDA2 7, VCC2 8.
 ISO_VCC_ABSMAX_V = 6.0              # p. 6, 6.1: VCC1, VCC2
 
+# TE90A2449F01 (AE, caso P-258801, 2026-10-28, tabla del informe CB IEC 62368-1,
+# sec. 5.7/5.7.2.2/5.7.4 a 264 VAC, 60 Hz): corriente de contacto primario a
+# secundario (conector CN2) en falta simple con PE abierto (`FG open`, e1 abierto).
+I_CONTACTO_TE90_CB_FALTA_UA = 127.0
+I_CONTACTO_ES1_FALTA_MAX_UA = 500.0
+
 # BAT54S (onsemi BAT54SLT1G, D14..D17): no hay hoja en docs/reference/datasheets.
 VF_BAT54_V = 0.29                   # peor caso en frio a ~100 uA; SIN HOJA, ver _HUECOS
 CLAMP_V = -VF_BAT54_V
@@ -457,8 +463,12 @@ def demo() -> int:
     linea(red_de(nets, "J5.1") == "GNDA" and len(refs_en("GNDA") & {"J5"}) == 1,
           f"T17: J5 (puente unico GNDA-chasis) cuelga de {red_de(nets, 'J5.1')}")
     fisica("T17: continuidad estrella GNDA-chasis", "continuidad_estrella_GNDA_a_chasis")
-    hueco("T17: fuga a PE de los ladrillos candidatos", "ni medidas.csv ni ningun presupuesto de la v5 "
-          "la tiene (fuga_budget.py es de la v4, con la red dentro del chasis)")
+    linea(I_CONTACTO_TE90_CB_FALTA_UA < I_CONTACTO_ES1_FALTA_MAX_UA,
+          f"T17: corriente de contacto del TE90A2449F01 con PE abierto (AE P-258801, informe CB "
+          f"IEC 62368-1 a 264 VAC/60 Hz) {I_CONTACTO_TE90_CB_FALTA_UA:g} uA < "
+          f"{I_CONTACTO_ES1_FALTA_MAX_UA:g} uA limite ES1")
+    fisica("T17: corriente de contacto chasis-tierra con PE abierto (TE90 ES1)",
+           "corriente_contacto_chasis_a_tierra_pe_abierto")
 
     # T26 (#477): la pantalla vuelve por su propio par en el mazo, no por el bus
     # de la fila. Es regla de cableado, no red de la placa: la placa solo pone
