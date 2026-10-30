@@ -276,10 +276,16 @@ pub struct Ranura<'d> {
     /// El reset por RCC de este periferico: [`resetear_por_rcc`] con su `T`.
     resetear: fn(),
     _sck: Flex<'d>,
-    _mosi: Flex<'d>,
-    _miso: Flex<'d>,
-    _nss: Flex<'d>,
+    _resto: Resto<'d>,
 }
+
+/// MOSI, MISO y NSS. Con `ranuras-6` pueden faltar (`Ranura::solo_sck`); sin la feature el tipo es el
+/// de siempre, porque `Hw` guarda la ranura y su forma mueve el codigo del tic: con `Option` en todas
+/// las compilaciones, la fila fria de la ficha J paso de 2 399 a 2 458 ciclos (2026-10-30, `799c8ea`).
+#[cfg(not(feature = "ranuras-6"))]
+type Resto<'d> = [Flex<'d>; 3];
+#[cfg(feature = "ranuras-6")]
+type Resto<'d> = Option<[Flex<'d>; 3]>;
 
 impl<'d> Ranura<'d> {
     /// Configura los pines (AF5), el reloj del periferico, los `CFG1`/`CFG2`
@@ -325,6 +331,88 @@ impl<'d> Ranura<'d> {
         Tx: CanalGpdma1 + spi::TxDma<T>,
         Rx: CanalGpdma1 + spi::RxDma<T>,
     {
+        // `Flex::new` no toca el pin: el AF5 se escribe en `construir`, en el mismo sitio de siempre.
+        let resto = [Flex::new(mosi), Flex::new(miso), Flex::new(nss)];
+        #[cfg(feature = "ranuras-6")]
+        let resto = Some(resto);
+        Self::construir::<T, Tx, Rx>(
+            indice,
+            regs,
+            Flex::new(sck),
+            5,
+            resto,
+            tx,
+            rx,
+            irq_tx,
+            irq_rx,
+            rcc_peri,
+            cfg,
+        )
+    }
+
+    /// La misma ranura **con el SCK y nada mas**, para el banco de seis maestros (`ranuras-6`): la
+    /// Nucleo no saca seis SPI enteros (EN-PLACA, montaje del 11-09). El SPI cloca, los dos canales
+    /// del GPDMA1 mueven la trama y el tic la atiende como a cualquiera; la subida no viene de nadie
+    /// y el juez la da por mala, como en las de relleno.
+    ///
+    /// **El SCK no se puede quitar.** Sin ningun pin en AF, el canal de transmision mueve los 25
+    /// bytes, el de recepcion no recibe ninguno (`BNDT` se queda en 25) y el `EOT` no llega: medido
+    /// en placa el 2026-10-30 (`d7cba23`), todas las tramas de las cinco ranuras vencieron. Que el
+    /// receptor tome el reloj de vuelta del pin es la lectura de ese resultado, no una cita del RM.
+    #[cfg(feature = "ranuras-6")]
+    #[allow(clippy::too_many_arguments)]
+    pub fn solo_sck<T, Sck, Tx, Rx>(
+        indice: usize,
+        regs: pac::spi::Spi,
+        sck: Peri<'d, Sck>,
+        tx: Peri<'d, Tx>,
+        rx: Peri<'d, Rx>,
+        irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
+        irq_rx: impl Binding<Rx::Interrupt, dma::InterruptHandler<Rx>> + 'd,
+        rcc_peri: &Peri<'_, peripherals::RCC>,
+        cfg: Config,
+    ) -> Ranura<'d>
+    where
+        T: spi::Instance,
+        Sck: spi::SckPin<T>,
+        Tx: CanalGpdma1 + spi::TxDma<T>,
+        Rx: CanalGpdma1 + spi::RxDma<T>,
+    {
+        let af = sck.af_num();
+        Self::construir::<T, Tx, Rx>(
+            indice,
+            regs,
+            Flex::new(sck),
+            af,
+            None,
+            tx,
+            rx,
+            irq_tx,
+            irq_rx,
+            rcc_peri,
+            cfg,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn construir<T, Tx, Rx>(
+        indice: usize,
+        regs: pac::spi::Spi,
+        mut sck: Flex<'d>,
+        sck_af: u8,
+        mut resto: Resto<'d>,
+        tx: Peri<'d, Tx>,
+        rx: Peri<'d, Rx>,
+        irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
+        irq_rx: impl Binding<Rx::Interrupt, dma::InterruptHandler<Rx>> + 'd,
+        rcc_peri: &Peri<'_, peripherals::RCC>,
+        cfg: Config,
+    ) -> Ranura<'d>
+    where
+        T: spi::Instance,
+        Tx: CanalGpdma1 + spi::TxDma<T>,
+        Rx: CanalGpdma1 + spi::RxDma<T>,
+    {
         defmt::assert!(indice < RANURAS, "J2: ranura fuera de rango");
         // La ISR alcanza los registros por `SPI_DE_RANURA[R]` y `giro` por
         // `self.regs`. Si los dos no son el mismo bloque, la ISR limpiaria las
@@ -354,14 +442,16 @@ impl<'d> Ranura<'d> {
         // `pin_trait_impl!(spi::SckPin, SPI5, PE15, 5u8)`), y DS14791 Rev 10
         // Tabla 18. `VeryHigh` porque el enlace sube a 34,5 MHz (spec D8).
         let salida = AfType::output(OutputType::PushPull, VELOCIDAD_PINES);
-        let mut sck = Flex::new(sck);
-        let mut mosi = Flex::new(mosi);
-        let mut miso = Flex::new(miso);
-        let mut nss = Flex::new(nss);
-        sck.set_as_af_unchecked(5, salida);
-        mosi.set_as_af_unchecked(5, salida);
-        nss.set_as_af_unchecked(5, salida);
-        miso.set_as_af_unchecked(5, AfType::input(Pull::None));
+        sck.set_as_af_unchecked(sck_af, salida);
+        #[cfg(not(feature = "ranuras-6"))]
+        let pines = Some(&mut resto);
+        #[cfg(feature = "ranuras-6")]
+        let pines = resto.as_mut();
+        if let Some([mosi, miso, nss]) = pines {
+            mosi.set_as_af_unchecked(5, salida);
+            nss.set_as_af_unchecked(5, salida);
+            miso.set_as_af_unchecked(5, AfType::input(Pull::None));
+        }
 
         // CFG2, la configuracion fija de D1. `write` deja en cero todo lo que
         // no se nombra: `SSM = 0` (el NSS es del periferico), `COMM = 0` (full
@@ -528,9 +618,7 @@ impl<'d> Ranura<'d> {
             cfg2,
             resetear: resetear_por_rcc::<T>,
             _sck: sck,
-            _mosi: mosi,
-            _miso: miso,
-            _nss: nss,
+            _resto: resto,
         }
     }
 

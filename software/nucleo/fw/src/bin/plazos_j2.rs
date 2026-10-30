@@ -40,8 +40,8 @@
 //! 30), no es ninguno de los ocho del J2 (SPI5 PE15/PG2/PG1/PA3, SPI4
 //! PE2/PE14/PE13/PE11), no es PE10 -- el plan B del `CS` del esclavo --, no es
 //! PE12, el SCK alternativo de SPI4, y no toca nada del bring-up: los LED son
-//! PG10 (LD5), PG0 (LD6), PG8 (LD7) y PB15 (LD3), el boton es PC13, y el ST-LINK
-//! se lleva PB14/PB15 y PC3/PC4 (UM3417 sec.7.5, sec.7.6 y Tabla 16).
+//! PG10 (LD5), PG0 (LD6), PG8 (LD7) y PB15 (LD3), y el boton es PC13 (UM3417
+//! sec.7.5 y sec.7.6).
 //!
 //! **La bajada.** El mismo patron del banco, `0x5A ^ i`, rellenado hasta el
 //! largo del mensaje. No es el sobre de la cabecera -- no existe todavia
