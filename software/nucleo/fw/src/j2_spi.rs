@@ -276,9 +276,16 @@ pub struct Ranura<'d> {
     /// El reset por RCC de este periferico: [`resetear_por_rcc`] con su `T`.
     resetear: fn(),
     _sck: Flex<'d>,
-    /// MOSI, MISO y NSS; `None` en una ranura [`Ranura::solo_sck`].
-    _resto: Option<[Flex<'d>; 3]>,
+    _resto: Resto<'d>,
 }
+
+/// MOSI, MISO y NSS. Con `ranuras-6` pueden faltar (`Ranura::solo_sck`); sin la feature el tipo es el
+/// de siempre, porque `Hw` guarda la ranura y su forma mueve el codigo del tic: con `Option` en todas
+/// las compilaciones, la fila fria de la ficha J paso de 2 399 a 2 458 ciclos (2026-10-30, `799c8ea`).
+#[cfg(not(feature = "ranuras-6"))]
+type Resto<'d> = [Flex<'d>; 3];
+#[cfg(feature = "ranuras-6")]
+type Resto<'d> = Option<[Flex<'d>; 3]>;
 
 impl<'d> Ranura<'d> {
     /// Configura los pines (AF5), el reloj del periferico, los `CFG1`/`CFG2`
@@ -326,12 +333,14 @@ impl<'d> Ranura<'d> {
     {
         // `Flex::new` no toca el pin: el AF5 se escribe en `construir`, en el mismo sitio de siempre.
         let resto = [Flex::new(mosi), Flex::new(miso), Flex::new(nss)];
+        #[cfg(feature = "ranuras-6")]
+        let resto = Some(resto);
         Self::construir::<T, Tx, Rx>(
             indice,
             regs,
             Flex::new(sck),
             5,
-            Some(resto),
+            resto,
             tx,
             rx,
             irq_tx,
@@ -350,6 +359,7 @@ impl<'d> Ranura<'d> {
     /// bytes, el de recepcion no recibe ninguno (`BNDT` se queda en 25) y el `EOT` no llega: medido
     /// en placa el 2026-10-30 (`d7cba23`), todas las tramas de las cinco ranuras vencieron. Que el
     /// receptor tome el reloj de vuelta del pin es la lectura de ese resultado, no una cita del RM.
+    #[cfg(feature = "ranuras-6")]
     #[allow(clippy::too_many_arguments)]
     pub fn solo_sck<T, Sck, Tx, Rx>(
         indice: usize,
@@ -390,7 +400,7 @@ impl<'d> Ranura<'d> {
         regs: pac::spi::Spi,
         mut sck: Flex<'d>,
         sck_af: u8,
-        mut resto: Option<[Flex<'d>; 3]>,
+        mut resto: Resto<'d>,
         tx: Peri<'d, Tx>,
         rx: Peri<'d, Rx>,
         irq_tx: impl Binding<Tx::Interrupt, dma::InterruptHandler<Tx>> + 'd,
@@ -433,7 +443,11 @@ impl<'d> Ranura<'d> {
         // Tabla 18. `VeryHigh` porque el enlace sube a 34,5 MHz (spec D8).
         let salida = AfType::output(OutputType::PushPull, VELOCIDAD_PINES);
         sck.set_as_af_unchecked(sck_af, salida);
-        if let Some([mosi, miso, nss]) = &mut resto {
+        #[cfg(not(feature = "ranuras-6"))]
+        let pines = Some(&mut resto);
+        #[cfg(feature = "ranuras-6")]
+        let pines = resto.as_mut();
+        if let Some([mosi, miso, nss]) = pines {
             mosi.set_as_af_unchecked(5, salida);
             nss.set_as_af_unchecked(5, salida);
             miso.set_as_af_unchecked(5, AfType::input(Pull::None));

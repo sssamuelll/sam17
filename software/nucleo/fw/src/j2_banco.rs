@@ -78,14 +78,18 @@ embassy_stm32::bind_interrupts!(
     /// `_generated.rs` de este build: `SPI5`, `EXTI11` y `GPDMA1_CHANNELn` --
     /// **no** `GPDMA1_CHn`, que es el nombre del *periferico*
     /// (`dma_channel_impl!(GPDMA1_CH0, ...::GPDMA1_CHANNEL0)`).
-    /// `SPI4`, `SPI3` y `SPI6` son de las ranuras 1, 4 y 5 de `ranuras-6`, que no tienen pines.
-    /// El esclavo del banco usa SPI4 sin su linea: solo la desenmascara `Ranura::nueva`.
+    /// Con `ranuras-6`, ademas, `SPI4`, `SPI3` y `SPI6` (las ranuras 1, 4 y 5) y los canales 8 a 11.
+    /// Sin la feature no se atan: el texto y el `.rodata` quedan donde estaban, y con ellos la fila
+    /// fria de la ficha J.
     pub struct IrqsBanco {
         SPI5 => Isr<0>;
+        #[cfg(feature = "ranuras-6")]
         SPI4 => Isr<1>;
         SPI1 => Isr<2>;
         SPI2 => Isr<3>;
+        #[cfg(feature = "ranuras-6")]
         SPI3 => Isr<4>;
+        #[cfg(feature = "ranuras-6")]
         SPI6 => Isr<5>;
         GPDMA1_CHANNEL0 => dma::InterruptHandler<peripherals::GPDMA1_CH0>;
         GPDMA1_CHANNEL1 => dma::InterruptHandler<peripherals::GPDMA1_CH1>;
@@ -95,9 +99,13 @@ embassy_stm32::bind_interrupts!(
         GPDMA1_CHANNEL5 => dma::InterruptHandler<peripherals::GPDMA1_CH5>;
         GPDMA1_CHANNEL6 => dma::InterruptHandler<peripherals::GPDMA1_CH6>;
         GPDMA1_CHANNEL7 => dma::InterruptHandler<peripherals::GPDMA1_CH7>;
+        #[cfg(feature = "ranuras-6")]
         GPDMA1_CHANNEL8 => dma::InterruptHandler<peripherals::GPDMA1_CH8>;
+        #[cfg(feature = "ranuras-6")]
         GPDMA1_CHANNEL9 => dma::InterruptHandler<peripherals::GPDMA1_CH9>;
+        #[cfg(feature = "ranuras-6")]
         GPDMA1_CHANNEL10 => dma::InterruptHandler<peripherals::GPDMA1_CH10>;
+        #[cfg(feature = "ranuras-6")]
         GPDMA1_CHANNEL11 => dma::InterruptHandler<peripherals::GPDMA1_CH11>;
         EXTI11 => IsrCs;
     }
@@ -259,7 +267,11 @@ pub fn maestro_de_relleno_3(
 /// | 5 | SPI6 | PC12 | 5 | CN3-36, Arduino A4 |
 ///
 /// PE2, el otro SCK de SPI4, no: va cableado al SCK del maestro del banco.
+///
+/// Corre una vez, al arrancar, y va fuera de la ITCM: el patron de `j2_banco` en `j2_tcm.x` la meteria
+/// dentro, y desde alli llama al `set_as_af` de embassy (`tcm_cierre.py` lo cuenta como fuga).
 #[cfg(feature = "ranuras-6")]
+#[link_section = ".text.maestros_solo_sck"]
 #[allow(clippy::too_many_arguments)]
 pub fn maestros_solo_sck(
     sck1: Peri<'static, peripherals::PE12>,
