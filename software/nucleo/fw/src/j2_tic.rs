@@ -80,11 +80,11 @@ const IRQ_REC: interrupt::Interrupt = interrupt::JPEG;
 pub const T_CANAL_US: u32 = 25;
 /// Hueco entre el fin de la recuperacion y el primer armado (`T_GAP`, D8). ESTIMADO.
 pub const T_GAP_REARME_US: u32 = 2;
-/// Un tic que entra con el contador del temporizador por encima de esto va tarde (§2.8).
-const TARDIO_US: u16 = 10;
+/// Un tic que entra mas de esto despues de su actualizacion va tarde (§2.8).
+const TARDIO_US: u32 = 10;
 /// El presupuesto de retraso del tic (§2.8, R-H2): una entrada que pasa de esto cuenta en
 /// `tics_fuera_de_presupuesto`.
-const PRESUPUESTO_RETRASO_US: u16 = 60;
+const PRESUPUESTO_RETRASO_US: u32 = 60;
 
 /// Los canales del GPDMA1 de la ranura `n` son `2n` y `2n + 1` (los de `j2_banco`).
 const IRQ_CANAL: [interrupt::Interrupt; 12] = [
@@ -1069,12 +1069,12 @@ pub fn lanzar(
 unsafe fn TIM7() {
     let t0 = DWT::cycle_count();
     let tim = pac::TIM7;
-    // Testigo de retraso: microsegundos desde el ultimo suceso de actualizacion (§2.8).
+    // Microsegundos desde el ultimo suceso de actualizacion.
     let cuentas = tim.cnt().read().cnt();
     #[cfg(feature = "tic-fino")]
-    let retraso = (u32::from(cuentas) / CUENTAS_POR_US.load(Ordering::Relaxed)) as u16;
+    let mut retraso = u32::from(cuentas) / CUENTAS_POR_US.load(Ordering::Relaxed);
     #[cfg(not(feature = "tic-fino"))]
-    let retraso = cuentas;
+    let mut retraso = u32::from(cuentas);
     #[cfg(all(feature = "tic-fino", feature = "perfil"))]
     {
         let c = u32::from(cuentas) * CICLOS_POR_CUENTA.load(Ordering::Relaxed);
@@ -1083,27 +1083,31 @@ unsafe fn TIM7() {
         ENTRADA[2].fetch_max(c, Ordering::Relaxed);
     }
     tim.sr().write(|w| w.set_uif(false));
-    if retraso > TARDIO_US {
-        TICS_TARDIOS.fetch_add(1, Ordering::Relaxed);
-    }
-    if retraso > PRESUPUESTO_RETRASO_US {
-        TICS_FUERA_DE_PRESUPUESTO.fetch_add(1, Ordering::Relaxed);
-    }
-    if u32::from(retraso) > RETRASO_MAX_US.load(Ordering::Relaxed) {
-        RETRASO_MAX_US.store(u32::from(retraso), Ordering::Relaxed);
-    }
     // El reloj del tic cuenta periodos desde la actualizacion, no entradas (§2.7, K2).
     // SAFETY: el tic es el unico dueno de `RELOJ_TIC`.
     let p = unsafe { &mut *RELOJ_TIC.0.get() }.entrada(u32::from(cuentas), t0);
     if p.anomalo {
         RELOJ_ANOMALO.fetch_add(1, Ordering::Relaxed);
     }
+    // Testigo de retraso (§2.8): desde la primera actualizacion que sirve esta entrada. Una que
+    // funde `n` llega `n - 1` periodos mas tarde de lo que dice el contador, que vuelve a cero en
+    // cada una (`tic_tardio`: con 300 us, el contador dice 50).
+    if p.n > 1 {
+        PERIODOS_SALTADOS.fetch_add(p.n - 1, Ordering::Relaxed);
+        retraso += (p.n - 1) * PERIODO_US.load(Ordering::Relaxed);
+    }
+    if retraso > TARDIO_US {
+        TICS_TARDIOS.fetch_add(1, Ordering::Relaxed);
+    }
+    if retraso > PRESUPUESTO_RETRASO_US {
+        TICS_FUERA_DE_PRESUPUESTO.fetch_add(1, Ordering::Relaxed);
+    }
+    if retraso > RETRASO_MAX_US.load(Ordering::Relaxed) {
+        RETRASO_MAX_US.store(retraso, Ordering::Relaxed);
+    }
     if p.n == 0 {
         // Una reentrada por la misma actualizacion: no ha pasado ningun periodo.
         return;
-    }
-    if p.n > 1 {
-        PERIODOS_SALTADOS.fetch_add(p.n - 1, Ordering::Relaxed);
     }
     let periodos = p.n.min(u32::from(u16::MAX)) as u16;
     let tics = TICS.load(Ordering::Relaxed).wrapping_add(p.n);
