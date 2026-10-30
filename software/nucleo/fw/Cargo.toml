@@ -198,6 +198,11 @@ path = "src/bin/tic_cota.rs"
 required-features = ["inyeccion"]
 
 [[bin]]
+name = "tic_tardio"
+path = "src/bin/tic_tardio.rs"
+required-features = ["inyeccion"]
+
+[[bin]]
 name = "tic_estres"
 path = "src/bin/tic_estres.rs"
 required-features = ["inyeccion", "secuencia"]

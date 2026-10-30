@@ -80,11 +80,11 @@ const IRQ_REC: interrupt::Interrupt = interrupt::JPEG;
 pub const T_CANAL_US: u32 = 25;
 /// Hueco entre el fin de la recuperacion y el primer armado (`T_GAP`, D8). ESTIMADO.
 pub const T_GAP_REARME_US: u32 = 2;
-/// Un tic que entra con el contador del temporizador por encima de esto va tarde (§2.8).
-const TARDIO_US: u16 = 10;
+/// Un tic que entra mas de esto despues de su actualizacion va tarde (§2.8).
+const TARDIO_US: u32 = 10;
 /// El presupuesto de retraso del tic (§2.8, R-H2): una entrada que pasa de esto cuenta en
 /// `tics_fuera_de_presupuesto`.
-const PRESUPUESTO_RETRASO_US: u16 = 60;
+const PRESUPUESTO_RETRASO_US: u32 = 60;
 
 /// Los canales del GPDMA1 de la ranura `n` son `2n` y `2n + 1` (los de `j2_banco`).
 const IRQ_CANAL: [interrupt::Interrupt; 12] = [
@@ -1069,12 +1069,12 @@ pub fn lanzar(
 unsafe fn TIM7() {
     let t0 = DWT::cycle_count();
     let tim = pac::TIM7;
-    // Testigo de retraso: microsegundos desde el ultimo suceso de actualizacion (§2.8).
+    // Microsegundos desde el ultimo suceso de actualizacion.
     let cuentas = tim.cnt().read().cnt();
     #[cfg(feature = "tic-fino")]
-    let retraso = (u32::from(cuentas) / CUENTAS_POR_US.load(Ordering::Relaxed)) as u16;
+    let mut retraso = u32::from(cuentas) / CUENTAS_POR_US.load(Ordering::Relaxed);
     #[cfg(not(feature = "tic-fino"))]
-    let retraso = cuentas;
+    let mut retraso = u32::from(cuentas);
     #[cfg(all(feature = "tic-fino", feature = "perfil"))]
     {
         let c = u32::from(cuentas) * CICLOS_POR_CUENTA.load(Ordering::Relaxed);
@@ -1083,27 +1083,31 @@ unsafe fn TIM7() {
         ENTRADA[2].fetch_max(c, Ordering::Relaxed);
     }
     tim.sr().write(|w| w.set_uif(false));
-    if retraso > TARDIO_US {
-        TICS_TARDIOS.fetch_add(1, Ordering::Relaxed);
-    }
-    if retraso > PRESUPUESTO_RETRASO_US {
-        TICS_FUERA_DE_PRESUPUESTO.fetch_add(1, Ordering::Relaxed);
-    }
-    if u32::from(retraso) > RETRASO_MAX_US.load(Ordering::Relaxed) {
-        RETRASO_MAX_US.store(u32::from(retraso), Ordering::Relaxed);
-    }
     // El reloj del tic cuenta periodos desde la actualizacion, no entradas (§2.7, K2).
     // SAFETY: el tic es el unico dueno de `RELOJ_TIC`.
     let p = unsafe { &mut *RELOJ_TIC.0.get() }.entrada(u32::from(cuentas), t0);
     if p.anomalo {
         RELOJ_ANOMALO.fetch_add(1, Ordering::Relaxed);
     }
+    // Testigo de retraso (§2.8): desde la primera actualizacion que sirve esta entrada. Una que
+    // funde `n` llega `n - 1` periodos mas tarde de lo que dice el contador, que vuelve a cero en
+    // cada una (`tic_tardio`: con 300 us, el contador dice 50).
+    if p.n > 1 {
+        PERIODOS_SALTADOS.fetch_add(p.n - 1, Ordering::Relaxed);
+        retraso += (p.n - 1) * PERIODO_US.load(Ordering::Relaxed);
+    }
+    if retraso > TARDIO_US {
+        TICS_TARDIOS.fetch_add(1, Ordering::Relaxed);
+    }
+    if retraso > PRESUPUESTO_RETRASO_US {
+        TICS_FUERA_DE_PRESUPUESTO.fetch_add(1, Ordering::Relaxed);
+    }
+    if retraso > RETRASO_MAX_US.load(Ordering::Relaxed) {
+        RETRASO_MAX_US.store(retraso, Ordering::Relaxed);
+    }
     if p.n == 0 {
         // Una reentrada por la misma actualizacion: no ha pasado ningun periodo.
         return;
-    }
-    if p.n > 1 {
-        PERIODOS_SALTADOS.fetch_add(p.n - 1, Ordering::Relaxed);
     }
     let periodos = p.n.min(u32::from(u16::MAX)) as u16;
     let tics = TICS.load(Ordering::Relaxed).wrapping_add(p.n);
@@ -1653,22 +1657,38 @@ unsafe fn JPEG() {
 /// Una interrupcion que acapara la CPU un rato, para los binarios de estres: `VENC`, que ningun otro
 /// modulo atiende, con la prioridad que se le pida. A P2 es un USB o una pantalla que retiene al
 /// planificador (P3) y a la recuperacion (P4); a P3, trabajo del planificador que no pega al
-/// resto del banco (el esclavo del banco es una tarea de P2).
+/// resto del banco (el esclavo del banco es una tarea de P2); a P0, por encima del tic, lo que
+/// R-H1 prohibe en el instrumento, para provocar un tic tardio (`tic_tardio`).
 #[cfg(feature = "inyeccion")]
 pub mod acapara {
-    use core::sync::atomic::{AtomicU32, Ordering};
+    use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
     use cortex_m::peripheral::{DWT, NVIC};
-    use embassy_stm32::interrupt;
     use embassy_stm32::interrupt::{InterruptExt, Priority};
+    use embassy_stm32::{interrupt, pac};
 
     static CICLOS: AtomicU32 = AtomicU32::new(0);
     static EN_VENCIDA: AtomicU32 = AtomicU32::new(0);
+    static TRAS_LA_ACTUALIZACION: AtomicBool = AtomicBool::new(false);
 
     #[interrupt]
     unsafe fn VENC() {
-        let t0 = DWT::cycle_count();
+        let mut t0 = DWT::cycle_count();
         let n = CICLOS.load(Ordering::Relaxed);
+        if TRAS_LA_ACTUALIZACION.swap(false, Ordering::Relaxed) {
+            // El golpe cuenta desde la actualizacion del tic, no desde aqui: espera a que `TIM7`
+            // la marque y descuenta lo que su contador ya avanzo desde ella.
+            let tim = pac::TIM7;
+            while !tim.sr().read().uif() {}
+            let ahora = DWT::cycle_count();
+            let cuentas = u32::from(tim.cnt().read().cnt());
+            #[cfg(feature = "tic-fino")]
+            let cuentas_us = super::CUENTAS_POR_US.load(Ordering::Relaxed);
+            #[cfg(not(feature = "tic-fino"))]
+            let cuentas_us = 1;
+            let ciclos_por_cuenta = super::CICLOS_POR_US.load(Ordering::Relaxed) / cuentas_us;
+            t0 = ahora.wrapping_sub(cuentas * ciclos_por_cuenta);
+        }
         while DWT::cycle_count().wrapping_sub(t0) < n {}
     }
 
@@ -1685,6 +1705,18 @@ pub mod acapara {
             us * super::CICLOS_POR_US.load(Ordering::Relaxed),
             Ordering::Relaxed,
         );
+        NVIC::pend(interrupt::VENC);
+    }
+
+    /// Un tic tardio (papel v3, §5.2 j): hace pendiente un golpe que espera a la proxima
+    /// actualizacion del tic y retiene la CPU hasta `us` microsegundos despues de ella. Con
+    /// `arranca(P0)`, el tic entra `us` tarde; con mas de un periodo, funde actualizaciones.
+    pub fn tic_tardio(us: u32) {
+        CICLOS.store(
+            us * super::CICLOS_POR_US.load(Ordering::Relaxed),
+            Ordering::Relaxed,
+        );
+        TRAS_LA_ACTUALIZACION.store(true, Ordering::Relaxed);
         NVIC::pend(interrupt::VENC);
     }
 
